@@ -1,5 +1,23 @@
 # 법령 문서 기반 RAG QA 시스템 데이터 기획 및 미니 구현
 
+# Law RAG QA Planner
+
+법령 문서 기반 RAG QA 시스템을 설계하고,
+retrieval 성능과 failure case를 분석한 프로젝트입니다.
+
+## What I Did
+
+- 법령 QA에서 발생하는 hallucination 문제를 정의
+- 법령 구조를 반영한 metadata schema 설계
+- 조문 단위 chunking 전략 설계 및 구현
+- keyword 기반 retrieval 시스템 구현
+- retrieval accuracy 평가 로직 설계 (Hit@K, Top-1)
+- failure case를 직접 설계하고 원인 분석
+- RAG 시스템 개선 방향 제시 (semantic search, reranking)
+
+본 프로젝트는 단순 구현이 아니라  
+**법령 도메인 특성을 반영한 RAG 시스템 설계 및 검증 경험**을 보여주기 위해 수행하였다.
+
 ## 1. 프로젝트 개요
 
 본 프로젝트는 법령 문서를 기반으로 한 RAG(Retrieval-Augmented Generation) QA 시스템의 데이터 구조, 검색 전략, 프롬프트 설계, 평가 지표를 설계하고 간단히 구현한 미니 프로젝트입니다.
@@ -70,6 +88,26 @@ LLM 답변 생성 단계에서는 다음 원칙을 적용합니다.
 - source completeness
 - freshness
 
+### Why Top-1 Accuracy?
+
+본 프로젝트에서는 retrieval 성능 평가 시 Hit@K뿐 아니라 Top-1 Accuracy를 함께 고려하였다.
+
+법령 QA의 특성상 단순히 정답 조문이 검색 결과에 "포함"되는 것만으로는 충분하지 않다.
+
+- 실제 QA 시스템은 하나의 조문을 근거로 답변을 생성함
+- 따라서 Top-K에 포함되더라도 Top-1이 잘못되면 잘못된 답변으로 이어질 가능성이 높음
+
+예를 들어:
+
+Query: "손해배상 청구 규정은?"
+
+- Top-K 결과: [제750조, 제390조] → Hit@K 기준 성공
+- Top-1 결과: 제750조 → 실제로는 제390조가 더 적절
+
+이 경우 Hit@K는 높게 나오지만, 실제 서비스 품질은 낮다.
+
+따라서 본 프로젝트에서는 **실제 QA 품질을 반영하기 위해 Top-1 Accuracy를 주요 지표로 사용하였다.**
+
 ## 8. 실행 방법
 
 ```bash
@@ -79,7 +117,7 @@ python src/prompt_builder.py
 python src/evaluation.py
 ```
 
-## 11. Evaluation 결과
+## 9. Evaluation 결과
 
 샘플 데이터 기반 테스트 결과:
 
@@ -88,7 +126,7 @@ python src/evaluation.py
 ※ 단, 본 결과는 제한된 샘플 데이터 기준이며, 실제 서비스에서는 더 다양한 질의와 대규모 데이터셋 기반 평가가 필요할 것으로 보임.
 
 
-## 12. Failure Case Analysis
+## 10. Failure Case Analysis
 
 본 프로젝트에서는 단순히 정답을 맞추는 것이 아니라, retrieval 단계에서 발생할 수 있는 failure case를 재현하고 그 원인과 개선 방향을 분석하였다.
 
@@ -139,23 +177,26 @@ Expected:
 ![architecture](./images/accuracy_test3.png)
 
 I. 실험 결과
+
 keyword 기반 retrieval에서는 "손해배상" 키워드가 포함된 민법 제750조가 Top-1으로 선택되었다.
 
 II. 문제 원인
+
 민법 제750조와 제390조는 모두 "손해배상"과 관련되지만,
 제750조는 불법행위 책임, 제390조는 채무불이행 책임에 관한 조문이다.
 단순 keyword matching은 "청구"라는 법적 맥락을 충분히 반영하지 못한다.
 
 III. 의미
+
 Hit@K 기준에서는 정답 조문이 포함될 수 있지만,
 Top-1 기준에서는 잘못된 조문이 선택될 수 있다.
 
 
-## 13. 간단실행 결과
+## 11. 간단실행 결과
 ![architecture](./images/demo_output1.png)
 
 
-## 14. Retrieval Evaluation (Sample)
+## 12. Retrieval Evaluation (Sample)
 
 본 프로젝트에서는 retrieval accuracy를 평가하기 위해 테스트 쿼리셋을 구성하고,
 expected article 기준으로 hit 여부를 측정하는 구조를 설계했습니다.
