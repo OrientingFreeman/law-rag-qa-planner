@@ -4,13 +4,18 @@ def evaluate_retrieval(query, retrieved_results, expected_article_no):
         for result in retrieved_results
     ]
 
-    hit = expected_article_no in retrieved_articles
+    top1_article = retrieved_articles[0] if retrieved_articles else None
+
+    hit_at_k = expected_article_no in retrieved_articles
+    top1_hit = top1_article == expected_article_no
 
     return {
         "query": query,
         "expected_article_no": expected_article_no,
         "retrieved_articles": retrieved_articles,
-        "retrieval_hit": hit
+        "top1_article": top1_article,
+        "hit_at_k": hit_at_k,
+        "top1_hit": top1_hit
     }
 
 

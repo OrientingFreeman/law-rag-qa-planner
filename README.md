@@ -81,29 +81,94 @@ python src/evaluation.py
 
 ## 11. Evaluation 결과
 
-간단한 테스트셋 기준 retrieval accuracy:
+샘플 데이터 기반 테스트 결과:
 
-- Accuracy: 1.00 (3/3)
+- Retrieval Accuracy: 1.00 (3/3)
+![architecture](./images/accuracy_test1.png)
+※ 단, 본 결과는 제한된 샘플 데이터 기준이며, 실제 서비스에서는 더 다양한 질의와 대규모 데이터셋 기반 평가가 필요할 것으로 보임.
 
-본 시스템은 metadata + keyword 기반 retrieval로도 높은 정확도를 보였으며,
-향후 vector search 및 reranking 적용 시 성능 향상이 기대됩니다.
 
-## 12. Failure Case 분석
+## 12. Failure Case Analysis
 
-다음과 같은 경우 retrieval 실패 가능성이 존재한다:
+본 프로젝트에서는 단순히 정답을 맞추는 것이 아니라, retrieval 단계에서 발생할 수 있는 failure case를 재현하고 그 원인과 개선 방향을 분석하였다.
 
-1. 법령명이 명시되지 않은 질문
-2. 유사 키워드가 많은 조문 (예: 손해배상)
-3. 최신 개정 반영 부족
+---
 
-### 해결 전략
+### Failure Case 1: 법령명 누락 (Missing Law Name)
 
-- metadata 필터 강화
-- semantic search 도입
-- reranking 추가
+**Query**
+
+손해배상 책임 요건은 무엇인가?
+
+I. 실험결과
+
+해당 질의에 대한 retrieval 결과:
+
+Top results: 제750조, 제390조
+Hit@K 기준에서는 정답 포함 (Hit)
+그러나 복수의 후보 조문이 함께 검색됨
+![architecture](./images/accuracy_test2.png)
+
+II. 문제 원인
+
+질의에 법령명(민법)이 명시되지 않음
+"손해배상" 키워드는 불법행위(제750조)와 채무불이행(제390조) 모두에서 사용됨
+keyword 기반 retrieval만으로는 법적 맥락(disambiguation)을 구분하기 어려움
+
+III. 의미
+
+Hit@K 기준에서는 성능이 높게 측정될 수 있으나,
+실제 서비스에서는 Top-1 정확도 저하 및 잘못된 조문 선택 가능성 존재
+
+IV. 개선방향
+
+query intent 분석을 통한 법령명 및 주제 추론
+semantic search 도입 (embedding 기반 의미 유사도 활용)
+query expansion 적용
+(예: "손해배상" → "불법행위 손해배상")
+reranking 단계에서 법적 맥락 반영
+
+### Failure Case 2: 유사 키워드 충돌
+
+Query:
+손해배상 청구 규정은?
+
+Expected:
+민법 제390조
+
+![architecture](./images/accuracy_test3.png)
+
+I. 실험 결과
+keyword 기반 retrieval에서는 "손해배상" 키워드가 포함된 민법 제750조가 Top-1으로 선택되었다.
+
+II. 문제 원인
+민법 제750조와 제390조는 모두 "손해배상"과 관련되지만,
+제750조는 불법행위 책임, 제390조는 채무불이행 책임에 관한 조문이다.
+단순 keyword matching은 "청구"라는 법적 맥락을 충분히 반영하지 못한다.
+
+III. 의미
+Hit@K 기준에서는 정답 조문이 포함될 수 있지만,
+Top-1 기준에서는 잘못된 조문이 선택될 수 있다.
 
 
 ## 13. 간단실행 결과
 ![architecture](./images/demo_output1.png)
+
+
+## 14. Retrieval Evaluation (Sample)
+
+본 프로젝트에서는 retrieval accuracy를 평가하기 위해 테스트 쿼리셋을 구성하고,
+expected article 기준으로 hit 여부를 측정하는 구조를 설계했습니다.
+
+### Sample Test Cases
+
+| Query | Expected Article | Hit 여부 |
+|------|----------------|----------|
+| 민법상 불법행위 손해배상 요건은? | 제750조 | Hit |
+| 채무불이행 손해배상 규정은? | 제390조 | Hit |
+| 개인정보 수집 요건은? | 제15조 | Hit |
+
+※ 본 결과는 샘플 데이터 기반 테스트이며,
+실제 서비스에서는 더 큰 데이터셋과 다양한 질의에 대한 평가가 필요합니다.
 
 

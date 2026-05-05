@@ -14,6 +14,10 @@ test_cases = [
     {
         "query": "개인정보 수집 요건은?",
         "expected": "제15조"
+    },
+    {
+        "query": "손해배상 청구 규정은?",
+        "expected": "제390조"
     }
 ]
 
@@ -33,14 +37,15 @@ def run_tests():
             case["expected"]
         )
 
-        if evaluation["retrieval_hit"]:
+        if evaluation["top1_hit"]:
             correct += 1
 
         print(evaluation)
 
     accuracy = correct / total
 
-    print(f"\nRetrieval Accuracy: {accuracy:.2f}")
+    top1_accuracy = correct / total
+    print(f"\nTop-1 Accuracy: {top1_accuracy:.2f}")
 
 if __name__ == "__main__":
     run_tests()
