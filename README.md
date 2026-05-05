@@ -121,7 +121,7 @@ python src/evaluation.py
 
 샘플 데이터 기반 테스트 결과:
 
-- Retrieval Accuracy: 1.00 (3/3)
+- Top-1 Accuracy: 1.00 (3/3)
 ![architecture](./images/accuracy_test1.png)
 ※ 단, 본 결과는 제한된 샘플 데이터 기준이며, 실제 서비스에서는 더 다양한 질의와 대규모 데이터셋 기반 평가가 필요할 것으로 보임.
 
@@ -142,9 +142,9 @@ I. 실험결과
 
 해당 질의에 대한 retrieval 결과:
 
-Top results: 제750조, 제390조
-Hit@K 기준에서는 정답 포함 (Hit)
-그러나 복수의 후보 조문이 함께 검색됨
+-Top results: 제750조, 제390조
+-Hit@K 기준에서는 정답 포함 (Hit)
+-그러나 복수의 후보 조문이 함께 검색됨
 ![architecture](./images/accuracy_test2.png)
 
 II. 문제 원인
@@ -208,6 +208,8 @@ expected article 기준으로 hit 여부를 측정하는 구조를 설계했습�
 | 민법상 불법행위 손해배상 요건은? | 제750조 | Hit |
 | 채무불이행 손해배상 규정은? | 제390조 | Hit |
 | 개인정보 수집 요건은? | 제15조 | Hit |
+| 손해배상 청구 규정은? | 제390조 | Top-1 Fail / Hit@K |
+
 
 ※ 본 결과는 샘플 데이터 기반 테스트이며,
 실제 서비스에서는 더 큰 데이터셋과 다양한 질의에 대한 평가가 필요합니다.
