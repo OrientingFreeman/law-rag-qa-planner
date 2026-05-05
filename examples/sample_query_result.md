@@ -1,7 +1,4 @@
 
----
-
-# 8. `examples/sample_query_result.md`
 
 ```markdown
 # Sample Query Result
@@ -37,3 +34,5 @@ LLM은 제공된 근거 문서만 사용해야 하며, 근거에 없는 내용�
 - answer grounding: 성공
 - source completeness: 성공
 - hallucination risk: 낮음
+
+```

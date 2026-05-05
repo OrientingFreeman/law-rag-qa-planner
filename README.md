@@ -77,3 +77,33 @@ python src/chunking.py
 python src/retriever.py
 python src/prompt_builder.py
 python src/evaluation.py
+```
+
+## 11. Evaluation 결과
+
+간단한 테스트셋 기준 retrieval accuracy:
+
+- Accuracy: 1.00 (3/3)
+
+본 시스템은 metadata + keyword 기반 retrieval로도 높은 정확도를 보였으며,
+향후 vector search 및 reranking 적용 시 성능 향상이 기대됩니다.
+
+## 12. Failure Case 분석
+
+다음과 같은 경우 retrieval 실패 가능성이 존재한다:
+
+1. 법령명이 명시되지 않은 질문
+2. 유사 키워드가 많은 조문 (예: 손해배상)
+3. 최신 개정 반영 부족
+
+### 해결 전략
+
+- metadata 필터 강화
+- semantic search 도입
+- reranking 추가
+
+
+## 13. 간단실행 결과
+![architecture](./images/demo_output1.png)
+
+
