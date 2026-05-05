@@ -1,0 +1,44 @@
+[
+  {
+    "document_type": "법령",
+    "law_name": "민법",
+    "article_no": "제750조",
+    "clause_no": null,
+    "item_no": null,
+    "effective_date": "2023-01-01",
+    "revision_date": "2022-12-31",
+    "authority": "법제처",
+    "reliability": "공식",
+    "topic": "불법행위",
+    "keywords": ["손해배상", "고의", "과실", "책임"],
+    "content": "고의 또는 과실로 인한 위법행위로 타인에게 손해를 가한 자는 그 손해를 배상할 책임이 있다."
+  },
+  {
+    "document_type": "법령",
+    "law_name": "민법",
+    "article_no": "제390조",
+    "clause_no": null,
+    "item_no": null,
+    "effective_date": "2023-01-01",
+    "revision_date": "2022-12-31",
+    "authority": "법제처",
+    "reliability": "공식",
+    "topic": "채무불이행",
+    "keywords": ["채무불이행", "손해배상", "이행지체"],
+    "content": "채무자가 채무의 내용에 좇은 이행을 하지 아니한 때에는 채권자는 손해배상을 청구할 수 있다."
+  },
+  {
+    "document_type": "법령",
+    "law_name": "개인정보 보호법",
+    "article_no": "제15조",
+    "clause_no": "제1항",
+    "item_no": null,
+    "effective_date": "2024-03-15",
+    "revision_date": "2024-02-20",
+    "authority": "법제처",
+    "reliability": "공식",
+    "topic": "개인정보 수집",
+    "keywords": ["개인정보", "수집", "이용", "동의"],
+    "content": "개인정보처리자는 정보주체의 동의를 받은 경우 개인정보를 수집할 수 있으며 그 수집 목적의 범위에서 이용할 수 있다."
+  }
+]
