@@ -1,0 +1,66 @@
+[
+  {
+    "case_id": "official_privacy_collection_consent",
+    "question": "개인정보를 수집할 때 정보주체의 동의를 받아야 하는 요건은?",
+    "domain": "digital_business",
+    "top_k": 5,
+    "expected_law_id": "011357",
+    "expected_article_nos": ["제15조"]
+  },
+  {
+    "case_id": "official_privacy_policy_contents",
+    "question": "개인정보 처리방침에는 어떤 내용을 포함해야 하나?",
+    "domain": "digital_business",
+    "top_k": 5,
+    "expected_law_id": "011357",
+    "expected_article_nos": ["제30조"]
+  },
+  {
+    "case_id": "official_eft_record_retention",
+    "question": "전자금융거래 기록은 얼마 동안 보존해야 하나?",
+    "domain": "electronic_finance",
+    "top_k": 5,
+    "expected_law_id": "010199",
+    "expected_article_nos": ["제22조"]
+  },
+  {
+    "case_id": "official_access_media_transfer",
+    "question": "접근매체를 양도하거나 대여해도 되는가?",
+    "domain": "electronic_finance",
+    "top_k": 5,
+    "expected_law_id": "010199",
+    "expected_article_nos": ["제6조"]
+  },
+  {
+    "case_id": "official_labor_written_terms",
+    "question": "근로계약을 체결할 때 서면으로 명시해야 하는 사항은?",
+    "domain": "labor",
+    "top_k": 5,
+    "expected_law_id": "001872",
+    "expected_article_nos": ["제17조"]
+  },
+  {
+    "case_id": "official_labor_dismissal_notice",
+    "question": "사용자가 근로자를 해고하려면 몇 일 전에 예고해야 하나?",
+    "domain": "labor",
+    "top_k": 5,
+    "expected_law_id": "001872",
+    "expected_article_nos": ["제26조"]
+  },
+  {
+    "case_id": "official_civil_fraud_cancellation",
+    "question": "상대방의 사기로 체결한 계약을 취소할 수 있는가?",
+    "domain": "civil_transactions",
+    "top_k": 5,
+    "expected_law_id": "001706",
+    "expected_article_nos": ["제110조"]
+  },
+  {
+    "case_id": "official_civil_nonperformance_damages",
+    "question": "채무자가 계약상 의무를 이행하지 않으면 손해배상을 청구할 수 있는가?",
+    "domain": "civil_transactions",
+    "top_k": 5,
+    "expected_law_id": "001706",
+    "expected_article_nos": ["제390조"]
+  }
+]

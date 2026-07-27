@@ -1,0 +1,60 @@
+[
+  {
+    "document_id": "TEST001:제1조:제1항",
+    "law_id": "TEST001",
+    "law_name": "테스트법",
+    "article_no": "제1조",
+    "text": "이 법은 테스트를 목적으로 한다.",
+    "document_type": "법령",
+    "article_title": "목적",
+    "paragraph_no": "제1항",
+    "item_no": null,
+    "subitem_no": null,
+    "promulgation_date": "2026-01-01",
+    "effective_from": "2026-02-01",
+    "effective_to": null,
+    "revision_date": null,
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "reliability": "공식",
+    "source_url": "file:///home/kitedailyrec/projects/law-rag-qa-planner/tests/fixtures/sample_law.xml",
+    "version_id": "42",
+    "domain_tags": [
+      "test_domain"
+    ],
+    "topic": null,
+    "keywords": [],
+    "related_article_ids": [],
+    "content_kind": "official_text",
+    "source_checked_at": "2026-07-24"
+  },
+  {
+    "document_id": "TEST001:제1조:제1항:제1호",
+    "law_id": "TEST001",
+    "law_name": "테스트법",
+    "article_no": "제1조",
+    "text": "첫 번째 세부사항",
+    "document_type": "법령",
+    "article_title": "목적",
+    "paragraph_no": "제1항",
+    "item_no": "제1호",
+    "subitem_no": null,
+    "promulgation_date": "2026-01-01",
+    "effective_from": "2026-02-01",
+    "effective_to": null,
+    "revision_date": null,
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "reliability": "공식",
+    "source_url": "file:///home/kitedailyrec/projects/law-rag-qa-planner/tests/fixtures/sample_law.xml",
+    "version_id": "42",
+    "domain_tags": [
+      "test_domain"
+    ],
+    "topic": null,
+    "keywords": [],
+    "related_article_ids": [],
+    "content_kind": "official_text",
+    "source_checked_at": "2026-07-24"
+  }
+]

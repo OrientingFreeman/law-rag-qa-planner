@@ -1,3 +1,4 @@
+import _bootstrap  # noqa: F401
 from chunking import load_laws, create_chunks
 from retriever import retrieve
 from evaluation import evaluate_retrieval

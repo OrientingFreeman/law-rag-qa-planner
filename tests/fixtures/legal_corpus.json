@@ -1,0 +1,303 @@
+[
+  {
+    "document_id": "pipa:15:1",
+    "law_id": "pipa",
+    "law_name": "개인정보 보호법",
+    "article_no": "제15조",
+    "article_title": "개인정보의 수집·이용",
+    "paragraph_no": "제1항",
+    "text": "개인정보처리자는 정보주체의 동의를 받은 경우 등 법률이 정한 근거에 해당하면 개인정보를 수집할 수 있으며, 그 수집 목적의 범위에서 이용할 수 있다.",
+    "content_kind": "official_summary",
+    "effective_from": "2024-03-15",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/개인정보보호법",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "digital_business"
+    ],
+    "topic": "개인정보 수집·이용의 법적 근거",
+    "keywords": [
+      "개인정보",
+      "수집",
+      "이용",
+      "동의",
+      "법적 근거"
+    ],
+    "related_article_ids": [
+      "pipa:15:2",
+      "pipa:16:1",
+      "pipa:22:1",
+      "pipa-enforcement:17:1"
+    ]
+  },
+  {
+    "document_id": "pipa:15:2",
+    "law_id": "pipa",
+    "law_name": "개인정보 보호법",
+    "article_no": "제15조",
+    "article_title": "개인정보의 수집·이용",
+    "paragraph_no": "제2항",
+    "text": "정보주체의 동의를 받을 때에는 수집·이용 목적, 수집하려는 개인정보의 항목, 보유 및 이용 기간, 동의 거부 권리와 거부에 따른 불이익이 있는 경우 그 내용을 알려야 한다.",
+    "content_kind": "official_summary",
+    "effective_from": "2024-03-15",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/개인정보보호법",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "digital_business"
+    ],
+    "topic": "개인정보 수집 동의 고지사항",
+    "keywords": [
+      "수집 목적",
+      "개인정보 항목",
+      "보유 기간",
+      "동의 거부",
+      "불이익"
+    ],
+    "related_article_ids": [
+      "pipa:15:1",
+      "pipa:22:1",
+      "pipa-enforcement:17:1"
+    ]
+  },
+  {
+    "document_id": "pipa:16:1",
+    "law_id": "pipa",
+    "law_name": "개인정보 보호법",
+    "article_no": "제16조",
+    "article_title": "개인정보의 수집 제한",
+    "paragraph_no": "제1항",
+    "text": "개인정보처리자는 개인정보를 수집하는 경우 그 목적에 필요한 최소한의 개인정보를 수집해야 한다.",
+    "content_kind": "official_summary",
+    "effective_from": "2024-03-15",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/개인정보보호법",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "digital_business"
+    ],
+    "topic": "최소수집 원칙",
+    "keywords": [
+      "최소한",
+      "필요 최소",
+      "수집 제한"
+    ],
+    "related_article_ids": [
+      "pipa:15:1"
+    ]
+  },
+  {
+    "document_id": "pipa:22:1",
+    "law_id": "pipa",
+    "law_name": "개인정보 보호법",
+    "article_no": "제22조",
+    "article_title": "동의를 받는 방법",
+    "paragraph_no": "제1항",
+    "text": "개인정보처리자는 동의 사항을 구분하여 정보주체가 명확히 인지할 수 있도록 알리고 각각 동의를 받아야 한다.",
+    "content_kind": "official_summary",
+    "effective_from": "2024-03-15",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/개인정보보호법",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "digital_business"
+    ],
+    "topic": "개인정보 동의 방식",
+    "keywords": [
+      "동의 방법",
+      "구분 동의",
+      "명확한 동의"
+    ],
+    "related_article_ids": [
+      "pipa:15:2",
+      "pipa-enforcement:17:1"
+    ]
+  },
+  {
+    "document_id": "pipa-enforcement:17:1",
+    "law_id": "pipa-enforcement",
+    "law_name": "개인정보 보호법 시행령",
+    "article_no": "제17조",
+    "article_title": "동의를 받는 방법",
+    "paragraph_no": "제1항",
+    "text": "동의는 정보주체가 자유로운 의사에 따라 결정할 수 있고, 내용이 구체적·명확하며, 쉽게 읽고 이해할 수 있고, 동의 여부를 명확하게 표시할 수 있는 방법으로 받아야 한다.",
+    "content_kind": "official_summary",
+    "effective_from": "2026-05-19",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/개인정보보호법시행령",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "digital_business"
+    ],
+    "topic": "유효한 동의의 요건",
+    "keywords": [
+      "자유로운 의사",
+      "구체적",
+      "명확",
+      "이해 가능",
+      "표시"
+    ],
+    "related_article_ids": [
+      "pipa:22:1",
+      "pipa:15:2"
+    ]
+  },
+  {
+    "document_id": "ecommerce:6:1",
+    "law_id": "ecommerce",
+    "law_name": "전자상거래 등에서의 소비자보호에 관한 법률",
+    "article_no": "제6조",
+    "article_title": "거래기록의 보존 등",
+    "paragraph_no": "제1항",
+    "text": "사업자는 전자상거래 및 통신판매에서 표시·광고, 계약내용과 이행 등 거래기록을 상당한 기간 보존해야 한다.",
+    "content_kind": "official_summary",
+    "effective_from": "2026-07-21",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "digital_business"
+    ],
+    "topic": "전자상거래 거래기록 보존",
+    "keywords": [
+      "거래기록",
+      "보존",
+      "계약",
+      "표시 광고"
+    ],
+    "related_article_ids": [
+      "ecommerce:17:1"
+    ]
+  },
+  {
+    "document_id": "ecommerce:17:1",
+    "law_id": "ecommerce",
+    "law_name": "전자상거래 등에서의 소비자보호에 관한 법률",
+    "article_no": "제17조",
+    "article_title": "청약철회등",
+    "paragraph_no": "제1항",
+    "text": "통신판매 계약을 체결한 소비자는 원칙적으로 계약내용에 관한 서면을 받은 날 또는 재화 등의 공급이 시작된 날 등을 기준으로 7일 이내에 청약철회 등을 할 수 있다.",
+    "content_kind": "official_summary",
+    "effective_from": "2026-07-21",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "digital_business"
+    ],
+    "topic": "통신판매 청약철회",
+    "keywords": [
+      "환불",
+      "청약철회",
+      "7일",
+      "통신판매"
+    ],
+    "related_article_ids": [
+      "ecommerce:6:1"
+    ]
+  },
+  {
+    "document_id": "efta:21:1",
+    "law_id": "efta",
+    "law_name": "전자금융거래법",
+    "article_no": "제21조",
+    "article_title": "안전성의 확보의무",
+    "paragraph_no": "제1항",
+    "text": "금융회사와 전자금융업자는 전자금융거래가 안전하게 처리될 수 있도록 선량한 관리자로서 주의를 다하고 전자금융거래의 안전성과 신뢰성을 확보해야 한다.",
+    "content_kind": "official_summary",
+    "effective_from": "2026-12-17",
+    "is_current": false,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/전자금융거래법",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "electronic_finance"
+    ],
+    "topic": "전자금융 안전성 확보",
+    "keywords": [
+      "보안",
+      "안전성",
+      "신뢰성",
+      "주의의무"
+    ],
+    "related_article_ids": [
+      "efta:22:1"
+    ]
+  },
+  {
+    "document_id": "efta:22:1",
+    "law_id": "efta",
+    "law_name": "전자금융거래법",
+    "article_no": "제22조",
+    "article_title": "전자금융거래기록의 생성·보존 및 파기",
+    "paragraph_no": "제1항",
+    "text": "금융회사와 전자금융업자는 전자금융거래 내용을 추적·검색하거나 오류를 검증·정정할 수 있도록 거래기록을 생성하고 법정 기간 동안 보존해야 한다.",
+    "content_kind": "official_summary",
+    "effective_from": "2026-12-17",
+    "is_current": false,
+    "authority": "국가법령정보센터",
+    "source_url": "https://www.law.go.kr/법령/전자금융거래법",
+    "source_checked_at": "2026-07-24",
+    "domain_tags": [
+      "electronic_finance"
+    ],
+    "topic": "전자금융 거래기록 보존",
+    "keywords": [
+      "거래기록",
+      "보존",
+      "추적",
+      "오류 정정"
+    ],
+    "related_article_ids": [
+      "efta:21:1"
+    ]
+  },
+  {
+    "document_id": "civil:750",
+    "law_id": "civil",
+    "law_name": "민법",
+    "article_no": "제750조",
+    "text": "고의 또는 과실로 인한 위법행위로 타인에게 손해를 가한 자는 그 손해를 배상할 책임이 있다.",
+    "content_kind": "official_text",
+    "effective_from": "2023-01-01",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "domain_tags": [
+      "civil_transactions"
+    ],
+    "topic": "불법행위",
+    "keywords": [
+      "손해배상",
+      "고의",
+      "과실",
+      "위법행위"
+    ]
+  },
+  {
+    "document_id": "civil:390",
+    "law_id": "civil",
+    "law_name": "민법",
+    "article_no": "제390조",
+    "text": "채무자가 채무의 내용에 좇은 이행을 하지 아니한 때에는 채권자는 손해배상을 청구할 수 있다.",
+    "content_kind": "official_text",
+    "effective_from": "2023-01-01",
+    "is_current": true,
+    "authority": "국가법령정보센터",
+    "domain_tags": [
+      "civil_transactions"
+    ],
+    "topic": "채무불이행",
+    "keywords": [
+      "채무불이행",
+      "손해배상",
+      "이행"
+    ]
+  }
+]

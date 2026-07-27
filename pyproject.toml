@@ -1,0 +1,10 @@
+[project]
+name = "law-rag-qa-planner"
+version = "4.10.0"
+description = "Domain-extensible Korean law retrieval and grounded QA planner"
+requires-python = ">=3.10"
+dependencies = ["python-dotenv>=1.0,<2.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

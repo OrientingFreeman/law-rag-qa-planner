@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="한국 법령 검색, 근거 기반 답변, 회귀 평가를 한 화면에서 검증하는 Law RAG QA Planner">
+  <title>Law RAG QA Planner</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="/">Law RAG QA Planner <span>v1.3</span></a>
+  <nav><a href="/docs">API 문서</a><a href="/health">상태 확인</a></nav>
+</header>
+<main>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Internal Validation Console</p>
+      <h1>법령 검색과 답변 품질을<br>브라우저에서 검증합니다.</h1>
+      <p class="hero-description">검색 근거, 생성 답변, 인용 검증과 회귀 평가 지표를 한 화면에서 확인합니다.</p>
+    </div>
+    <div class="health-card"><span id="health-dot"></span><strong id="health-text">서버 확인 중</strong><small id="health-meta"></small></div>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="qa-panel">질의 검증</button>
+    <button class="tab" data-tab="evaluation-panel">평가 리포트</button>
+  </div>
+
+  <section id="qa-panel" class="panel active">
+    <form id="query-form" class="query-card">
+      <div class="field-full"><label for="question">법률 질문</label><textarea id="question" rows="4" required placeholder="예: 개인정보 수집 동의 요건은?"></textarea></div>
+      <div class="form-grid">
+        <div><label for="domain">검색 도메인</label><select id="domain"><option value="all">전체 법령</option></select></div>
+        <div><label for="top-k">직접 검색 수</label><select id="top-k"><option value="1">1개</option><option value="3">3개</option><option value="5">5개</option></select></div>
+        <div><label for="mode">실행 모드</label><select id="mode"><option value="answer">답변 + 인용 검증</option><option value="query">검색 + Prompt</option><option value="retrieve">검색만</option></select></div>
+        <div><label for="as-of-date">기준일</label><input id="as-of-date" type="date"></div>
+      </div>
+      <div class="sample-questions">
+        <button type="button" data-question="개인정보 수집 동의 요건은?">개인정보 수집 동의</button>
+        <button type="button" data-question="근로계약서를 작성해야 하는 이유는?">근로계약서</button>
+        <button type="button" data-question="전자금융거래 기록 보존 의무는?">전자금융 기록</button>
+      </div>
+      <button id="submit-button" class="primary-button" type="submit">검증 실행</button>
+    </form>
+
+    <section id="result-section" class="results-section" hidden aria-live="polite">
+      <div class="result-heading"><div><p class="eyebrow">Validation Result</p><h2 id="result-question"></h2></div><span id="evidence-badge" class="evidence-badge"></span></div>
+      <div id="status-message" class="status-message"></div>
+      <article id="answer-card" class="answer-card" hidden><div class="answer-header"><h3>생성 답변</h3><span id="generation-badge"></span></div><pre id="answer-content"></pre><div id="citation-status" class="citation-status"></div></article>
+      <div id="result-list" class="result-list"></div>
+      <details id="prompt-panel" class="prompt-panel" hidden><summary>Grounded Prompt 확인</summary><pre id="prompt-content"></pre></details>
+    </section>
+  </section>
+
+  <section id="evaluation-panel" class="panel">
+    <div class="evaluation-toolbar"><div><p class="eyebrow">Regression Evaluation</p><h2>평가셋 실행 및 실패 사례 확인</h2></div><div class="toolbar-actions"><button id="load-report" class="secondary-button">최근 리포트</button><button id="run-evaluation" class="primary-button compact">전체 평가 실행</button></div></div>
+    <div id="evaluation-empty" class="empty-state">평가를 실행하거나 최근 리포트를 불러오세요.</div>
+    <div id="evaluation-content" hidden>
+      <div id="metric-grid" class="metric-grid"></div>
+      <div class="case-toolbar"><strong>사례별 결과</strong><select id="case-filter"><option value="all">전체</option><option value="failed">실패만</option><option value="passed">통과만</option></select></div>
+      <div id="case-list" class="case-list"></div>
+    </div>
+  </section>
+</main>
+<footer>Law RAG QA Planner · Internal Portfolio Validation Console</footer>
+<script src="/static/app.js" defer></script>
+</body>
+</html>

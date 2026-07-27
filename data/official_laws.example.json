@@ -1,0 +1,29 @@
+{
+  "laws": [
+    {
+      "law_name": "개인정보 보호법",
+      "domain_id": "digital_business",
+      "enabled": true
+    },
+    {
+      "law_name": "개인정보 보호법 시행령",
+      "domain_id": "digital_business",
+      "enabled": true
+    },
+    {
+      "law_name": "전자금융거래법",
+      "domain_id": "electronic_finance",
+      "enabled": true
+    },
+    {
+      "law_name": "근로기준법",
+      "domain_id": "labor",
+      "enabled": true
+    },
+    {
+      "law_name": "민법",
+      "domain_id": "civil_transactions",
+      "enabled": true
+    }
+  ]
+}

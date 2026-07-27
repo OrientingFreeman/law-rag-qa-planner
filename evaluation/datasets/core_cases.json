@@ -1,0 +1,52 @@
+{
+  "name": "core-regression-v1",
+  "cases": [
+    {
+      "case_id": "privacy-consent",
+      "question": "개인정보 수집 동의 요건은?",
+      "domain": "digital_business",
+      "top_k": 1,
+      "expected_document_ids": ["pipa:15:1", "pipa:15:2"],
+      "evaluate_answer": true
+    },
+    {
+      "case_id": "privacy-minimum",
+      "question": "개인정보는 필요한 최소한만 수집해야 하나?",
+      "domain": "digital_business",
+      "top_k": 3,
+      "expected_document_ids": ["pipa:16:1"]
+    },
+    {
+      "case_id": "online-cancellation",
+      "question": "전자상거래에서 소비자의 청약철회 권리는?",
+      "domain": "digital_business",
+      "top_k": 3,
+      "as_of_date": "2026-07-24",
+      "expected_document_ids": ["ecommerce:17:1"]
+    },
+    {
+      "case_id": "future-efta-excluded",
+      "question": "전자금융거래 기록 보존 의무는?",
+      "domain": "electronic_finance",
+      "top_k": 5,
+      "as_of_date": "2026-07-24",
+      "expected_document_ids": [],
+      "expected_abstain": true
+    },
+    {
+      "case_id": "civil-damages",
+      "question": "채무불이행 손해배상 책임은?",
+      "domain": "civil_transactions",
+      "top_k": 3,
+      "expected_document_ids": ["civil:390"]
+    },
+    {
+      "case_id": "out-of-corpus",
+      "question": "항공우주 발사체 등록 절차는?",
+      "domain": "labor",
+      "top_k": 3,
+      "expected_document_ids": [],
+      "expected_abstain": true
+    }
+  ]
+}

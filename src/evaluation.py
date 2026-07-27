@@ -1,3 +1,4 @@
+import _bootstrap  # noqa: F401
 def evaluate_retrieval(query, retrieved_results, expected_article_no):
     retrieved_articles = [
         result["chunk"]["metadata"]["article_no"]

@@ -1,51 +1,21 @@
-from chunking import load_laws, create_chunks
+import _bootstrap  # noqa: F401
+from law_rag.domain.config import DomainRegistry
+from law_rag.retrieval.hybrid import HybridRetriever
+from chunking import create_chunks, load_laws
 
 
-def keyword_score(query, chunk):
-    score = 0
-    metadata = chunk["metadata"]
-
-    for keyword in metadata["keywords"]:
-        if keyword in query:
-            score += 2
-
-    if metadata["law_name"] in query:
-        score += 3
-
-    if metadata["topic"] in query:
-        score += 2
-
-    if metadata["article_no"] in query:
-        score += 3
-
-    return score
-
-
-def retrieve(query, chunks, top_k=3):
-    scored_results = []
-
-    for chunk in chunks:
-        score = keyword_score(query, chunk)
-
-        if score > 0:
-            scored_results.append({
-                "score": score,
-                "chunk": chunk
-            })
-
-    scored_results.sort(key=lambda x: x["score"], reverse=True)
-
-    return scored_results[:top_k]
+def retrieve(query, chunks, top_k=3, domain_id=None):
+    provisions = [chunk["provision"] for chunk in chunks]
+    domain = DomainRegistry("domains").load_all().get(domain_id)
+    return [
+        result.to_legacy_dict()
+        for result in HybridRetriever(provisions).retrieve(query, domain=domain, top_k=top_k)
+    ]
 
 
 if __name__ == "__main__":
-    laws = load_laws("data/sample_laws.json")
-    chunks = create_chunks(laws)
-
-    query = "민법상 불법행위 손해배상 요건은 무엇인가요?"
-    results = retrieve(query, chunks)
-
-    for result in results:
-        print("score:", result["score"])
+    chunks = create_chunks(load_laws("data/sample_laws.json"))
+    for result in retrieve("민법상 불법행위 손해배상 요건은 무엇인가요?", chunks):
+        print("score:", round(result["score"], 4))
         print(result["chunk"]["text"])
         print("-" * 50)

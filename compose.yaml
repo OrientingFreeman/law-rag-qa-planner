@@ -1,0 +1,33 @@
+services:
+  law-rag-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: law-rag-qa-planner:1.1.0
+    ports:
+      - "${LAW_RAG_PORT:-8000}:8000"
+    environment:
+      LAW_RAG_HOST: 0.0.0.0
+      LAW_RAG_PORT: 8000
+      LAW_RAG_RELOAD: "false"
+      LAW_RAG_LLM_PROVIDER: ${LAW_RAG_LLM_PROVIDER:-deterministic}
+      LAW_RAG_LLM_API_KEY: ${LAW_RAG_LLM_API_KEY:-}
+      LAW_RAG_LLM_MODEL: ${LAW_RAG_LLM_MODEL:-gpt-4.1-mini}
+      LAW_RAG_LLM_BASE_URL: ${LAW_RAG_LLM_BASE_URL:-https://api.openai.com/v1}
+      LAW_RAG_DATA_PATH: data/legal_corpus.json
+      LAW_RAG_DOMAINS_PATH: domains
+      LAW_RAG_EVALUATION_DATASET: evaluation/datasets/core_cases.json
+      LAW_RAG_EVALUATION_REPORT: evaluation/reports/latest.json
+      LAW_RAG_PROMPT_DIR: prompts
+      LAW_RAG_PROMPT_VERSION: ${LAW_RAG_PROMPT_VERSION:-answer_v1}
+      LAW_RAG_LOG_DIR: logs
+    volumes:
+      - ./logs:/app/logs
+      - ./evaluation/reports:/app/evaluation/reports
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
