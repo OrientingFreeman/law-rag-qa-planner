@@ -1,881 +1,439 @@
-# 법령 문서 기반 RAG QA 시스템 데이터 기획 및 미니 구현
+# 법령 문서 기반 RAG QA 시스템
 
-# Law RAG QA Planner
+> 법령 구조를 반영한 검색, 근거 기반 답변 생성, 인용 검증, 법적 추론 구조화와 회귀 평가를 하나의 파이프라인으로 구현한 한국어 법령 AI 프로젝트입니다.
 
-> v4.0.0 adds a Legal Logic Engine: Evidence/Reasoning → Legal Logic Tree → Logic Validation → Answer Skeleton → Sentence Planner.
+현재 서비스 버전: **v4.11.4**
 
-Current service version: **v3.5.0** — Reasoning Tree → Answer Planner → deterministic answer serialization.
+## 1. 프로젝트 소개
 
-법령 문서 기반 RAG QA 시스템을 설계하고,
-retrieval 성능과 failure case를 분석한 프로젝트입니다.
+이 프로젝트는 한국 법령 문서를 대상으로 질문에 관련된 조문을 검색하고, 검색된 근거 범위 안에서 답변을 생성하는 법령 RAG(Retrieval-Augmented Generation) 시스템입니다.
 
-## What I Did
+법령 QA에서는 일반 문서 검색과 달리 다음 요소가 중요합니다.
 
-- 법령 QA에서 발생하는 hallucination 문제를 정의
-- 법령 구조를 반영한 metadata schema 설계
-- 조문 단위 chunking 전략 설계 및 구현
-- keyword 기반 retrieval 시스템 구현
-- retrieval accuracy 평가 로직 설계 (Hit@K, Top-1)
-- failure case를 직접 설계하고 원인 분석
-- RAG 시스템 개선 방향 제시 (semantic search, reranking)
+- 정확한 법령명과 조문 식별
+- 조·항·호 단위의 구조 보존
+- 개정일과 시행일을 고려한 기준일 검색
+- 근거가 부족할 때 답변을 유보하는 기능
+- 생성 답변의 인용과 실제 검색 근거 일치 여부 검증
+- 검색 및 생성 품질을 반복적으로 확인하는 회귀 평가
 
-본 프로젝트는 단순 구현이 아니라  
-**법령 도메인 특성을 반영한 RAG 시스템 설계 및 검증 경험**을 보여주기 위해 수행하였다.
+이 프로젝트는 단순한 챗봇 구현보다 **검증 가능하고 추적 가능한 법령 AI 시스템 설계**에 초점을 둡니다.
 
-## 1. 프로젝트 개요
+## 2. 채용 포트폴리오 관점의 핵심 역량
 
-본 프로젝트는 법령 문서를 기반으로 한 RAG(Retrieval-Augmented Generation) QA 시스템의 데이터 구조, 검색 전략, 프롬프트 설계, 평가 지표를 설계하고 간단히 구현한 미니 프로젝트입니다.
+이 프로젝트는 두 종류의 직무 역량을 동시에 보여줍니다.
 
-법령 영역에서는 LLM이 단독으로 답변할 경우 환각, 출처 불명확, 최신 개정 반영 오류가 발생할 수 있습니다. 따라서 법령 데이터를 조문 단위로 구조화하고, metadata 기반 필터링과 검색 전략을 결합하여 근거 기반 답변을 생성하는 구조가 필요합니다.
+### 법률 실무 및 고객 업무
 
-## 2. 문제 정의
+- 비정형 법률 질문을 법적 행위, 주체, 요건과 예외로 구조화
+- 관련 조문과 공식 출처를 함께 제시해 확인 시간을 단축
+- 근거가 부족한 경우 답변을 유보하도록 설계
+- 반복적인 법률 확인 업무를 표준화할 수 있는 업무 흐름 제안
 
-법령 QA 시스템에서 중요한 문제는 다음과 같습니다.
+### LLM 및 데이터 품질 업무
 
-- 정확한 조문 검색
-- 개정일 및 시행일 반영
-- 근거 없는 답변 생성 방지
-- 출처와 조문 번호 명시
-- 검색 실패 및 환각 케이스 관리
+- 조·항·호 단위의 법령 데이터 모델과 메타데이터 설계
+- 키워드·의미 검색을 결합한 하이브리드 Retrieval 구현
+- 문장별 Grounding과 Citation Validation 수행
+- 회귀 평가와 실패 사례를 이용한 품질 관리 체계 구축
 
-## 3. 데이터 구조 설계
+공개 데모는 특정 기업의 내부 문서나 비공개 데이터를 사용하지 않으며, 공개 법령 데이터만을 사용한 비공식 채용 포트폴리오입니다.
 
-각 법령 데이터는 다음과 같은 metadata를 포함합니다.
+## 3. 주요 기능
 
-- document_type
-- law_name
-- article_no
-- clause_no
-- item_no
-- effective_date
-- revision_date
-- authority
-- reliability
-- topic
-- keywords
-- content
+### 2.1 법령 구조 기반 데이터 모델
 
-## 4. Chunking 전략
+법령 데이터를 단순한 길이 기준으로 분할하지 않고 조문 구조에 맞춰 정규화합니다.
 
-일반 문서처럼 길이 기준으로 chunking하지 않고, 법령의 의미 구조에 맞춰 조문 단위 chunking을 사용합니다.
+주요 메타데이터는 다음과 같습니다.
 
-기본 단위는 조문(article)이며, 필요한 경우 항(clause), 호(item) 단위로 세분화할 수 있습니다.
+- 문서 유형
+- 법령명과 법령 식별자
+- 조·항·호 번호
+- 시행일과 개정일
+- 소관 기관
+- 주제와 핵심어
+- 원문 및 공식 출처 주소
+- 법령 버전 식별자
 
-## 5. Retrieval 전략
+### 2.2 하이브리드 검색
 
-본 미니 구현에서는 간단한 keyword 기반 검색을 사용했지만, 실제 서비스에서는 다음 구조로 확장할 수 있습니다.
+키워드 검색과 의미 기반 검색을 결합해 검색 결과를 산출합니다.
 
-1. 사용자 질문 분석
-2. 법령명, 주제, 조문번호 기반 metadata filtering
-3. semantic vector search
-4. keyword search
-5. reranking
-6. 근거 문서 선택
-7. LLM 답변 생성
+- BM25 기반 키워드 검색
+- 문자 단위 유사도 및 의미 검색
+- 법령 도메인 필터
+- 기준일에 따른 시행 법령 필터
+- 직접 근거와 관련 근거 구분
+- 관련 조문 확장과 그래프 기반 재정렬
 
-## 6. Prompt 설계
+### 2.3 법적 질의 의도 분석
 
-LLM 답변 생성 단계에서는 다음 원칙을 적용합니다.
+사용자 질문에서 다음 요소를 구조화합니다.
 
-- 제공된 근거 문서만 사용
-- 근거에 없는 내용은 추측 금지
-- 법령명과 조문 번호 명시
-- 근거 부족 시 fallback 응답
+- 법적 행위
+- 주체와 대상
+- 요구되는 답변 유형
+- 조건과 예외
+- 복합 질문 여부
+- 검색용 하위 질의
+- 법률 온톨로지 연결 정보
 
-## 7. Evaluation 설계
+### 2.4 근거 기반 답변 생성
 
-단순 정답률이 아니라 다음 지표를 함께 평가해야 합니다.
+검색된 법령 근거만 사용하도록 생성 프롬프트를 구성합니다.
 
-- retrieval accuracy
-- answer grounding
-- hallucination rate
-- source completeness
-- freshness
+- 근거에 없는 내용 추측 금지
+- 법령명과 조문 번호 표시
+- 결론, 핵심 요건, 법적 근거, 주의사항 구분
+- 근거 부족 시 답변 유보
+- 규칙 우선순위와 충돌 해결 결과 반영
+- 실무상 추가 확인이 필요한 사실 제시
 
-### Why Top-1 Accuracy?
+### 2.5 인용 및 문장 근거 검증
 
-본 프로젝트에서는 retrieval 성능 평가 시 Hit@K뿐 아니라 Top-1 Accuracy를 함께 고려하였다.
+생성 답변이 검색되지 않은 조문을 인용하는지 검사하고, 답변 문장별 근거 연결 상태를 검증합니다.
 
-법령 QA의 특성상 단순히 정답 조문이 검색 결과에 "포함"되는 것만으로는 충분하지 않다.
+- 인용 조문과 검색 조문 비교
+- 미지원 인용 탐지
+- 문장별 근거 연결
+- 근거 범위와 역할 기록
+- 다중 근거 사용 여부 확인
+- 근거 추적 가능성 계산
 
-- 실제 QA 시스템은 하나의 조문을 근거로 답변을 생성함
-- 따라서 Top-K에 포함되더라도 Top-1이 잘못되면 잘못된 답변으로 이어질 가능성이 높음
+### 2.6 법적 추론 구조
 
-예를 들어:
+법률 답변이 만들어지는 과정을 구조화된 데이터로 보존합니다.
 
-Query: "손해배상 청구 규정은?"
+- 증거 그래프
+- 법적 추론 경로
+- 법률 논증 그래프
+- 법률 논리 트리
+- 규칙 우선순위
+- 반대 논거와 충돌 해결
+- 답변 골격
+- 문장 계획과 인용 연결표
 
-- Top-K 결과: [제750조, 제390조] → Hit@K 기준 성공
-- Top-1 결과: 제750조 → 실제로는 제390조가 더 적절
+### 2.7 평가와 회귀 테스트
 
-이 경우 Hit@K는 높게 나오지만, 실제 서비스 품질은 낮다.
+검색 결과에 정답 조문이 포함되는지만 보는 것이 아니라, 실제 답변 품질에 영향을 주는 지표를 함께 측정합니다.
 
-따라서 본 프로젝트에서는 **실제 QA 품질을 반영하기 위해 Top-1 Accuracy를 주요 지표로 사용하였다.**
+- Top-1 정확도
+- Hit@K
+- Recall@K
+- 평균 역순위(MRR)
+- 답변 유보 정확도
+- 시행일 정확도
+- 인용 정확도
+- 평균 처리 지연 시간
+- 평가 사례별 통과·실패 기록
 
-## 8. 실행 방법
+## 4. Top-1 정확도를 중요하게 보는 이유
 
-```bash
-python src/chunking.py
-python src/retriever.py
-python src/prompt_builder.py
-python src/evaluation.py
+법령 QA에서는 정답 조문이 검색 결과 여러 개 중 하나로 포함되는 것만으로 충분하지 않습니다. 실제 답변 생성에서는 상위 조문이 핵심 근거로 사용될 가능성이 높기 때문입니다.
+
+예를 들어 “손해배상 청구 규정은?”이라는 질문에 민법 제750조와 제390조가 모두 검색되더라도, 질문의 맥락이 채무불이행 손해배상이라면 제390조가 가장 먼저 선택되어야 합니다.
+
+따라서 이 프로젝트는 Hit@K뿐 아니라 **Top-1 정확도와 검색 순위 품질**을 핵심 지표로 관리합니다.
+
+## 5. 전체 처리 흐름
+
+```text
+사용자 질문
+  ↓
+법적 질의 의도 분석
+  ↓
+도메인·시행일 필터
+  ↓
+키워드 검색 + 의미 검색
+  ↓
+근거 그래프와 관련 조문 확장
+  ↓
+법적 추론 경로 및 논리 구조 생성
+  ↓
+근거 기반 답변 생성
+  ↓
+인용 검증 및 문장 근거 검증
+  ↓
+사용자 답변 + 전문가용 검증 정보 반환
 ```
 
-## 9. Evaluation 결과
-
-샘플 데이터 기반 테스트 결과:
-
-- Top-1 Accuracy: 1.00 (3/3)
-![architecture](./images/accuracy_test1.png)
-※ 단, 본 결과는 제한된 샘플 데이터 기준이며, 실제 서비스에서는 더 다양한 질의와 대규모 데이터셋 기반 평가가 필요할 것으로 보임.
-
-
-## 10. Failure Case Analysis
-
-본 프로젝트에서는 단순히 정답을 맞추는 것이 아니라, retrieval 단계에서 발생할 수 있는 failure case를 재현하고 그 원인과 개선 방향을 분석하였다.
-
----
-
-### Failure Case 1: 법령명 누락 (Missing Law Name)
-
-**Query**
-
-손해배상 책임 요건은 무엇인가?
-
-I. 실험결과
-
-해당 질의에 대한 retrieval 결과:
-
--Top results: 제750조, 제390조
--Hit@K 기준에서는 정답 포함 (Hit)
--그러나 복수의 후보 조문이 함께 검색됨
-![architecture](./images/accuracy_test2.png)
-
-II. 문제 원인
-
-질의에 법령명(민법)이 명시되지 않음
-"손해배상" 키워드는 불법행위(제750조)와 채무불이행(제390조) 모두에서 사용됨
-keyword 기반 retrieval만으로는 법적 맥락(disambiguation)을 구분하기 어려움
-
-III. 의미
-
-Hit@K 기준에서는 성능이 높게 측정될 수 있으나,
-실제 서비스에서는 Top-1 정확도 저하 및 잘못된 조문 선택 가능성 존재
-
-IV. 개선방향
-
-query intent 분석을 통한 법령명 및 주제 추론
-semantic search 도입 (embedding 기반 의미 유사도 활용)
-query expansion 적용
-(예: "손해배상" → "불법행위 손해배상")
-reranking 단계에서 법적 맥락 반영
-
-### Failure Case 2: 유사 키워드 충돌
-
-Query:
-손해배상 청구 규정은?
-
-Expected:
-민법 제390조
-
-![architecture](./images/accuracy_test3.png)
-
-I. 실험 결과
-
-keyword 기반 retrieval에서는 "손해배상" 키워드가 포함된 민법 제750조가 Top-1으로 선택되었다.
-
-II. 문제 원인
-
-민법 제750조와 제390조는 모두 "손해배상"과 관련되지만,
-제750조는 불법행위 책임, 제390조는 채무불이행 책임에 관한 조문이다.
-단순 keyword matching은 "청구"라는 법적 맥락을 충분히 반영하지 못한다.
-
-III. 의미
-
-Hit@K 기준에서는 정답 조문이 포함될 수 있지만,
-Top-1 기준에서는 잘못된 조문이 선택될 수 있다.
-
-
-## 11. 간단실행 결과
-![architecture](./images/demo_output1.png)
-
-
-## 12. Retrieval Evaluation (Sample)
-
-본 프로젝트에서는 retrieval accuracy를 평가하기 위해 테스트 쿼리셋을 구성하고,
-expected article 기준으로 hit 여부를 측정하는 구조를 설계했습니다.
-
-### Sample Test Cases
-
-| Query | Expected Article | Hit 여부 |
-|------|----------------|----------|
-| 민법상 불법행위 손해배상 요건은? | 제750조 | Hit |
-| 채무불이행 손해배상 규정은? | 제390조 | Hit |
-| 개인정보 수집 요건은? | 제15조 | Hit |
-| 손해배상 청구 규정은? | 제390조 | Top-1 Fail / Hit@K |
-
-
-※ 본 결과는 샘플 데이터 기반 테스트이며,
-실제 서비스에서는 더 큰 데이터셋과 다양한 질의에 대한 평가가 필요합니다.
-
-## What I Learned
-
-본 프로젝트를 통해 단순히 RAG를 구현하는 것보다,
-retrieval failure를 분석하고 이를 개선하는 구조를 설계하는 것이
-실제 서비스 품질에 더 중요하다는 것을 확인했다.
-
-특히 법령 QA에서는
-- 단순 keyword matching의 한계
-- Top-1 정확도의 중요성
-- failure case 기반 개선 필요성
-
-을 실험적으로 검증하였다.
-
----
-
-# v0.2 — 도메인 확장형 법령 RAG 코어
-
-기존 미니 구현을 유지하면서, 신규 법률 도메인을 코드 재개발 없이 온보딩할 수 있도록 구조를 확장했다.
-
-## 이번 패치의 핵심
-
-- `LegalProvision` 공통 스키마 도입
-- 기존 JSON 형식과 신규 정규화 형식 모두 지원
-- BM25 + 문자 n-gram 유사도 기반 Hybrid Retrieval
-- 도메인별 법령 목록·동의어·검색 가중치 설정 분리
-- 기준일(`as_of_date`)에 따른 시행 법령 필터 기반 마련
-- 근거 없는 답변을 막기 위한 abstention 구조
-- 생성 답변의 미검색 조문 인용을 탐지하는 citation validator
-- 도메인 독립적인 검색 서비스와 CLI
-- 노동법 도메인 팩을 통해 향후 확장 방식 예시 제공
-
-## 구조
+## 6. 프로젝트 구조
 
 ```text
 law_rag/
-├── domain/       # 공통 법령 스키마와 도메인 설정
-├── ingestion/    # 데이터 소스 adapter 및 정규화
-├── retrieval/    # BM25, semantic-lite, hybrid retrieval
-├── generation/   # grounded prompt 및 citation validation
-└── evaluation/   # Top-1, Hit@K, MRR 평가
+├── api/                 # FastAPI 서버, 요청·응답 스키마, 웹 데모
+├── domain/              # 공통 법령 스키마와 도메인 설정
+├── ingestion/           # 공식 법령 데이터 수집·정규화
+├── retrieval/           # 키워드·의미·하이브리드 검색
+├── generation/          # 프롬프트, 답변 생성, 인용 검증
+├── evaluation/          # 평가 데이터셋, 실행기, 리포트
+├── ontology/            # 법률 개념 및 관계 구조
+└── reasoning/           # 증거 그래프와 법적 추론 구성
 
-domains/
-├── civil_transactions/
-├── digital_business/
-├── electronic_finance/
-└── labor/
+data/                    # 법령 말뭉치 및 예시 데이터
+domains/                 # 도메인별 법령·동의어·가중치 설정
+evaluation/              # 평가셋과 평가 결과
+prompts/                 # 답변 생성 프롬프트 버전
+tests/                   # 단위·통합·회귀 테스트
 ```
 
-## 실행
+## 7. 설치 방법
 
-기존 명령은 그대로 사용할 수 있다.
+### 6.1 가상환경 생성
 
 ```bash
-python src/chunking.py
-python src/retriever.py
-python src/evaluation.py
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-신규 CLI:
+### 6.2 의존성 설치
 
 ```bash
-python -m law_rag "개인정보 수집 동의 요건은?" --domain digital_business
-python -m law_rag "손해배상 청구 규정은?" --domain civil_transactions --top-k 3
+pip install -r requirements.txt
 ```
 
-등록된 법령 데이터가 없는 도메인은 다른 분야의 조문을 억지로 반환하지 않고 빈 결과와 `abstain=true`를 반환한다.
-
-## 신규 도메인 추가 방법
-
-1. `domains/<domain_id>/domain.json` 생성
-2. 법령명, 동의어, 검색 가중치 등록
-3. 해당 법령을 공통 `LegalProvision` 스키마로 적재
-4. 도메인별 benchmark 작성
-5. 동일 retrieval/service 코드를 그대로 사용
-
-전자금융·노동·조세·의료·지식재산 등으로 확장할 때 검색 엔진 코드를 수정하지 않고 데이터와 설정, 평가셋만 추가하는 것을 목표로 한다.
-
-> 현재 포함된 법령 데이터는 구조 검증용 소규모 샘플이며 실제 법률자문이나 현행 법령 확인 용도가 아니다.
-
-
-## v0.3 evidence expansion
-
-기본 데이터는 `data/legal_corpus.json`입니다. 직접 검색된 조문의 `related_article_ids`를 따라 고지사항, 최소수집 원칙, 동의 방식 등 보조 근거를 함께 반환합니다. 현재 추가된 신규 규제 조문은 국가법령정보센터를 확인한 **공식 조문 요약(`content_kind=official_summary`)**이며, 원문 그대로가 필요한 운영 환경에서는 공식 API/원문 적재기로 교체해야 합니다.
-
-## 공식 법령 XML 수집 (v0.4)
-
-로컬 XML로 먼저 파서를 검증할 수 있습니다.
+### 6.3 환경변수 설정
 
 ```bash
-python3 -m law_rag.ingestion \
-  --xml tests/fixtures/sample_law.xml \
-  --domain digital_business \
-  --output data/imported_corpus.json
+cp .env.example .env
 ```
 
-실제 API 응답을 수집할 때는 계정·엔드포인트를 코드에 저장하지 않습니다.
+`.env`에는 API 키와 배포 환경 설정이 들어갈 수 있으므로 Git 저장소에 커밋하지 마십시오.
+
+## 8. 실행 방법
+
+### 7.1 API와 웹 데모 실행
 
 ```bash
-export LAW_API_BASE_URL='공식 API 엔드포인트'
-export LAW_API_OC='발급받은 호출자 식별값'
-python3 -m law_rag.ingestion \
-  --law-id '법령ID' \
-  --domain digital_business \
-  --output data/legal_corpus.json
-```
-
-수집기는 임시 파일에 먼저 기록한 후 교체하므로 실패한 요청이 기존 코퍼스를 훼손하지 않습니다. 원문은 `content_kind=official_text`, 법령 일련번호는 `version_id`, 시행일은 `effective_from`으로 저장됩니다.
-
----
-
-# v0.5 — 국가법령정보 공동활용 API 실제 규격 연결
-
-v0.4의 범용 XML 수집기 골격을 법제처 국가법령정보 공동활용 API의 실제 요청 규격에 맞게 구체화했다.
-
-## 핵심 변경사항
-
-- 법령 목록 검색과 본문 조회를 별도 endpoint로 분리
-  - 목록 검색: `lawSearch.do?target=law`
-  - 시행일 기준 본문: `lawService.do?target=eflaw`
-- 정확한 법령명으로 법령 ID를 자동 확인하는 `--law-name` 추가
-- 법령 ID를 알고 있을 때 바로 수집하는 `--law-id` 유지
-- API 인증값 `OC`가 `source_url`이나 오류 메시지에 저장되지 않도록 제거
-- 유사한 법령명만 검색되면 자동 선택하지 않고 중단
-- 조문 가지번호를 `제15조의2` 형식으로 정규화
-- 법령 구조를 조·항·호·목 단위까지 파싱
-- 조문별 시행일자가 있으면 법령 전체 시행일자보다 우선 적용
-- 병합 전에 결과만 확인하는 `--preview` 모드 추가
-- HTTP 오류, 연결 오류, 비 XML 응답 및 API 오류 응답을 명시적으로 처리
-
-## API 인증정보 설정
-
-국가법령정보 공동활용 서비스에서 발급받은 API 인증값을 환경변수로 설정한다.
-
-```bash
-export LAW_API_OC='발급받은_API_인증값'
-```
-
-기본 endpoint는 코드에 이미 설정되어 있으므로 일반적인 경우 별도 URL 설정은 필요하지 않다.
-
-```text
-https://www.law.go.kr/DRF/lawSearch.do
-https://www.law.go.kr/DRF/lawService.do
-```
-
-## 개인정보 보호법 원문 미리보기
-
-기존 코퍼스를 변경하기 전에 별도 파일로 확인한다.
-
-```bash
-python3 -m law_rag.ingestion \
-  --law-name '개인정보 보호법' \
-  --domain digital_business \
-  --preview data/pipa_preview.json
-```
-
-출력 파일과 조문 수를 검토한 후 실제 코퍼스에 병합한다.
-
-```bash
-python3 -m law_rag.ingestion \
-  --law-name '개인정보 보호법' \
-  --domain digital_business \
-  --output data/legal_corpus.json
-```
-
-법령 ID를 이미 알고 있는 경우:
-
-```bash
-python3 -m law_rag.ingestion \
-  --law-id '011357' \
-  --domain digital_business \
-  --output data/legal_corpus.json
-```
-
-## 로컬 XML 회귀 테스트
-
-```bash
-python3 -m law_rag.ingestion \
-  --xml tests/fixtures/official_law_body.xml \
-  --domain digital_business \
-  --preview data/local_preview.json
-```
-
-## 검증
-
-```bash
-pytest -q
-```
-
-v0.5 기준 자동 테스트는 다음 범위를 포함한다.
-
-- 기존 JSON 호환성
-- 도메인 필터 및 하이브리드 검색
-- 관련 조문 확장과 재점수화
-- 시행일 기준 미래 조문 제외
-- XML 조·항·호·목 파싱
-- 법령명 정확 일치 확인
-- 목록 검색 후 본문 조회
-- 인증값 비노출
-
-## FastAPI 실행 (v0.6)
-
-CLI와 HTTP API는 동일한 `LawRagService`를 사용합니다.
-
-```bash
-python3 -m pip install -r requirements.txt
 python3 -m law_rag.api
 ```
 
-기본 주소는 `http://127.0.0.1:8000`입니다.
+또는 다음과 같이 Uvicorn을 직접 실행할 수 있습니다.
 
-- Swagger UI: `/docs`
-- OpenAPI JSON: `/openapi.json`
-- 상태 확인: `GET /health`
-- 도메인 목록: `GET /domains`
-- 적재 법령 목록: `GET /laws?domain=digital_business`
-- 검색 전용: `POST /retrieve`
-- 검색 + 생성 프롬프트: `POST /query`
+```bash
+uvicorn law_rag.api.app:app --host 0.0.0.0 --port 8000
+```
 
-질의 예시:
+실행 후 접속 주소:
+
+- 웹 데모: `http://127.0.0.1:8000/`
+- API 문서: `http://127.0.0.1:8000/docs`
+- 상태 확인: `http://127.0.0.1:8000/health`
+
+### 7.2 명령행 질의
+
+```bash
+python3 -m law_rag.cli \
+  --question "개인정보 수집 동의 요건은 무엇인가요?" \
+  --domain digital_business \
+  --top-k 3
+```
+
+## 9. 웹 데모
+
+웹 화면에서는 다음 기능을 확인할 수 있습니다.
+
+- 법률 질문 입력
+- 도메인 및 기준일 선택
+- 답변·검색·프롬프트 결과 유형 선택
+- 생성 답변과 근거 상태 확인
+- 인용 검증 결과 확인
+- 관련 법령, 검색 점수, 시행일, 공식 출처 확인
+- 저장된 회귀 평가 리포트 확인
+
+공개 배포 시에는 평가 실행을 차단하고 저장된 평가 결과만 보여줄 수 있습니다.
+
+## 9. 공개 포트폴리오 데모 설정
+
+공개 서버에서는 다음 환경변수 사용을 권장합니다.
+
+```bash
+LAW_RAG_PUBLIC_DEMO=true
+LAW_RAG_ENABLE_EVALUATION_RUN=false
+LAW_RAG_DEMO_MAX_REQUESTS=20
+LAW_RAG_DEMO_WINDOW_SECONDS=3600
+```
+
+각 설정의 의미는 다음과 같습니다.
+
+- `LAW_RAG_PUBLIC_DEMO`: 공개 데모 보호 기능 활성화
+- `LAW_RAG_ENABLE_EVALUATION_RUN`: 브라우저에서 전체 평가 실행 허용 여부
+- `LAW_RAG_DEMO_MAX_REQUESTS`: 제한 시간 동안 접속자별 최대 질의 횟수
+- `LAW_RAG_DEMO_WINDOW_SECONDS`: 요청 횟수를 계산하는 시간 범위
+
+현재 요청 제한은 단일 프로세스 메모리 기준입니다. 여러 서버 프로세스나 여러 인스턴스를 운영할 경우 Redis 등 외부 저장소 기반 제한기로 교체하는 것이 적절합니다.
+
+## 10. API 사용 예시
+
+### 10.1 근거 기반 답변
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/answer' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "question": "개인정보 수집 동의 요건은 무엇인가요?",
+    "domain": "digital_business",
+    "top_k": 3
+  }'
+```
+
+### 10.2 검색 결과만 조회
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/retrieve' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "question": "전자금융거래 기록 보존 의무는 무엇인가요?",
+    "domain": "digital_business",
+    "top_k": 5
+  }'
+```
+
+### 10.3 기준일 검색
 
 ```bash
 curl -X POST 'http://127.0.0.1:8000/query' \
   -H 'Content-Type: application/json' \
   -d '{
-    "question": "개인정보 수집 동의 요건은?",
+    "question": "개인정보 처리위탁 시 필요한 조치는 무엇인가요?",
     "domain": "digital_business",
-    "top_k": 1,
-    "as_of_date": "2026-07-24"
+    "top_k": 3,
+    "as_of_date": "2026-07-30"
   }'
 ```
 
-환경변수로 실행 설정을 변경할 수 있습니다.
+## 11. 평가 실행
+
+### 11.1 테스트 전체 실행
 
 ```bash
-export LAW_RAG_DATA_PATH='data/legal_corpus.json'
-export LAW_RAG_DOMAINS_PATH='domains'
-export LAW_RAG_HOST='0.0.0.0'
-export LAW_RAG_PORT='8000'
-python3 -m law_rag.api
+pytest
 ```
 
-## v0.7 Answer Generation
-
-v0.7 adds an LLM provider abstraction and a grounded answer endpoint. Retrieval,
-prompt construction, generation, and citation validation remain separate layers.
-
-### Offline validation
-
-No API key is required for the deterministic local provider:
+### 11.2 평가 리포트 조회
 
 ```bash
-export LAW_RAG_LLM_PROVIDER=deterministic
-python3 -m law_rag.api
+curl 'http://127.0.0.1:8000/evaluation/latest'
 ```
 
-Then call:
+### 11.3 전체 평가 실행
+
+공개 데모가 아닌 개발 환경에서만 사용하십시오.
 
 ```bash
-curl -X POST 'http://127.0.0.1:8000/answer' \
+curl -X POST 'http://127.0.0.1:8000/evaluation/run' \
   -H 'Content-Type: application/json' \
-  -d '{
-    "question": "개인정보 수집 동의 요건은?",
-    "domain": "digital_business",
-    "top_k": 1
-  }'
+  -d '{}'
 ```
 
-The response includes `answer`, `generation_status`, provider/model metadata, and
-`citation_validation`. The deterministic provider exists only for pipeline and UI
-validation; it is not a substitute for a production language model.
+## 12. 대표 실패 사례
 
-### Provider configuration
+### 12.1 법령명이 생략된 질문
 
-Generation is disabled by default. Configure an OpenAI-compatible endpoint with:
+질문에 법령명이나 법적 관계가 명확히 포함되지 않으면 동일한 표현을 사용하는 여러 조문이 검색될 수 있습니다.
 
-```bash
-export LAW_RAG_LLM_PROVIDER=openai_compatible
-export LAW_RAG_LLM_API_KEY='...'
-export LAW_RAG_LLM_MODEL='gpt-4.1-mini'
-export LAW_RAG_LLM_BASE_URL='https://api.openai.com/v1'
-```
-
-Provider failures do not destroy retrieval output. `/answer` returns a safe
-`generation_status: failed` response while preserving the evidence results.
-
-## v0.8 회귀 평가
-
-기본 평가셋으로 검색 정확도, MRR, recall@k, abstention, 시행일 필터, 생성 답변의 인용 정확도를 한 번에 측정합니다.
-
-```bash
-export LAW_RAG_LLM_PROVIDER=deterministic
-python3 -m law_rag.evaluation \
-  --dataset evaluation/datasets/core_cases.json \
-  --output evaluation/reports/latest.json
-```
-
-CI에서 최소 합격률을 강제하려면 다음 옵션을 사용합니다.
-
-```bash
-python3 -m law_rag.evaluation --fail-under 0.8
-```
-
-## v0.9 내부 검증용 Web UI
-
-로컬 검증 provider를 사용해 서버를 실행합니다.
-
-```bash
-export LAW_RAG_LLM_PROVIDER=deterministic
-python3 -m law_rag.api
-```
-
-브라우저에서 `http://127.0.0.1:8000/`을 열면 다음 기능을 사용할 수 있습니다.
-
-- 검색만, Grounded Prompt 포함 검색, 답변 및 인용 검증 모드
-- 도메인·검색 수·기준일 지정
-- 검색 점수와 직접/관련 근거 비교
-- 생성 상태와 인용 검증 결과 확인
-- 기본 평가셋 실행 및 최근 리포트 조회
-- 통과율, Top-1, Hit@K, Recall@K, MRR, abstention, 시행일, 인용 정확도 표시
-- 실패 사례 필터링 및 예상/실제 문서 ID 비교
-
-평가 API:
+예시:
 
 ```text
-GET  /evaluation/latest
-POST /evaluation/run
+손해배상 책임 요건은 무엇인가요?
 ```
 
-## v1.0 운영 메타데이터
+이 질문은 불법행위 책임과 채무불이행 책임을 모두 가리킬 수 있습니다. 따라서 질의 의도 분석, 의미 검색, 추가 확인 질문 또는 답변 유보가 필요합니다.
 
-`POST /answer`는 기존 응답과 호환되면서 다음 필드를 추가로 반환합니다.
+### 12.2 유사 핵심어 충돌
 
-- `confidence`: 근거 점수, 수준, 산정 사유
-- `metadata`: 서비스·코퍼스 버전, 생성 시각, 처리 시간
-- `prompt_version`: 사용한 프롬프트 버전
-- `results[].matched_signals`: lexical·semantic·relation 신호
+민법 제390조와 제750조처럼 동일한 “손해배상” 표현을 포함하는 조문은 단순 핵심어 검색만으로 구분하기 어렵습니다.
 
-프롬프트는 `prompts/system.md`, `prompts/answer_v1.md`에서 관리합니다.
-답변 요청 로그는 기본적으로 `logs/YYYYMMDD.jsonl`에 기록됩니다.
+이를 개선하기 위해 다음 요소를 사용합니다.
 
-## v1.1 Docker 실행
+- 법적 행위와 관계 분석
+- 질의 확장
+- 의미 유사도
+- 도메인 및 온톨로지 제약
+- 재정렬
+- 근거 부족 판정
 
-빌드 및 실행:
+### 12.3 검색 결과에 없는 조문 인용
 
-```bash
-cp .env.example .env
-docker compose up --build -d
-```
+생성 모델이 학습 데이터에 기반해 검색되지 않은 조문을 추가할 수 있습니다. 이 프로젝트는 생성 답변의 인용 조문과 검색 결과의 조문을 비교해 미지원 인용을 탐지합니다.
 
-상태 확인:
+## 13. 설계 원칙
 
-```bash
-docker compose ps
-curl http://127.0.0.1:8000/health
-```
+### 근거 우선
 
-로그 확인과 종료:
+답변의 자연스러움보다 법령 근거의 존재와 적합성을 우선합니다.
 
-```bash
-docker compose logs -f law-rag-api
-docker compose down
-```
+### 답변 유보
 
-기본 Compose 설정은 로컬 파이프라인 검증을 위해 `deterministic` provider를 사용합니다.
-실제 OpenAI 호환 provider를 사용할 때는 `.env`에 API 키와 provider 설정을 지정하고,
-`.env` 파일은 저장소에 커밋하지 않습니다.
+근거가 부족하거나 질문이 지나치게 모호하면 억지로 답하지 않고 근거 부족 상태를 반환합니다.
 
-컨테이너는 비루트 `app` 사용자로 실행되며 `/health` 기반 Docker healthcheck를 포함합니다.
-운영 로그와 평가 리포트는 각각 호스트의 `logs/`, `evaluation/reports/`에 보존됩니다.
+### 추적 가능성
 
-## v1.1 GitHub Actions
+답변, 인용, 검색 결과, 법적 추론 경로와 검증 결과를 구조화된 형태로 남깁니다.
 
-`.github/workflows/ci.yml`은 다음 품질 게이트를 수행합니다.
+### 평가 가능성
 
-1. Python 3.10 및 3.12 테스트
-2. 기본 평가셋 회귀 평가(`--fail-under 0.8`)
-3. Docker 이미지 빌드
-4. 컨테이너 `/health` 확인
-5. `/answer` smoke test
+정량 지표와 실패 사례를 저장해 기능 추가 후 품질 저하 여부를 확인할 수 있도록 합니다.
 
-GitHub에 push하거나 pull request를 생성하면 자동 실행됩니다.
+### 도메인 확장성
 
-## v1.2 OpenAI 실연동
+새로운 법률 도메인을 추가할 때 검색 코어를 다시 개발하지 않고 설정과 법령 데이터 팩을 확장하는 구조를 지향합니다.
 
-`openai` provider는 OpenAI Responses API를 사용합니다.
+## 14. 기술 스택
 
-```bash
-export LAW_RAG_LLM_PROVIDER=openai
-export LAW_RAG_LLM_API_KEY='발급받은_API_KEY'
-export LAW_RAG_LLM_MODEL=gpt-4.1-mini
-export LAW_RAG_LLM_BASE_URL=https://api.openai.com/v1
-export LAW_RAG_LLM_TIMEOUT=30
-export LAW_RAG_LLM_MAX_RETRIES=2
-python3 -m law_rag.api
-```
+- Python
+- FastAPI
+- Pydantic
+- Uvicorn
+- BM25
+- 의미 기반 검색
+- 법률 온톨로지
+- 그래프 기반 근거 확장
+- Pytest
+- Docker 및 Docker Compose
+- HTML, CSS, JavaScript 기반 웹 데모
 
-실제 답변 요청:
+## 15. 배포 시 보안 점검
 
-```bash
-curl -X POST 'http://127.0.0.1:8000/answer' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "question": "개인정보 수집 동의 요건은?",
-    "domain": "digital_business",
-    "top_k": 1
-  }'
-```
+공개 서버에 배포하기 전에 다음 사항을 확인하십시오.
 
-응답에는 생성 provider와 model 외에 다음 필드가 포함됩니다.
+- `.env`와 API 키를 저장소 및 배포 압축 파일에서 제외
+- 이미 Git 이력에 포함된 키가 있다면 폐기하고 재발급
+- `LAW_RAG_PUBLIC_DEMO=true` 설정
+- `LAW_RAG_ENABLE_EVALUATION_RUN=false` 설정
+- 요청 제한 또는 역방향 프록시 수준의 제한 적용
+- HTTPS 적용
+- 운영 로그에서 개인정보와 민감한 질문 제거 또는 마스킹
+- API 문서를 공개할 필요가 없다면 `/docs` 접근 제한
+- 오류 응답에 내부 경로나 비밀정보가 포함되지 않는지 확인
 
-- `generation_request_id`: provider 요청 추적 ID
-- `generation_usage.input_tokens`
-- `generation_usage.output_tokens`
-- `generation_usage.total_tokens`
+## 16. 프로젝트의 의미
 
-429, 5xx, 연결 오류, 시간 초과는 `LAW_RAG_LLM_MAX_RETRIES` 범위에서 지수형 대기 후 재시도합니다.
-API 키는 로그와 응답에 기록하지 않으며 `.env`는 저장소에 커밋하지 않습니다.
+이 프로젝트를 통해 확인한 핵심은 RAG 시스템에서 중요한 것이 단순한 답변 생성이 아니라는 점입니다.
 
-OpenAI-compatible 로컬 또는 외부 서버는 Chat Completions 경로를 사용합니다.
+특히 법령 영역에서는 다음 역량이 실제 서비스 품질을 좌우합니다.
 
-```bash
-export LAW_RAG_LLM_PROVIDER=openai_compatible
-export LAW_RAG_LLM_API_KEY='서버가_요구하는_키'
-export LAW_RAG_LLM_MODEL='서버_모델명'
-export LAW_RAG_LLM_BASE_URL='http://127.0.0.1:1234/v1'
-```
+- 법령 구조와 시행 시점의 정확한 처리
+- 검색 실패 원인 분석
+- 근거 부족 판정
+- 인용과 문장 근거 검증
+- 법적 추론 과정의 구조화
+- 회귀 평가를 통한 지속적인 품질 관리
 
-API 키가 없거나 provider 설정이 잘못되어도 검색 결과는 유지되고,
-`generation_status="failed"`와 안전한 오류 메시지가 반환됩니다.
+따라서 이 프로젝트는 법령 검색 데모를 넘어 **기업 법무·컴플라이언스 업무를 지원하는 검증 가능한 Legal AI 시스템의 기반**을 제시합니다.
 
-## `.env` automatic loading
+## 17. 향후 개선 방향
 
-The application automatically loads the nearest project `.env` file through `python-dotenv`. Existing shell or deployment environment variables are never overwritten (`override=False`). The effective priority is:
+- 사내 규정과 법령을 함께 검색하는 Enterprise RAG
+- 법령 개정 전후 비교와 업무 영향 분석
+- 개인정보 처리방침 및 약관 점검
+- 계약서 조항과 관련 법령 연결
+- 사용자 권한별 법무 업무 화면
+- 외부 저장소 기반 분산 요청 제한
+- 운영 환경 모니터링 및 검색 품질 대시보드
+- 실제 법무 담당자 피드백 기반 평가셋 확장
 
-```text
-OS / container environment > .env > code defaults
-```
+## 18. 주의사항
 
-Create a local file from the safe template:
-
-```bash
-cp .env.example .env
-python3 -m law_rag.api
-```
-
-To use a different file, set `LAW_RAG_ENV_FILE=/absolute/path/to/.env`. Never commit `.env` or API keys.
-
-## Official corpus synchronization (v1.4)
-
-Create a manifest from `data/official_laws.example.json`, configure `LAW_API_OC` in `.env`, and run:
-
-```bash
-python -m law_rag.ingestion \
-  --manifest data/official_laws.example.json \
-  --output data/legal_corpus.json
-```
-
-Each successful law response is normalized and cached under `data/official_cache/`. Cached data is not used silently. To continue local development during an API outage, opt in explicitly:
-
-```bash
-python -m law_rag.ingestion \
-  --manifest data/official_laws.example.json \
-  --output data/legal_corpus.json \
-  --allow-cache-fallback
-```
-
-The synchronization report distinguishes `fetched` and `cached` laws. `LAW_API_OC` is removed from persisted provenance URLs and corpus files.
-
-### v1.4.1 official XML compatibility
-
-The search parser accepts the production `<law>` element and Korean response fields (`법령명한글`, `법령ID`, `법령일련번호`, `현행연혁코드`, `시행일자`, `법령상세링크`). Name-based synchronization resolves the exact normalized law name and requests the body with `MST=<법령일련번호>`. Search metadata is validated and `OC` is redacted from persisted URLs and error diagnostics.
-
-```bash
-unset LAW_API_OC  # only when an empty shell variable is shadowing .env
-python3 -m law_rag.ingestion \
-  --manifest data/official_laws.example.json \
-  --output data/legal_corpus.json
-
-python3 -m pytest -q
-LAW_RAG_LLM_PROVIDER=deterministic python3 -m law_rag.evaluation \
-  --dataset evaluation/datasets/core_cases.json \
-  --output evaluation/reports/v1.4.1.json \
-  --fail-under 0.8
-```
-
-### v1.4.2 corpus snapshot behavior
-
-Manifest synchronization now treats the manifest as the authoritative corpus snapshot and replaces `--output` atomically. This prevents demo records or laws removed from the manifest from remaining in retrieval results.
-
-```bash
-python3 -m law_rag.ingestion \
-  --manifest data/official_laws.example.json \
-  --output data/legal_corpus.json
-```
-
-Use the legacy merge behavior only when intentional:
-
-```bash
-python3 -m law_rag.ingestion \
-  --manifest data/official_laws.example.json \
-  --output data/legal_corpus.json \
-  --merge-output
-```
-
-Tests use `tests/fixtures/legal_corpus.json`, so refreshing the production corpus no longer changes deterministic regression expectations.
-
-
-### v1.5.0 official-corpus retrieval evaluation
-
-Run the deterministic fixture regression:
-
-```bash
-LAW_RAG_LLM_PROVIDER=deterministic python3 -m law_rag.evaluation \
-  --dataset evaluation/datasets/core_cases.json \
-  --data tests/fixtures/legal_corpus.json \
-  --output evaluation/reports/v1.5.0-fixture.json \
-  --fail-under 0.8
-```
-
-Run the official 4,833-provision corpus regression:
-
-```bash
-LAW_RAG_LLM_PROVIDER=deterministic python3 -m law_rag.evaluation \
-  --dataset evaluation/datasets/official_core_cases.json \
-  --data data/legal_corpus.json \
-  --output evaluation/reports/v1.5.0-official.json \
-  --fail-under 1.0
-```
-
-Official evaluation expectations use `law_id + article_no`, so harmless paragraph/item-level changes do not invalidate the benchmark. Domain-specific `query_rules` in each `domains/*/domain.json` provide auditable legal-intent expansion. Retrieval responses expose `title` and `coverage` under `matched_signals`.
-
-### Evidence aggregation
-
-v1.5.1부터 `/retrieve`, `/query`, `/answer`는 같은 법률·조문·항에 속하는 호와 목을 하나의 근거 단위로 묶습니다.
-
-```json
-{
-  "citation": "개인정보 보호법 제30조 ①",
-  "evidence_scope": "paragraph",
-  "sub_provisions": [
-    {"citation": "개인정보 보호법 제30조 ① 제1호", "text": "1. 개인정보의 처리 목적"}
-  ]
-}
-```
-
-`text`에는 대표 항과 하위 호·목이 법령 번호 순서대로 결합됩니다. 따라서 목록형 질문은 일부 호만 검색되는 대신 전체 항 단위 근거를 답변 생성기에 전달합니다.
-
-## Structured legal answer response (v1.6)
-
-`POST /answer` now returns the generated answer together with provider-independent structured fields:
-
-- `answer_structure`: conclusion, legal basis, exceptions/cautions, and facts to confirm
-- `related_provisions`: unique supporting or explicitly related articles
-- `retrieval_explanation`: Top-1 citation, score, human-readable reasons, and ranking signals
-
-The default prompt version is `answer_v3`, which asks the model to write in the order: conclusion → legal basis → exceptions/cautions → facts to confirm.
-
-Example response excerpt:
-
-```json
-{
-  "prompt_version": "answer_v3",
-  "answer_structure": {
-    "conclusion": "질문은 우선 개인정보 보호법 제15조 제1항을 중심으로 검토해야 합니다.",
-    "legal_basis": [],
-    "exceptions_and_cautions": [],
-    "facts_to_confirm": []
-  },
-  "related_provisions": [],
-  "retrieval_explanation": {
-    "selected": true,
-    "citation": "개인정보 보호법 제15조 제1항",
-    "reasons": [],
-    "signals": {}
-  }
-}
-```
-
-## Benchmark and failure cases
-
-Run the default official-corpus regression benchmark:
-
-```bash
-python benchmark.py
-```
-
-The command writes the full report to `evaluation/reports/latest.json`. Failed cases are appended to `evaluation/failures/failure_cases.jsonl` with the expected evidence, retrieved evidence, failure reason, and case-level metrics.
-
-Useful options:
-
-```bash
-python benchmark.py --dataset evaluation/datasets/official_core_cases.json
-python benchmark.py --fail-under 0.95
-python benchmark.py --json
-python benchmark.py --no-log-failures
-```
-
-A benchmark exits with status `1` when the pass rate is below `--fail-under`, making it suitable for CI.
-
-### Multi-hop legal reasoning (v1.9.0)
-
-`/answer` and `/query` now return an article-level `reasoning_chain` and `graph_expansion` object. The graph is built from explicit cross-references in official provision text and optional `related_article_ids` metadata. Expanded provisions are used as supporting evidence, while direct retrieval results remain separately identifiable.
-
-## Legal Intent Planner (v2.0)
-
-Compound questions are decomposed into independent legal acts before retrieval. For example, a question combining processing delegation and overseas transfer creates separate searches for Personal Information Protection Act Articles 26 and 28-8, then fuses the results. API responses expose the analysis in `legal_intent`, while Prompt v6 passes it to the answer generator.
-
-Key response fields:
-
-- `legal_intent.actions`
-- `legal_intent.requested_outputs`
-- `legal_intent.subqueries`
-- `legal_intent.is_compound`
-
-
-
-## Citation canonicalization (v2.2)
-
-The generation pipeline now uses one canonical Korean article-reference parser across citation repair, citation validation, and grounding validation. Canonical branch-article forms such as `제28조의8` are preserved instead of being truncated to `제28조`. Evidence fallback responses also prioritize primary direct/planned rules and render exact evidence as readable bullets rather than dumping every graph-expanded provision.
-
-## Legal Ontology Layer (v3.1)
-
-v3.1 promotes the semantic vocabulary introduced by Semantic Evidence Assignment into a shared ontology contract. The deterministic ontology is defined in `law_rag/ontology` and is used by both the Legal Intent Planner and grounding validator.
-
-Each concept has a stable `concept_id`, Korean display label, aliases, category, optional parent, related concepts, and associated legal actions. API output now exposes:
-
-- `legal_intent.ontology.concepts`
-- `legal_intent.ontology.expanded_concept_ids`
-- `legal_intent.ontology.relations`
-- `grounding_validation.claims[].ontology`
-- `grounding_validation.claims[].supporting_evidence[].ontology`
-
-The ontology normalizes and relates evidence; it does not independently infer a legal conclusion or replace official statutory evidence.
-
-## v3.2 Evidence Graph Ranking
-
-v3.2 calibrates hybrid retrieval scores without saturation, directly incorporates legal-ontology and issue-coverage signals, and exposes an `evidence_graph` containing issue coverage, missing issues, evidence roles, nodes, and support edges. Evidence results now include `evidence_role`, `issue_ids`, `ontology`, and `issue_coverage` signals.
-
-## v3.8 Dual Output and Reasoning Trace
-
-`/answer` now exposes the same grounded reasoning in two deterministic views:
-
-- `user_answer`: concise conclusion, requirements, practical actions, and cautions.
-- `expert_report`: issue order, reasoning steps, transitions, graph-driven answer structure, and sentence-level provenance.
-
-Additional top-level fields are `dual_output`, `reasoning_trace`, and `graph_answer_structure`. Every trace row retains its sentence id, source reasoning step or transition, citations, evidence node ids, and rendered hash.
-
-### v4.1 Logic-driven reasoning
-
-`legal_logic_tree`는 더 이상 설명용 결과에만 머물지 않습니다. 시스템은 검증된 Logic Tree에서 `logic_driven_reasoning_path`를 다시 생성하고, 이 경로를 Answer Planner의 직접 입력으로 사용합니다. `counter_reasoning`은 검색된 primary rule과 exception/limitation만 비교하므로 출처에 없는 반대 논리를 생성하지 않습니다.
-
-### v4.3 Answer Composition Layer
-
-The answer pipeline now converts validated legal reasoning into a structured FRAC composition model:
-
-- **Fact**: detected issues and facts that still require confirmation
-- **Rule**: retrieved primary, exception, and supplementary provisions
-- **Application**: conflict resolution and source-bound practical actions
-- **Conclusion**: issue transitions and final legal route
-
-Every cited sentence is published in `sentence_citation_map` with its source document, evidence node, and rendered hash. The API also returns `missing_fact_detector` and `practical_action_generator` for operational use.
+이 프로젝트의 답변은 기술 검증과 포트폴리오 시연을 위한 결과입니다. 실제 사건이나 기업 의사결정에 적용할 때는 사실관계, 최신 법령, 판례, 행정해석과 전문가 검토가 추가로 필요합니다.

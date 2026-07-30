@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>법령 AI 내부 평가 콘솔</title>
+  <link rel="stylesheet" href="/static/app.css?v=4.11.3">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="/">법령 AI 내부 평가 <span id="brand-version">버전 확인 중</span></a>
+  <nav><a href="/">공개 데모</a><a href="/docs">API 문서</a></nav>
+</header>
+<main>
+  <section class="internal-hero">
+    <p class="eyebrow">Internal Quality Console</p>
+    <h1>회귀 평가와 실패 사례 점검</h1>
+    <p>이 화면은 개발·배포 전 품질 검증을 위한 내부 도구입니다. 공개 포트폴리오 화면에는 연결하지 않습니다.</p>
+  </section>
+  <section class="workspace-section">
+    <div class="evaluation-toolbar">
+      <div><p class="eyebrow">Regression Evaluation</p><h2>정량 평가와 실패 사례</h2><p>Top-1, Hit@K, MRR, 인용 정확도 등 저장된 회귀 평가 결과를 확인합니다.</p></div>
+      <div class="toolbar-actions"><button id="load-report" class="secondary-button">최근 평가 리포트 불러오기</button><button id="run-evaluation" class="primary-button compact">전체 평가 실행</button></div>
+    </div>
+    <p id="evaluation-disabled-note" class="internal-warning" hidden>현재 서버 설정에서는 전체 평가 실행이 비활성화되어 있습니다.</p>
+    <div id="evaluation-empty" class="empty-state">최근 평가 리포트를 불러오세요.</div>
+    <div id="evaluation-content" hidden>
+      <div id="metric-grid" class="metric-grid"></div>
+      <div class="case-toolbar"><strong>평가 사례별 결과</strong><select id="case-filter"><option value="all">전체</option><option value="failed">실패만</option><option value="passed">통과만</option></select></div>
+      <div id="case-list" class="case-list"></div>
+    </div>
+  </section>
+</main>
+<footer><strong>법령 AI 내부 품질 콘솔</strong><span>개발·검증 전용</span></footer>
+<script src="/static/evaluation.js?v=4.11.4" defer></script>
+</body>
+</html>

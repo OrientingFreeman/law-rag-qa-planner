@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 import os
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from law_rag.api.schemas import (
@@ -47,6 +49,14 @@ def create_app(
         evaluation_report_path
         or os.getenv("LAW_RAG_EVALUATION_REPORT", "evaluation/reports/latest.json")
     )
+    public_demo = os.getenv("LAW_RAG_PUBLIC_DEMO", "false").strip().lower() in {"1", "true", "yes", "on"}
+    evaluation_run_enabled = os.getenv(
+        "LAW_RAG_ENABLE_EVALUATION_RUN",
+        "false" if public_demo else "true",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    demo_max_requests = max(1, int(os.getenv("LAW_RAG_DEMO_MAX_REQUESTS", "20")))
+    demo_window_seconds = max(60, int(os.getenv("LAW_RAG_DEMO_WINDOW_SECONDS", "3600")))
+    request_history: dict[str, deque[float]] = defaultdict(deque)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -65,6 +75,31 @@ def create_app(
         lifespan=lifespan,
     )
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+    @app.middleware("http")
+    async def public_demo_rate_limit(request: Request, call_next):
+        limited_paths = {"/answer", "/query", "/retrieve"}
+        if public_demo and request.method == "POST" and request.url.path in limited_paths:
+            client_key = request.client.host if request.client else "unknown"
+            now = time.monotonic()
+            history = request_history[client_key]
+            while history and now - history[0] >= demo_window_seconds:
+                history.popleft()
+            if len(history) >= demo_max_requests:
+                retry_after = max(1, int(demo_window_seconds - (now - history[0])))
+                return JSONResponse(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    headers={"Retry-After": str(retry_after)},
+                    content={
+                        "detail": {
+                            "code": "demo_rate_limit_exceeded",
+                            "message": "공개 데모의 시간당 질의 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.",
+                            "retry_after_seconds": retry_after,
+                        }
+                    },
+                )
+            history.append(now)
+        return await call_next(request)
 
     def get_service(request: Request) -> LawRagService:
         return request.app.state.law_rag_service
@@ -85,7 +120,26 @@ def create_app(
 
     @app.get("/", include_in_schema=False)
     def web_ui() -> FileResponse:
-        return FileResponse(STATIC_DIR / "index.html")
+        return FileResponse(
+            STATIC_DIR / "index.html",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
+
+    @app.get("/internal/evaluation", include_in_schema=False)
+    def internal_evaluation_ui() -> FileResponse:
+        return FileResponse(
+            STATIC_DIR / "evaluation.html",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
+
+    @app.get("/demo-config", include_in_schema=False)
+    def demo_config() -> dict[str, object]:
+        return {
+            "public_demo": public_demo,
+            "evaluation_run_enabled": evaluation_run_enabled,
+            "max_requests": demo_max_requests if public_demo else None,
+            "window_seconds": demo_window_seconds if public_demo else None,
+        }
 
     @app.get("/health", response_model=HealthResponse, tags=["system"])
     def health(service: LawRagService = Depends(get_service)) -> dict[str, object]:
@@ -137,6 +191,14 @@ def create_app(
         request: Request,
         service: LawRagService = Depends(get_service),
     ) -> dict[str, object]:
+        if not evaluation_run_enabled:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "evaluation_run_disabled",
+                    "message": "공개 데모에서는 평가 실행이 비활성화되어 있습니다. 저장된 평가 리포트만 조회할 수 있습니다.",
+                },
+            )
         dataset_path: Path = request.app.state.evaluation_dataset_path
         report_path: Path = request.app.state.evaluation_report_path
         if not dataset_path.exists():

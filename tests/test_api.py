@@ -74,10 +74,18 @@ def test_web_ui_and_static_assets_are_served():
     with client() as api:
         home = api.get("/")
         script = api.get("/static/app.js")
+        internal_evaluation = api.get("/internal/evaluation")
+        evaluation_script = api.get("/static/evaluation.js")
     assert home.status_code == 200
-    assert "Internal Validation Console" in home.text
+    assert "기업 법무·컴플라이언스를 위한" in home.text
+    assert "평가 리포트" not in home.text
+    assert home.headers["cache-control"] == "no-cache, no-store, must-revalidate"
     assert script.status_code == 200
-    assert "run-evaluation" in script.text
+    assert "run-evaluation" not in script.text
+    assert internal_evaluation.status_code == 200
+    assert "회귀 평가와 실패 사례 점검" in internal_evaluation.text
+    assert evaluation_script.status_code == 200
+    assert "run-evaluation" in evaluation_script.text
 
 
 def test_evaluation_latest_and_run_endpoints(tmp_path):
@@ -135,3 +143,34 @@ def test_unknown_ontology_issue_abstains():
     assert body["abstain"] is True
     assert body["generation_status"] == "abstained"
 
+
+
+def test_supported_question_generates_answer(monkeypatch):
+    monkeypatch.setenv("LAW_RAG_LLM_PROVIDER", "deterministic")
+    with client() as api:
+        response = api.post("/answer", json={
+            "question": "개인정보 수집 동의 요건은 무엇인가요?",
+            "domain": "digital_business",
+            "top_k": 3,
+        })
+    assert response.status_code == 200
+    body = response.json()
+    assert body["abstain"] is False
+    assert body["generation_status"] == "completed"
+    assert body["evidence_status"]["level"] in {"partial", "usable"}
+    assert body["answer"]
+
+
+def test_abstained_candidates_are_marked_insufficient():
+    from law_rag.service import LawRagService
+
+    service = LawRagService(data_path="data/legal_corpus.json", domains_path="domains")
+    body = service.answer(
+        "법인 설립 후 반드시 해야 하는 신고나 등기에는 무엇이 있나요?",
+        domain_id=None,
+        top_k=3,
+    )
+    assert body["abstain"] is True
+    assert body["generation_status"] == "abstained"
+    assert body["evidence_status"]["level"] == "insufficient"
+    assert "검색 후보" not in body["answer"]

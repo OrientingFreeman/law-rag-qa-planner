@@ -70,10 +70,13 @@ class DeterministicProvider(LlmProvider):
                 citations.append(label)
         citation_text = ", ".join(citations[:5]) or "검색된 근거 없음"
         text = (
-            "요약 답변\n"
+            "결론\n"
             "제공된 법령 근거를 기준으로 검토해야 합니다. 구체적인 적용은 사실관계에 따라 달라질 수 있습니다.\n\n"
+            "실무상 조치\n"
+            "- 질문의 적용 대상과 사실관계를 확인합니다.\n"
+            "- 검색된 조문의 시행일과 예외 규정을 함께 검토합니다.\n\n"
             f"근거 조문\n{citation_text}\n\n"
-            "추가 확인 사항\n처리 목적, 수집 항목, 보유 기간과 실제 동의 화면을 추가로 확인해야 합니다.\n\n"
+            "추가 확인 사실\n처리 목적, 수집 항목, 보유 기간과 실제 동의 화면을 추가로 확인해야 합니다.\n\n"
             "답변 한계\n이 답변은 검색된 근거만을 사용한 로컬 검증용 결과이며 최종 법률판단이 아닙니다."
         )
         return GenerationOutput(text=text, provider=self.name, model="offline-template")

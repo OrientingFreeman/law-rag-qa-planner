@@ -130,12 +130,20 @@ class LawRagService:
         for rank, result in enumerate(results, 1):
             result.rank = rank
         evidence_graph = build_evidence_graph(plan, results)
+        # Ontology가 쟁점을 명시적으로 포착하지 못하더라도 검색 점수가 충분히
+        # 높으면 답변 생성을 허용한다. 기존 0.80 임계값은 조문 표현과 질문 표현이
+        # 다른 정상 질의까지 과도하게 유보했다. 0.70 미만의 저신뢰 후보는 계속
+        # 답변 근거로 채택하지 않는다.
+        abstain = (not results) or (
+            (not evidence_graph.get("issues"))
+            and results[0].score < 0.70
+        )
         return {
             "question": normalized_question,
             "domain": domain_id or "all",
             "results": [self._serialize_result(result) for result in results],
-            "abstain": (not results) or ((not evidence_graph.get("issues")) and (not results or results[0].score < 0.80)),
-            "evidence_status": self._evidence_status(results),
+            "abstain": abstain,
+            "evidence_status": self._evidence_status(results, abstain=abstain),
             "legal_intent": plan.to_dict(),
             "evidence_graph": evidence_graph,
             "legal_reasoning_path": evidence_graph.get("reasoning_path", {}),
@@ -391,9 +399,14 @@ class LawRagService:
         }
 
     @staticmethod
-    def _evidence_status(results):
+    def _evidence_status(results, *, abstain: bool = False):
         if not results:
             return {"level": "insufficient", "message": "검색 근거가 없습니다."}
+        if abstain:
+            return {
+                "level": "insufficient",
+                "message": "관련 후보 조문은 검색했지만 답변 근거로 채택할 만큼 충분히 일치하지 않습니다.",
+            }
         direct = [r for r in results if r.retrieval_reason == "direct"]
         if len(direct) == 1 and len(results) == 1:
             return {
