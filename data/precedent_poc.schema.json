@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name", "version", "source_policy", "precedents"],
+  "properties": {
+    "name": {"type": "string"},
+    "version": {"type": "string"},
+    "source_policy": {"type": "string"},
+    "precedents": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "precedent_id", "evidence_type", "court", "case_number",
+          "decision_date", "case_name", "issues", "holding_summary",
+          "reasoning_summary", "related_statutes", "source_url",
+          "source_section", "context_date", "legal_context_note",
+          "source_checked_at"
+        ],
+        "properties": {
+          "precedent_id": {"type": "string"},
+          "evidence_type": {"const": "precedent"},
+          "court": {"const": "대법원"},
+          "case_number": {"type": "string"},
+          "decision_date": {"type": "string", "format": "date"},
+          "case_name": {"type": "string"},
+          "issues": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "holding_summary": {"type": "string"},
+          "reasoning_summary": {"type": "string"},
+          "related_statutes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["law_id", "law_name", "article_no", "role"],
+              "properties": {
+                "law_id": {"type": "string"},
+                "law_name": {"type": "string"},
+                "article_no": {"type": "string"},
+                "role": {"type": "string"}
+              }
+            }
+          },
+          "source_url": {"type": "string", "pattern": "^https://www\\.law\\.go\\.kr/"},
+          "source_section": {"type": "string"},
+          "context_date": {"type": "string", "format": "date"},
+          "legal_context_note": {"type": "string"},
+          "source_checked_at": {"type": "string", "format": "date"}
+        }
+      }
+    }
+  }
+}

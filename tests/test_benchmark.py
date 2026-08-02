@@ -33,7 +33,7 @@ def test_failure_logger_writes_structured_jsonl(tmp_path):
     assert record["case_id"] == "missing"
     assert record["expected"]["document_ids"] == ["expected:1"]
     assert record["retrieved"]["document_ids"] == ["actual:2"]
-    assert record["reason"] == ["expected_evidence_not_retrieved"]
+    assert record["reason"] == ["retrieval_miss"]
 
 
 def test_failure_diagnosis_can_report_multiple_reasons():
@@ -45,10 +45,36 @@ def test_failure_diagnosis_can_report_multiple_reasons():
         "citation_valid": False,
         "hit_at_k": False,
     })
-    assert "abstention_mismatch" in reasons
-    assert "temporal_filter_failure" in reasons
-    assert "citation_validation_failure" in reasons
-    assert "unexpected_evidence_retrieved" in reasons
+    assert "incorrect_abstention" in reasons
+    assert "temporal_mismatch" in reasons
+    assert "unsupported_citation" in reasons
+
+
+def test_failure_diagnosis_uses_requested_taxonomy():
+    assert diagnose_failure({
+        "expected_abstain": False,
+        "actual_abstain": False,
+        "abstention_correct": True,
+        "temporal_valid": True,
+        "citation_valid": None,
+        "hit_at_k": True,
+        "top1_hit": False,
+        "recall_at_k": 0.5,
+        "expected_article_nos": ["제1조", "제2조"],
+        "retrieved_articles": ["law:제2조"],
+        "answer_point_coverage": 0.5,
+    }) == ["wrong_top1", "under_retrieval", "incomplete_answer"]
+
+    assert "over_retrieval" in diagnose_failure({
+        "expected_abstain": False,
+        "abstention_correct": True,
+        "temporal_valid": True,
+        "hit_at_k": True,
+        "top1_hit": True,
+        "recall_at_k": 1.0,
+        "expected_article_nos": ["제1조"],
+        "retrieved_articles": ["law:제1조", "law:제2조"],
+    })
 
 
 def test_summary_formatter_contains_core_metrics():

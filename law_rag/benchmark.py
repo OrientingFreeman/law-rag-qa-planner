@@ -11,6 +11,8 @@ from law_rag.service import LawRagService
 
 
 def _percent(value: Any) -> str:
+    if value is None:
+        return "n/a"
     return f"{float(value or 0) * 100:.1f}%"
 
 

@@ -1,0 +1,112 @@
+"""Build the reviewed 49-case official evaluation dataset.
+
+The cases are intentionally declared in source so changes remain reviewable.
+Run: python tools/build_official_evaluation_dataset.py
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+def case(
+    case_id: str,
+    question: str,
+    category: str,
+    difficulty: str,
+    law_id: str | None,
+    articles: list[str],
+    points: list[str],
+    note: str,
+    domain: str = "all",
+    *,
+    abstain: bool = False,
+    as_of_date: str | None = None,
+) -> dict[str, object]:
+    row: dict[str, object] = {
+        "case_id": case_id,
+        "question": question,
+        "category": category,
+        "difficulty": difficulty,
+        "domain": domain,
+        "top_k": 5,
+        "expected_law_id": law_id,
+        "expected_article_nos": articles,
+        "expected_answer_points": points,
+        "expected_abstain": abstain,
+        "annotation_note": note,
+    }
+    if as_of_date:
+        row["as_of_date"] = as_of_date
+    return row
+
+
+PIPA = "011357"
+PIPA_DECREE = "011468"
+EFTA = "010199"
+LABOR = "001872"
+CIVIL = "001706"
+
+CASES = [
+    case("pipa-collection-basis", "개인정보를 수집·이용할 수 있는 법적 근거는 무엇인가?", "direct_statute_retrieval", "easy", PIPA, ["제15조"], ["동의 등 제15조제1항의 처리 근거를 구분한다.", "수집 목적 범위에서 이용해야 함을 밝힌다."], "수집·이용의 일반 근거 조문을 직접 찾는 기준 사례.", "digital_business"),
+    case("pipa-minimum-collection", "개인정보는 필요한 것보다 많이 받아도 되나요?", "lay_to_legal_mapping", "easy", PIPA, ["제16조"], ["목적에 필요한 최소한만 수집한다.", "최소 수집 입증책임은 개인정보처리자에게 있다."], "일상어 '많이 받다'를 수집 제한·최소수집 원칙에 연결한다.", "digital_business"),
+    case("pipa-third-party-provision", "수집한 개인정보를 다른 회사에 제공할 수 있는 요건은?", "similar_provision_disambiguation", "medium", PIPA, ["제17조"], ["제3자 제공의 법적 근거를 확인한다.", "수집·이용과 제3자 제공을 구별한다."], "제15조 수집·이용이 아니라 제17조 제3자 제공을 선택해야 한다.", "digital_business"),
+    case("pipa-purpose-outside", "고객정보를 처음 알린 목적과 다른 마케팅에 쓰려면 어떤 제한이 있나?", "lay_to_legal_mapping", "medium", PIPA, ["제18조"], ["목적 외 이용·제공은 원칙적으로 제한된다.", "예외 근거 또는 별도 동의 여부를 확인한다."], "목적 외 이용과 일반 수집 근거를 구별하는 사례.", "digital_business"),
+    case("pipa-destruction", "보유기간이 끝난 개인정보는 언제 어떻게 처리해야 하나?", "direct_statute_retrieval", "easy", PIPA, ["제21조"], ["불필요해진 개인정보는 지체 없이 파기한다.", "다른 법령상 보존 의무가 있으면 예외임을 밝힌다."], "파기 원칙과 법정 보존 예외를 함께 요구한다.", "digital_business"),
+    case("pipa-consent-method", "개인정보 동의서를 받을 때 선택 동의와 필수 사항을 한꺼번에 표시해도 되나?", "multi_requirement", "hard", PIPA, ["제22조"], ["동의 사항을 구분하여 명확히 알린다.", "동의 없이 처리 가능한 항목과 동의 항목을 구분한다."], "동의 획득 방식의 복수 요건을 점검한다.", "digital_business"),
+    case("pipa-child-consent", "만 13세 이용자의 개인정보 처리 동의는 누구에게 받아야 하나?", "direct_statute_retrieval", "easy", PIPA, ["제22조의2"], ["만 14세 미만은 법정대리인 동의가 필요하다.", "법정대리인의 동의 여부를 확인해야 한다."], "연령과 대리인 동의 요건을 직접 검증한다.", "digital_business"),
+    case("pipa-resident-number", "회원가입 때 주민등록번호를 편의상 받아도 되나요?", "lay_to_legal_mapping", "medium", PIPA, ["제24조의2"], ["주민등록번호 처리는 법정 예외 외에는 제한된다.", "편의만으로는 처리 근거가 되지 않는다."], "고유식별정보 일반 조문이 아닌 주민등록번호 특칙을 찾는다.", "digital_business"),
+    case("pipa-outsourcing", "개인정보 처리 업무를 외주업체에 맡길 때 계약서에 무엇을 넣어야 하나?", "direct_statute_retrieval", "medium", PIPA, ["제26조"], ["위탁은 법정 사항이 포함된 문서로 해야 한다.", "수탁자 관리·감독과 공개 의무를 확인한다."], "제3자 제공과 처리위탁을 구별해야 한다.", "digital_business"),
+    case("pipa-policy", "개인정보 처리방침에는 어떤 내용을 공개해야 하나?", "direct_statute_retrieval", "easy", PIPA, ["제30조"], ["법정 기재사항을 포함한 처리방침을 수립한다.", "처리방침을 공개해야 한다."], "기존 공식 문항을 확장 스키마로 유지한 회귀 사례.", "digital_business"),
+    case("pipa-breach", "개인정보가 유출된 사실을 알게 되면 정보주체 통지와 기관 신고를 어떻게 해야 하나?", "multi_requirement", "hard", PIPA, ["제34조"], ["정보주체에게 지체 없이 법정 사항을 통지한다.", "규모·유형 등에 따른 보호위원회 등 신고 의무를 구분한다."], "통지와 신고를 하나의 의무로 혼동하는지 검증한다.", "digital_business"),
+    case("pipa-stop-processing", "내 개인정보 사용을 그만해 달라고 요구할 수 있나요?", "lay_to_legal_mapping", "easy", PIPA, ["제37조"], ["정보주체는 처리정지 요구 또는 동의 철회를 할 수 있다.", "법정 거절 사유가 있는지는 별도로 확인한다."], "일상어를 처리정지·동의철회 권리에 연결한다.", "digital_business"),
+    case("pipa-damages", "개인정보처리자의 법 위반으로 손해를 입으면 배상을 청구할 수 있나?", "direct_statute_retrieval", "medium", PIPA, ["제39조"], ["정보주체는 손해배상을 청구할 수 있다.", "개인정보처리자의 면책 입증 구조를 확인한다."], "법정손해배상 조문과 일반 손해배상책임을 구별한다.", "digital_business"),
+    case("pipa-decree-sensitive", "홍채나 지문처럼 개인을 식별하려고 만든 생체정보는 민감정보인가?", "lay_to_legal_mapping", "medium", PIPA_DECREE, ["제18조"], ["특정 개인 식별 목적의 생체특징 정보가 민감정보 범위에 포함된다."], "법률이 아니라 시행령의 구체적 민감정보 범위를 찾아야 한다.", "digital_business"),
+    case("pipa-decree-breach-72h", "개인정보 유출 신고는 항상 지체 없이만 하면 되고 72시간 기준은 없나요?", "false_premise", "hard", PIPA_DECREE, ["제40조"], ["일정한 유출 신고는 72시간 이내 기준이 적용된다.", "부득이한 사유와 권익 침해 가능성이 낮은 경우의 예외를 구분한다."], "질문의 잘못된 전제를 정정하면서 시행령 근거를 제시한다.", "digital_business"),
+    case("eft-access-media", "통장·카드 같은 접근매체를 다른 사람에게 빌려줘도 되나요?", "lay_to_legal_mapping", "easy", EFTA, ["제6조"], ["접근매체의 양도·대여 등 금지행위를 확인한다.", "법정 예외가 있는지 구분한다."], "일상어를 접근매체 관리 금지행위에 연결한다.", "electronic_finance"),
+    case("eft-liability", "전자금융사고로 이용자에게 손해가 나면 금융회사는 어떤 책임을 지는가?", "direct_statute_retrieval", "medium", EFTA, ["제9조"], ["접근매체 위조·변조 등 사고에 대한 책임 원칙을 확인한다.", "이용자 유형과 약정 가능한 예외를 구분한다."], "안전성 확보의무 조문과 사고 책임 조문을 구별한다.", "electronic_finance"),
+    case("eft-security", "전자금융거래의 안전성과 신뢰성을 위해 금융회사가 지켜야 할 의무는?", "direct_statute_retrieval", "medium", EFTA, ["제21조"], ["전자금융거래의 안전성과 신뢰성 확보 의무가 있다.", "금융위원회 기준 준수 등 관리적·기술적 기준을 확인한다."], "사고 후 책임이 아닌 사전 안전성 의무를 묻는다.", "electronic_finance"),
+    case("eft-record-retention", "전자금융거래 기록은 생성 후 얼마나 보존하고 언제 파기해야 하나?", "multi_requirement", "hard", EFTA, ["제22조"], ["거래기록을 생성·보존해야 한다.", "보존기간 경과 및 거래관계 종료 후 파기 기준과 예외를 확인한다."], "보존과 파기를 동시에 평가하는 복합 질문.", "electronic_finance"),
+    case("eft-info-disclosure", "은행이 고객 동의 없이 계좌와 전자금융거래 내역을 제3자에게 줄 수 있나?", "similar_provision_disambiguation", "medium", EFTA, ["제26조"], ["이용자 인적사항·계좌·거래정보 제공은 원칙적으로 제한된다.", "동의 또는 법정 예외 여부를 확인한다."], "개인정보 보호법 제17조 대신 전자금융거래정보 특칙을 선택한다.", "electronic_finance"),
+    case("labor-written-terms", "근로계약서에 임금과 근로시간을 꼭 서면으로 적어 줘야 하나?", "lay_to_legal_mapping", "easy", LABOR, ["제17조"], ["법정 근로조건을 명시한다.", "임금 등 핵심 사항이 적힌 서면을 근로자에게 교부한다."], "명시와 서면 교부를 함께 요구한다.", "labor"),
+    case("labor-dismissal-restriction", "업무상 다쳐 치료 때문에 쉬는 근로자를 바로 해고할 수 있나?", "direct_statute_retrieval", "medium", LABOR, ["제23조"], ["업무상 재해 요양 휴업 기간과 그 후 30일은 해고가 제한된다.", "일시보상 또는 사업 계속 불가 예외를 확인한다."], "해고예고가 아닌 해고 금지기간을 찾는다.", "labor"),
+    case("labor-dismissal-notice", "회사가 해고하려면 원칙적으로 며칠 전에 알려야 하나?", "direct_statute_retrieval", "easy", LABOR, ["제26조"], ["원칙적으로 30일 전에 예고한다.", "예고하지 않으면 30일분 이상의 통상임금을 지급한다.", "법정 예외를 구분한다."], "기존 공식 문항을 확장한 회귀 사례.", "labor"),
+    case("labor-dismissal-writing", "구두로 해고 사유와 날짜를 말하면 해고 통지가 유효한가?", "similar_provision_disambiguation", "medium", LABOR, ["제27조"], ["해고사유와 해고시기를 서면으로 통지해야 한다.", "서면통지가 있어야 해고 효력이 있다."], "제26조 예고와 제27조 서면통지를 구별한다.", "labor"),
+    case("labor-final-payment", "퇴직한 직원에게 임금과 퇴직 관련 금품은 언제까지 지급해야 하나?", "direct_statute_retrieval", "easy", LABOR, ["제36조"], ["지급 사유 발생일부터 14일 이내 지급한다.", "특별한 사정이 있으면 당사자 합의로 연장할 수 있다."], "퇴직 금품청산 기한과 예외를 확인한다.", "labor"),
+    case("labor-wage-principles", "급여를 상품권으로 주거나 회사가 임의로 일부를 떼어도 되나요?", "multi_requirement", "hard", LABOR, ["제43조"], ["임금은 통화로 직접 근로자에게 전액 지급한다.", "법령 또는 단체협약상 예외를 구분한다.", "정기 지급 원칙도 질문 범위에 따라 설명한다."], "통화·직접·전액 지급 원칙을 복합 검증한다.", "labor"),
+    case("labor-waiting-time", "업무 지시를 기다리며 회사에서 대기한 시간도 근로시간인가?", "lay_to_legal_mapping", "medium", LABOR, ["제50조"], ["사용자의 지휘·감독 아래 있는 대기시간은 근로시간으로 본다."], "일상적 대기시간을 법정 근로시간 산정에 연결한다.", "labor"),
+    case("labor-break", "4시간 또는 8시간 일하면 휴게시간을 얼마나 받아야 하나?", "direct_statute_retrieval", "easy", LABOR, ["제54조"], ["4시간 근로 시 30분 이상, 8시간 근로 시 1시간 이상이다.", "휴게시간은 근로시간 도중에 부여한다.", "근로자가 자유롭게 이용할 수 있어야 한다."], "숫자와 부여 방식 모두를 정답 포인트로 둔다.", "labor"),
+    case("labor-annual-leave", "연차휴가는 근로자가 원하는 날짜에 반드시 쓸 수 있나?", "multi_requirement", "medium", LABOR, ["제60조"], ["원칙적으로 근로자가 청구한 시기에 부여한다.", "사업 운영에 막대한 지장이 있으면 시기를 변경할 수 있다."], "권리 원칙과 시기변경권 예외를 함께 평가한다.", "labor"),
+    case("civil-unfair-act", "궁박한 사정을 이용해 현저히 불공정한 계약을 체결했다면 효력이 있나?", "lay_to_legal_mapping", "medium", CIVIL, ["제104조"], ["궁박·경솔·무경험과 현저한 불공정 요건을 확인한다.", "요건 충족 시 법률행위는 무효이다."], "사기 취소와 불공정 법률행위 무효를 구별한다.", "civil_transactions"),
+    case("civil-secret-intent", "속마음과 다르게 계약 의사를 표시하면 언제 무효가 되나?", "direct_statute_retrieval", "medium", CIVIL, ["제107조"], ["진의 아닌 의사표시도 원칙적으로 유효하다.", "상대방이 진의 아님을 알았거나 알 수 있었으면 무효이다."], "착오 취소 조문과 구별해야 한다.", "civil_transactions"),
+    case("civil-mistake", "계약의 중요한 부분을 착각했다면 계약을 취소할 수 있나?", "similar_provision_disambiguation", "medium", CIVIL, ["제109조"], ["법률행위 내용의 중요부분 착오여야 한다.", "표의자에게 중대한 과실이 있으면 원칙적으로 취소하지 못한다."], "사기·강박 취소가 아니라 착오 취소를 선택한다.", "civil_transactions"),
+    case("civil-fraud", "상대방의 사기로 계약했다면 취소할 수 있는가?", "direct_statute_retrieval", "easy", CIVIL, ["제110조"], ["사기에 의한 의사표시는 취소할 수 있다.", "제3자 사기라면 상대방의 악의·과실 요건을 구분한다."], "기존 공식 문항을 유지한 회귀 사례.", "civil_transactions"),
+    case("civil-nonperformance", "채무자가 약속한 의무를 이행하지 않으면 손해배상을 청구할 수 있나?", "lay_to_legal_mapping", "easy", CIVIL, ["제390조"], ["채무 내용에 따른 이행이 없으면 손해배상을 청구할 수 있다.", "채무자의 고의·과실 없는 이행불능 예외를 확인한다."], "일상어를 채무불이행 손해배상에 연결한다.", "civil_transactions"),
+    case("civil-special-damages", "계약 위반으로 특별한 사정에서 생긴 손해까지 모두 배상받을 수 있나?", "similar_provision_disambiguation", "hard", CIVIL, ["제393조"], ["통상손해가 배상 범위의 원칙이다.", "특별손해는 채무자가 사정을 알았거나 알 수 있었을 때 배상한다."], "책임 성립 제390조가 아니라 손해 범위 제393조를 선택한다.", "civil_transactions"),
+    case("civil-contributory-negligence", "계약 불이행 손해에 채권자의 잘못도 있으면 배상액에 반영되나?", "direct_statute_retrieval", "medium", CIVIL, ["제396조"], ["채권자 과실은 손해배상 책임과 금액 산정에 참작된다."], "불법행위 과실상계와 채무불이행 과실상계를 혼동하지 않는다.", "civil_transactions"),
+    case("civil-simultaneous-performance", "상대방이 자기 의무를 이행하지 않으면서 나에게만 이행을 요구하면 거절할 수 있나?", "lay_to_legal_mapping", "medium", CIVIL, ["제536조"], ["쌍무계약에서 상대방의 이행 제공 전까지 자기 이행을 거절할 수 있다.", "상대방 채무가 변제기에 있지 않은 경우를 구분한다."], "일상 상황을 동시이행 항변권에 연결한다.", "civil_transactions"),
+    case("civil-delay-termination", "상대방이 계약을 이행하지 않으면 바로 계약을 해제할 수 있나?", "multi_requirement", "hard", CIVIL, ["제544조"], ["상당한 기간을 정해 이행을 최고하는 것이 원칙이다.", "그 기간 내 미이행 시 해제할 수 있다.", "미리 이행거절 의사를 표시한 경우 최고가 불필요하다."], "단순 미이행만으로 즉시 해제된다는 잘못된 전제를 교정한다.", "civil_transactions"),
+    case("civil-restoration", "계약을 해제하면 이미 주고받은 것은 어떻게 해야 하나?", "direct_statute_retrieval", "medium", CIVIL, ["제548조"], ["각 당사자는 상대방에게 원상회복할 의무가 있다.", "제3자의 권리를 해하지 못한다."], "해제권 발생 조문이 아닌 해제 효과 조문을 찾는다.", "civil_transactions"),
+    case("ambiguous-consent", "동의를 받으면 다 할 수 있나요?", "ambiguous_question", "hard", None, [], ["어떤 정보·처리행위·목적·법률을 말하는지 추가 사실을 요청한다.", "동의만으로 모든 처리가 허용된다고 단정하지 않는다."], "대상 법률과 행위가 특정되지 않아 단일 조문 정답을 부여하지 않는다.", abstain=True),
+    case("ambiguous-compensation", "손해배상 받을 수 있나요?", "ambiguous_question", "hard", None, [], ["계약·불법행위·개인정보 침해 등 원인과 사실관계를 요청한다.", "단일 법률효과를 단정하지 않는다."], "손해 원인과 법률관계가 없어 유보해야 한다.", abstain=True),
+    case("outside-tax", "종합소득세 신고기한은 언제인가?", "abstention", "easy", None, [], ["현재 corpus에 조세 법령이 없음을 밝힌다.", "근거 없는 날짜를 생성하지 않는다."], "지원 법령 범위 밖 질문의 명시적 유보 사례.", abstain=True),
+    case("nonexistent-pipa-999", "개인정보 보호법 제999조에 따른 동의 요건은 무엇인가?", "false_premise", "easy", None, [], ["해당 조문이 corpus에 존재하지 않음을 밝힌다.", "유사 조문을 제999조인 것처럼 인용하지 않는다."], "존재하지 않는 조문 번호를 사실처럼 수용하는지 검증한다.", "digital_business", abstain=True),
+    case("wrong-premise-break", "근로기준법은 8시간 근무 시 휴게시간을 전혀 주지 않아도 된다고 정하나요?", "false_premise", "medium", LABOR, ["제54조"], ["잘못된 전제를 명시적으로 정정한다.", "8시간 근로 시 1시간 이상 휴게를 근로 도중 부여한다."], "거짓 전제를 유보하지 말고 corpus 근거로 교정하는 사례.", "labor"),
+    case("wrong-law-fraud", "전자금융거래법 제110조에 따르면 사기 계약을 취소할 수 있나요?", "false_premise", "hard", CIVIL, ["제110조"], ["제110조 사기·강박 취소는 민법 조문임을 정정한다.", "전자금융거래법 조문으로 잘못 인용하지 않는다."], "법률명과 조문 번호의 잘못된 결합을 교정한다.", "civil_transactions"),
+    case("temporal-pipa-before-version", "2025년 9월 1일 기준 개인정보 수집·이용 요건은 현재 corpus의 조문으로 답할 수 있나?", "temporal_revision", "hard", None, [], ["현재 보유 버전의 시행일이 질문 기준일보다 뒤임을 밝힌다.", "과거 버전 없이 현행 내용을 과거 법으로 단정하지 않는다."], "개인정보 보호법 corpus 버전 시행일 2025-10-02 이전 질문.", "digital_business", abstain=True, as_of_date="2025-09-01"),
+    case("temporal-labor-before-version", "2025년 10월 1일 당시 해고예고 기준을 현재 corpus만으로 확정해줘.", "temporal_revision", "hard", None, [], ["현재 보유 근로기준법 버전은 질문 기준일에 시행 전이다.", "과거 버전 부재를 알리고 확정 답변을 유보한다."], "근로기준법 corpus 버전 시행일 2025-10-23 이전 질문.", "labor", abstain=True, as_of_date="2025-10-01"),
+    case("temporal-civil-current", "2026년 7월 31일 기준 계약의 중요부분 착오 취소 근거는?", "temporal_revision", "medium", CIVIL, ["제109조"], ["질문 기준일에 유효한 corpus 버전을 사용한다.", "중요부분 착오와 중대한 과실 제한을 설명한다."], "민법 corpus 시행일 2026-03-17 이후의 현재시점 질문.", "civil_transactions", as_of_date="2026-07-31"),
+    case("temporal-decree-current", "2026년 7월 31일 기준 개인정보 유출 신고의 72시간 기준 근거는?", "temporal_revision", "medium", PIPA_DECREE, ["제40조"], ["질문 기준일에 유효한 시행령 버전을 사용한다.", "72시간 신고 기준과 예외를 구분한다."], "시행령 corpus 시행일 2026-05-19 이후 질문.", "digital_business", as_of_date="2026-07-31"),
+]
+
+
+def main() -> None:
+    if len(CASES) != 49:
+        raise ValueError(f"expected 49 cases, got {len(CASES)}")
+    output = Path("evaluation/datasets/official_core_cases.json")
+    output.write_text(json.dumps(CASES, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote {len(CASES)} cases to {output}")
+
+
+if __name__ == "__main__":
+    main()

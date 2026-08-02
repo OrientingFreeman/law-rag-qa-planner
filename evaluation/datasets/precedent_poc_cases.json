@@ -1,0 +1,347 @@
+{
+  "name": "precedent_poc_cases",
+  "version": "0.3.0",
+  "cases": [
+    {
+      "case_id": "precedent-third-party-vs-outsourcing",
+      "question": "개인정보를 외부 업체에 넘긴 행위가 제3자 제공인지 처리위탁인지 무엇을 기준으로 구별해야 하나?",
+      "category": "precedent_interpretation",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2016do13263"],
+      "expected_case_numbers": ["2016도13263"],
+      "expected_law_id": "011357",
+      "expected_article_nos": ["제17조", "제26조"],
+      "expected_answer_points": [
+        "제3자 제공은 제공받는 자의 업무와 이익을 위한 이전이고, 처리위탁은 위탁자 자신의 업무와 이익을 위한 이전이라는 역할 차이를 설명한다.",
+        "취득 목적과 방법, 대가, 실질적 관리·감독, 정보주체 보호 영향, 실질적 이용 주체를 종합 판단한다.",
+        "위탁 범위에서 관리·감독을 받으며 독자적 이익이 없는 수탁자는 제17조의 제3자에 해당하지 않는다는 판례 법리를 제시한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "법률 제17조·제26조는 규범 근거이고 2016도13263은 두 규정의 경계를 해석하는 적용 근거다."
+    },
+    {
+      "case_id": "precedent-outsourcing-label-insufficient",
+      "question": "계약서 제목을 개인정보 처리위탁이라고 적기만 하면 제3자 제공이 아니라고 볼 수 있나?",
+      "category": "false_premise",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2016do13263"],
+      "expected_case_numbers": ["2016도13263"],
+      "expected_law_id": "011357",
+      "expected_article_nos": ["제17조", "제26조"],
+      "expected_answer_points": [
+        "계약 명칭만으로 제공과 위탁을 확정할 수 없다고 전제를 정정한다.",
+        "개인정보 이전의 목적, 독자적 이익, 대가와 실질적 관리·감독 등을 종합 판단한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "형식적 계약명보다 실질을 종합 판단한다는 2016도13263의 구별 법리를 검증한다."
+    },
+    {
+      "case_id": "precedent-public-personal-data-consent",
+      "question": "인터넷에 이미 공개된 개인정보를 수집해 제공할 때도 언제나 별도 동의를 다시 받아야 하나?",
+      "category": "precedent_interpretation",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2014da235080"],
+      "expected_case_numbers": ["2014다235080"],
+      "expected_law_id": "011357",
+      "expected_article_nos": ["제15조", "제17조"],
+      "expected_answer_points": [
+        "이미 공개된 개인정보도 개인정보자기결정권의 보호대상이라고 설명한다.",
+        "객관적으로 인정되는 공개 동의 범위 안의 처리라면 별도 동의가 필요하지 않을 수 있다고 한정한다.",
+        "정보 성격, 공개 형태·대상·목적, 후속 처리 형태와 대상 범위 변화 등을 종합 판단한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "공개 정보이면 언제나 자유롭게 처리할 수 있다는 과잉 일반화를 방지하는 판례 적용 문항이다."
+    },
+    {
+      "case_id": "precedent-profit-purpose-not-automatic-illegality",
+      "question": "공개된 개인정보를 영리 목적으로 이용했다는 사정만으로 곧바로 위법한가?",
+      "category": "precedent_interpretation",
+      "difficulty": "medium",
+      "expected_precedent_ids": ["supreme-court-2014da235080"],
+      "expected_case_numbers": ["2014다235080"],
+      "expected_law_id": "011357",
+      "expected_article_nos": ["제15조", "제17조"],
+      "expected_answer_points": [
+        "영리 목적만으로 곧바로 위법하다고 단정할 수 없다고 설명한다.",
+        "정보주체의 인격적 이익과 알 권리·표현의 자유·영업의 자유 등 충돌하는 이익을 구체적으로 비교한다.",
+        "구체적 처리 맥락과 공개 동의 범위를 추가 확인해야 한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "2014다235080의 이익형량 법리를 단일 문구로 과잉 단순화하는지 검증한다."
+    },
+    {
+      "case_id": "precedent-ordinary-wage-fixedness-changed",
+      "question": "통상임금이 되려면 임금의 지급 여부와 액수가 사전에 확정되는 고정성이 반드시 있어야 하나?",
+      "category": "temporal_precedent_change",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2020da247190"],
+      "expected_case_numbers": ["2020다247190"],
+      "expected_law_id": "001872",
+      "expected_article_nos": ["제2조", "제56조"],
+      "expected_answer_points": [
+        "2024년 전원합의체 판결이 고정성을 통상임금의 개념적 징표에서 제외했다고 설명한다.",
+        "소정근로 대가성, 정기성, 일률성을 중심으로 판단한다고 설명한다.",
+        "변경 법리의 원칙적 적용 시점이 2024년 12월 19일 이후 통상임금 산정임을 밝힌다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "종전 판례의 고정성 기준을 현행 법리로 잘못 답하는 temporal mismatch를 검증한다."
+    },
+    {
+      "case_id": "precedent-ordinary-wage-conditions-and-bonus",
+      "question": "재직자에게만 주는 임금과 성과급은 모두 통상임금에서 제외되나?",
+      "category": "similar_rule_distinction",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2020da247190"],
+      "expected_case_numbers": ["2020다247190"],
+      "expected_law_id": "001872",
+      "expected_article_nos": ["제2조", "제56조"],
+      "expected_answer_points": [
+        "재직조건만으로 통상임금성이 부정되지는 않는다고 구별한다.",
+        "근무실적에 따른 순수 성과급은 원칙적으로 소정근로 대가성이 부족하다고 설명한다.",
+        "실적과 무관한 최소보장액은 소정근로의 대가로 달리 판단할 수 있다고 설명한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "재직조건부 임금과 성과급을 같은 기준으로 처리하는 과잉 단순화를 검증한다."
+    },
+    {
+      "case_id": "precedent-electronic-finance-accident-scope",
+      "question": "구 전자금융거래법 제9조에서 금융회사가 책임지는 사고는 어떤 경우를 뜻하나?",
+      "category": "precedent_interpretation",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2013da69989-69996"],
+      "expected_case_numbers": ["2013다69989,69996"],
+      "expected_law_id": "010199",
+      "expected_article_nos": ["제2조", "제8조", "제9조"],
+      "expected_answer_points": [
+        "권한 없는 제3자에 의한 거래를 포함한다고 설명한다.",
+        "이용자의 거래지시가 없었는데 거래가 실행된 경우를 포함한다고 설명한다.",
+        "거래지시와 실제 이행 결과가 불일치한 경우를 포함한다고 설명한다.",
+        "구법 해석 판례이므로 현행 조문을 별도 확인해야 한다고 한정한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "전자금융 시스템의 모든 이상을 제9조 사고로 넓히는 오류와 구법 시점 누락을 함께 검증한다."
+    },
+    {
+      "case_id": "precedent-system-error-not-always-accident",
+      "question": "홈트레이딩 시스템 오류를 이용해 내가 직접 주문했고 주문한 그대로 계약이 체결됐다면, 오류가 있었다는 이유만으로 전자금융거래법상 사고인가?",
+      "category": "false_premise",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2013da69989-69996"],
+      "expected_case_numbers": ["2013다69989,69996"],
+      "expected_law_id": "010199",
+      "expected_article_nos": ["제9조"],
+      "expected_answer_points": [
+        "시스템 오류만으로 제9조의 사고라고 단정할 수 없다고 전제를 정정한다.",
+        "이용자가 직접 지시했고 본래 의도한 대로 거래가 실행됐다면 특별한 사정이 없는 한 구법상 사고가 아니라고 설명한다.",
+        "판결이 구 전자금융거래법 제9조에 관한 것임을 명시한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "기술적 오류와 법률상 사고를 구별하는지 검증한다."
+    },
+    {
+      "case_id": "precedent-termination-despite-valid-demand",
+      "question": "채권자가 적법하게 이행을 최고했고 기간이 지났다면 언제나 계약을 해제할 수 있나?",
+      "category": "false_premise",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2013da14880-14897"],
+      "expected_case_numbers": ["2013다14880,14897"],
+      "expected_law_id": "001706",
+      "expected_article_nos": ["제2조", "제544조"],
+      "expected_answer_points": [
+        "적법한 최고와 기간 경과만으로 해제 가능성을 항상 단정할 수 없다고 정정한다.",
+        "채무자가 기간 안에 이행하지 못한 데 정당한 사유가 있으면 신의칙상 해제권 행사가 제한될 수 있다고 설명한다.",
+        "이행지체 전후 사정, 당사자의 태도, 소송 경과 등을 종합 판단한다고 설명한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "민법 제544조의 형식 요건과 판례상 신의칙 제한을 함께 제시하는지 검증한다."
+    },
+    {
+      "case_id": "precedent-termination-justified-delay-facts-needed",
+      "question": "상대방이 돈을 정확히 계산할 자료를 내가 충분히 주지 않았는데도 지급 최고 후 바로 계약을 해제할 수 있을까?",
+      "category": "complex_requirements",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2013da14880-14897"],
+      "expected_case_numbers": ["2013다14880,14897"],
+      "expected_law_id": "001706",
+      "expected_article_nos": ["제2조", "제544조"],
+      "expected_answer_points": [
+        "자료 제공과 협조 정도는 기간 내 불이행의 정당한 사유를 판단하는 요소라고 설명한다.",
+        "당사자의 태도와 계산 가능성 등 구체적 사실을 확인하지 않고 해제 효력을 단정하지 않는다.",
+        "정당한 사유가 인정되면 신의칙상 해제권 행사가 제한될 수 있다고 설명한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "법률 결론을 유보하되 관련 판례상 판단 요소는 제공해야 하는 복합 사실 문항이다."
+    },
+    {
+      "case_id": "precedent-insecurity-defense-requirements",
+      "question": "내가 먼저 이행해야 하는 계약에서 상대방의 반대급부가 불안하면 언제 불안의 항변권으로 이행을 거절할 수 있나?",
+      "category": "complex_requirements",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2021da264673"],
+      "expected_case_numbers": ["2021다264673"],
+      "expected_law_id": "001706",
+      "expected_article_nos": ["제536조"],
+      "expected_answer_points": [
+        "반대급부를 받지 못할 위험 때문에 선이행을 강제하는 것이 공평과 신의칙에 반하는 정도의 현저한 사유가 필요하다고 설명한다.",
+        "상대방의 신용·재산 상태뿐 아니라 양 당사자의 사정을 종합 판단한다고 설명한다.",
+        "계약 당시의 위험 배분과 당사자 의사도 확인해야 한다고 설명한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "막연한 불안과 민법 제536조 제2항의 현저한 사유를 구별하는지 검증한다."
+    },
+    {
+      "case_id": "precedent-foreseeable-risk-not-automatic-defense",
+      "question": "계약할 때부터 예상했던 재개발 지연이 현실화되면 그것만으로 선이행의무를 거절할 수 있나?",
+      "category": "false_premise",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2021da264673"],
+      "expected_case_numbers": ["2021다264673"],
+      "expected_law_id": "001706",
+      "expected_article_nos": ["제536조"],
+      "expected_answer_points": [
+        "계약 당시 예상한 불확실성만으로 불안의 항변권이 자동 인정되지 않는다고 설명한다.",
+        "계약의 선이행 약정과 위험 배분, 사후 확인 행위, 공평과 신의칙을 종합 판단한다고 설명한다.",
+        "현저한 사유가 반드시 계약 후 발생한 사정에만 한정되지는 않는다는 점도 함께 구별한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "사정변경의 시점만으로 결론을 내리지 않고 계약상 의사와 위험 배분을 검토하는지 평가한다."
+    },
+    {
+      "case_id": "precedent-court-submission-not-automatically-lawful",
+      "question": "재판에 필요하다는 이유로 입주민 개인정보가 담긴 자료를 법원에 제출하면 언제나 개인정보 보호법 위반이 아닌가?",
+      "category": "false_premise",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2023do3673"],
+      "expected_case_numbers": ["2023도3673"],
+      "expected_law_id": "011357",
+      "expected_article_nos": ["제17조", "제18조", "제59조"],
+      "expected_answer_points": [
+        "법원 제출이라는 이유만으로 언제나 허용되는 것은 아니라고 전제를 정정한다.",
+        "소송상 증명이나 방어권 행사를 위한 제출은 사회상규에 위배되지 않는 정당행위가 될 수 있다고 설명한다.",
+        "필요 최소한의 제출, 비실명화 가능성, 정보의 민감성·양, 다른 수단과 불가피성을 종합 판단한다.",
+        "개정 전 개인정보 보호법에 관한 판결임을 밝힌다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "재판 제출과 개인정보 보호의 충돌에서 정당행위 판단 요소와 법령 시점을 함께 검증한다."
+    },
+    {
+      "case_id": "precedent-court-submission-minimization",
+      "question": "개인정보가 포함된 증거를 수사기관에 낼 때 정당행위인지 판단하려면 무엇을 확인해야 하나?",
+      "category": "complex_requirements",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2023do3673"],
+      "expected_case_numbers": ["2023도3673"],
+      "expected_law_id": "011357",
+      "expected_article_nos": ["제17조", "제18조", "제59조"],
+      "expected_answer_points": [
+        "자료 보유·제출 경위와 제출 목적·상대방을 확인한다.",
+        "목적 달성에 필요한 최소 정보인지와 비실명화 등 안전조치 가능성을 확인한다.",
+        "정보의 민감성·양과 침해 정도, 대체수단, 불가피성을 종합 판단한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "단일 요건이 아닌 정당행위의 다요소 비교형량을 빠짐없이 설명하는지 검증한다."
+    },
+    {
+      "case_id": "precedent-worker-status-substance-over-label",
+      "question": "도급계약서를 쓰고 개인사업자로 등록했으면 근로기준법상 근로자가 아닌가?",
+      "category": "false_premise",
+      "difficulty": "medium",
+      "expected_precedent_ids": ["supreme-court-2009da51417"],
+      "expected_case_numbers": ["2009다51417"],
+      "expected_law_id": "001872",
+      "expected_article_nos": ["제2조"],
+      "expected_answer_points": [
+        "계약 명칭이나 사업자등록만으로 근로자성을 부정할 수 없다고 정정한다.",
+        "임금을 목적으로 종속적인 관계에서 근로를 제공했는지 실질을 판단한다고 설명한다.",
+        "지휘·감독, 시간·장소 구속, 독립 사업 위험, 계속성·전속성 등을 종합한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "형식적 계약명과 근로관계 실질을 구별하는 대표적인 일상어→법률판단 문항이다."
+    },
+    {
+      "case_id": "precedent-worker-status-no-fixed-salary",
+      "question": "기본급 없이 작업량에 따라 성과급만 받으면 근로자로 인정될 수 없나?",
+      "category": "precedent_interpretation",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2009da51417"],
+      "expected_case_numbers": ["2009다51417"],
+      "expected_law_id": "001872",
+      "expected_article_nos": ["제2조"],
+      "expected_answer_points": [
+        "기본급이나 고정급 부재만으로 근로자성을 쉽게 부정해서는 안 된다고 설명한다.",
+        "보수 형태 외에 실제 지휘·감독과 종속성 등 전체 사정을 종합한다고 설명한다.",
+        "구체적인 업무 수행 실질과 증거가 필요하다고 한정한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "성과급이라는 동일 표현이 통상임금과 근로자성에서 서로 다른 법적 쟁점을 갖는지 구별한다."
+    },
+    {
+      "case_id": "precedent-phishing-gross-negligence-factors",
+      "question": "보이스피싱 금융사고에서 이용자의 중대한 과실은 어떤 기준으로 판단하나?",
+      "category": "complex_requirements",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2013da86489"],
+      "expected_case_numbers": ["2013다86489"],
+      "expected_law_id": "010199",
+      "expected_article_nos": ["제9조"],
+      "expected_answer_points": [
+        "금융사고의 구체적 경위와 범행 수법을 확인한다.",
+        "수법에 대한 일반인의 인식 정도를 고려한다.",
+        "이용자의 직업과 금융거래 경험 등 개별 사정을 종합한다고 설명한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "피해 발생만으로 책임을 단정하지 않고 이용자별 구체적 사정을 제시하는지 검증한다."
+    },
+    {
+      "case_id": "precedent-phishing-victim-not-always-no-fault",
+      "question": "보이스피싱 피해자라면 금융거래정보를 전부 알려줬어도 언제나 책임이 없나?",
+      "category": "false_premise",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2013da86489"],
+      "expected_case_numbers": ["2013다86489"],
+      "expected_law_id": "010199",
+      "expected_article_nos": ["제9조"],
+      "expected_answer_points": [
+        "보이스피싱 피해자라는 이유만으로 중대한 과실이 항상 부정되는 것은 아니라고 정정한다.",
+        "공인인증서 재발급에 필요한 주요 금융정보를 모두 제공한 사정은 중대한 과실 판단 요소라고 설명한다.",
+        "구체적 범행 경위와 이용자 경험을 종합해야 한다고 한정한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "피해자성에 대한 도덕적 직관과 전자금융거래법상 과실 판단을 구별한다."
+    },
+    {
+      "case_id": "precedent-impossibility-original-vs-subsequent",
+      "question": "계약 당시부터 이행할 수 없었던 경우와 계약 후 이행할 수 없게 된 경우의 구제수단은 같은가?",
+      "category": "similar_rule_distinction",
+      "difficulty": "hard",
+      "expected_precedent_ids": ["supreme-court-2016da9643"],
+      "expected_case_numbers": ["2016다9643"],
+      "expected_law_id": "001706",
+      "expected_article_nos": ["제535조", "제537조", "제741조"],
+      "expected_answer_points": [
+        "계약 당시의 원시적 불능과 계약 후의 후발적 불능을 구별한다.",
+        "원시적 불능에서는 원칙적으로 이행청구가 허용되지 않고 부당이득반환이나 계약체결상 과실책임을 검토한다고 설명한다.",
+        "후발적 불능에서는 귀책사유와 위험부담에 따라 급부의무·반대급부 및 반환관계를 검토한다고 설명한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "시점이 다른 두 이행불능 법리를 혼합하지 않고 구제수단을 구별하는지 검증한다."
+    },
+    {
+      "case_id": "precedent-legal-impossibility",
+      "question": "물리적으로는 가능하지만 법률이 금지해서 이행할 수 없다면 민법상 이행불능이 아닌가?",
+      "category": "false_premise",
+      "difficulty": "medium",
+      "expected_precedent_ids": ["supreme-court-2016da9643"],
+      "expected_case_numbers": ["2016다9643"],
+      "expected_law_id": "001706",
+      "expected_article_nos": ["제535조", "제537조"],
+      "expected_answer_points": [
+        "이행불능이 절대적·물리적 불능에 한정되지 않는다고 정정한다.",
+        "거래관념상 이행 실현을 기대할 수 없는 경우도 포함한다고 설명한다.",
+        "법률상 금지로 이행행위를 실현할 수 없는 경우도 이행불능에 포함될 수 있다고 설명한다."
+      ],
+      "expected_abstain": false,
+      "annotation_note": "물리적 불능과 법률상 불능을 구별하는 판례 적용 문항이다."
+    }
+  ]
+}

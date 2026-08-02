@@ -62,6 +62,43 @@ class LegalIntentResponse(BaseModel):
     ontology: dict[str, object] = Field(default_factory=dict)
 
 
+class PrecedentEvidence(BaseModel):
+    rank: int
+    score: float
+    precedent_id: str
+    evidence_type: Literal["precedent"] = "precedent"
+    court: str
+    case_number: str
+    decision_date: date
+    case_name: str
+    holding_summary: str
+    reasoning_summary: str
+    related_statutes: list[dict[str, str]] = Field(default_factory=list)
+    source_url: str
+    legal_context_note: str
+    matched_terms: list[str] = Field(default_factory=list)
+
+
+class EvidenceRouting(BaseModel):
+    statute: bool = True
+    precedent: bool = False
+    precedent_reason: str = ""
+    statute_sufficient: bool = False
+    answer_basis: Literal["statute", "precedent"] = "statute"
+    statute_precedent_alignment: dict[str, object] = Field(default_factory=dict)
+    precedent_linked_statutes: list[dict[str, object]] = Field(default_factory=list)
+
+
+class PrecedentValidation(BaseModel):
+    valid: bool = False
+    answer_supported: bool = False
+    minimum_score: float = 0.35
+    qualified_precedent_ids: list[str] = Field(default_factory=list)
+    qualified_case_numbers: list[str] = Field(default_factory=list)
+    source_urls: list[str] = Field(default_factory=list)
+    support_method: str = "insufficient_precedent_score"
+
+
 class RetrieveResponse(BaseModel):
     question: str
     domain: str
@@ -71,6 +108,9 @@ class RetrieveResponse(BaseModel):
     legal_intent: LegalIntentResponse
     evidence_graph: dict[str, object] = Field(default_factory=dict)
     legal_reasoning_path: dict[str, object] = Field(default_factory=dict)
+    precedent_evidence: list[PrecedentEvidence] = Field(default_factory=list)
+    precedent_validation: PrecedentValidation = Field(default_factory=PrecedentValidation)
+    evidence_routing: EvidenceRouting = Field(default_factory=EvidenceRouting)
 
 
 class RunMetadata(BaseModel):
@@ -213,6 +253,7 @@ class GraphExpansion(BaseModel):
 
 class AnswerResponse(RetrieveResponse):
     answer: str
+    display_answer: str | None = None
     generation_status: Literal["completed", "citation_invalid", "failed", "abstained"]
     provider: str
     model: str
@@ -288,20 +329,23 @@ class EvaluationSummary(BaseModel):
     total_cases: int
     passed_cases: int
     pass_rate: float
-    top1_accuracy: float
-    hit_at_k: float
-    mean_recall_at_k: float
-    mean_reciprocal_rank: float
-    abstention_accuracy: float
-    temporal_accuracy: float
+    top1_accuracy: float | None = None
+    hit_at_k: float | None = None
+    mean_recall_at_k: float | None = None
+    mean_reciprocal_rank: float | None = None
+    abstention_accuracy: float | None = None
+    temporal_accuracy: float | None = None
     citation_accuracy: float | None = None
     average_latency_ms: float
+    error_type_counts: dict[str, int] = {}
 
 
 class EvaluationCaseResult(BaseModel):
     case_id: str
     question: str
     domain: str
+    category: str = "direct_statute_retrieval"
+    difficulty: str = "medium"
     expected_document_ids: list[str]
     retrieved_document_ids: list[str]
     expected_abstain: bool
@@ -314,6 +358,8 @@ class EvaluationCaseResult(BaseModel):
     temporal_valid: bool
     citation_valid: bool | None = None
     generation_status: str | None = None
+    answer_point_coverage: float | None = None
+    error_types: list[str] = []
     latency_ms: float
     passed: bool
 
@@ -321,4 +367,6 @@ class EvaluationCaseResult(BaseModel):
 class EvaluationRunResponse(BaseModel):
     version: str
     summary: EvaluationSummary
+    metrics_by_category: dict[str, dict[str, object]] = {}
+    metrics_by_difficulty: dict[str, dict[str, object]] = {}
     cases: list[EvaluationCaseResult]

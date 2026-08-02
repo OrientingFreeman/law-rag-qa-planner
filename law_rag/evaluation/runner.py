@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from dataclasses import asdict, dataclass
 from datetime import date
@@ -9,12 +10,15 @@ from statistics import mean
 from typing import Any
 
 from law_rag.service import LawRagService
+from law_rag.evaluation.failures import diagnose_failure
 
 
 @dataclass(slots=True)
 class EvaluationCase:
     case_id: str
     question: str
+    category: str = "direct_statute_retrieval"
+    difficulty: str = "medium"
     domain: str = "all"
     top_k: int = 5
     as_of_date: date | None = None
@@ -22,6 +26,8 @@ class EvaluationCase:
     expected_law_id: str | None = None
     expected_article_nos: list[str] | None = None
     expected_abstain: bool = False
+    expected_answer_points: list[str] | None = None
+    annotation_note: str = ""
     evaluate_answer: bool = False
 
     @classmethod
@@ -30,6 +36,8 @@ class EvaluationCase:
         return cls(
             case_id=str(raw["case_id"]),
             question=str(raw["question"]),
+            category=str(raw.get("category", "direct_statute_retrieval")),
+            difficulty=str(raw.get("difficulty", "medium")),
             domain=str(raw.get("domain", "all")),
             top_k=int(raw.get("top_k", 5)),
             as_of_date=parsed_date,
@@ -37,6 +45,8 @@ class EvaluationCase:
             expected_law_id=str(raw["expected_law_id"]) if raw.get("expected_law_id") else None,
             expected_article_nos=list(raw.get("expected_article_nos", [])),
             expected_abstain=bool(raw.get("expected_abstain", False)),
+            expected_answer_points=list(raw.get("expected_answer_points", [])),
+            annotation_note=str(raw.get("annotation_note", "")),
             evaluate_answer=bool(raw.get("evaluate_answer", False)),
         )
 
@@ -50,6 +60,8 @@ class CaseResult:
     case_id: str
     question: str
     domain: str
+    category: str
+    difficulty: str
     expected_document_ids: list[str]
     expected_law_id: str | None
     expected_article_nos: list[str]
@@ -65,6 +77,8 @@ class CaseResult:
     temporal_valid: bool
     citation_valid: bool | None
     generation_status: str | None
+    answer_point_coverage: float | None
+    error_types: list[str]
     latency_ms: float
     passed: bool
 
@@ -79,6 +93,26 @@ class EvaluationRunner:
     @staticmethod
     def _article_key(item: dict[str, Any]) -> str:
         return f"{item.get('law_id', '')}:{item.get('article_no', '')}"
+
+    @staticmethod
+    def _answer_point_coverage(answer: object, points: list[str]) -> float | None:
+        """Return a conservative lexical completeness signal for generated answers.
+
+        Retrieval-only cases return ``None``. This is a screening metric rather
+        than a semantic correctness judgment; the report must label it as such.
+        """
+        if not isinstance(answer, str) or not answer.strip() or not points:
+            return None
+        answer_tokens = set(re.findall(r"[0-9A-Za-z가-힣]+", answer.lower()))
+        covered = 0
+        for point in points:
+            tokens = {
+                token for token in re.findall(r"[0-9A-Za-z가-힣]+", point.lower())
+                if len(token) >= 2 and token not in {"한다", "있다", "확인한다", "밝힌다", "구분한다"}
+            }
+            if tokens and len(tokens & answer_tokens) / len(tokens) >= 0.5:
+                covered += 1
+        return round(covered / len(points), 4)
 
     def run_case(self, case: EvaluationCase) -> CaseResult:
         started = time.perf_counter()
@@ -133,15 +167,20 @@ class EvaluationRunner:
             else None
         )
         generation_status = response.get("generation_status")
+        answer_point_coverage = self._answer_point_coverage(
+            response.get("answer"), list(case.expected_answer_points or [])
+        ) if case.evaluate_answer else None
 
         retrieval_pass = actual_abstain if case.expected_abstain else bool(matched)
         citation_pass = citation_valid is not False
         passed = retrieval_pass and abstention_correct and temporal_valid and citation_pass
 
-        return CaseResult(
+        result = CaseResult(
             case_id=case.case_id,
             question=case.question,
             domain=case.domain,
+            category=case.category,
+            difficulty=case.difficulty,
             expected_document_ids=list(case.expected_document_ids or []),
             expected_law_id=case.expected_law_id,
             expected_article_nos=list(case.expected_article_nos or []),
@@ -157,34 +196,59 @@ class EvaluationRunner:
             temporal_valid=temporal_valid,
             citation_valid=citation_valid,
             generation_status=str(generation_status) if generation_status is not None else None,
+            answer_point_coverage=answer_point_coverage,
+            error_types=[],
             latency_ms=round(latency_ms, 3),
             passed=passed,
         )
+        # Diagnostics are independent from the legacy boolean pass criterion.
+        # For example, a case may retrieve every gold article and still be
+        # flagged as over_retrieval for later qualitative review.
+        result.error_types = diagnose_failure(result.to_dict())
+        return result
+
+    @staticmethod
+    def _metric_block(results: list[CaseResult]) -> dict[str, Any]:
+        retrieval = [
+            row for row in results
+            if row.expected_document_ids or (row.expected_law_id and row.expected_article_nos)
+        ]
+        answer_rows = [row for row in results if row.citation_valid is not None]
+        dated_rows = [row for row in results if row.category == "temporal_revision"]
+        return {
+            "total_cases": len(results),
+            "passed_cases": sum(row.passed for row in results),
+            "pass_rate": round(mean(row.passed for row in results), 4) if results else 0.0,
+            "top1_accuracy": round(mean(row.top1_hit for row in retrieval), 4) if retrieval else None,
+            "hit_at_k": round(mean(row.hit_at_k for row in retrieval), 4) if retrieval else None,
+            "mean_recall_at_k": round(mean(row.recall_at_k for row in retrieval), 4) if retrieval else None,
+            "mean_reciprocal_rank": round(mean(row.reciprocal_rank for row in retrieval), 4) if retrieval else None,
+            "abstention_accuracy": round(mean(row.abstention_correct for row in results), 4) if results else None,
+            "temporal_accuracy": round(mean(row.temporal_valid for row in dated_rows), 4) if dated_rows else None,
+            "citation_accuracy": round(mean(bool(row.citation_valid) for row in answer_rows), 4) if answer_rows else None,
+            "average_latency_ms": round(mean(row.latency_ms for row in results), 3) if results else 0.0,
+        }
+
+    def _grouped_metrics(self, results: list[CaseResult], field: str) -> dict[str, dict[str, Any]]:
+        values = sorted({str(getattr(row, field)) for row in results})
+        return {
+            value: self._metric_block([row for row in results if str(getattr(row, field)) == value])
+            for value in values
+        }
 
     def run(self, cases: list[EvaluationCase]) -> dict[str, Any]:
         case_results = [self.run_case(case) for case in cases]
-        total = len(case_results)
-        retrieval_cases = [
-            r for r in case_results
-            if r.expected_document_ids or (r.expected_law_id and r.expected_article_nos)
-        ]
-        answer_cases = [r for r in case_results if r.citation_valid is not None]
-        summary = {
-            "total_cases": total,
-            "passed_cases": sum(r.passed for r in case_results),
-            "pass_rate": round(sum(r.passed for r in case_results) / total, 4) if total else 0.0,
-            "top1_accuracy": round(mean(r.top1_hit for r in retrieval_cases), 4) if retrieval_cases else 0.0,
-            "hit_at_k": round(mean(r.hit_at_k for r in retrieval_cases), 4) if retrieval_cases else 0.0,
-            "mean_recall_at_k": round(mean(r.recall_at_k for r in retrieval_cases), 4) if retrieval_cases else 0.0,
-            "mean_reciprocal_rank": round(mean(r.reciprocal_rank for r in retrieval_cases), 4) if retrieval_cases else 0.0,
-            "abstention_accuracy": round(mean(r.abstention_correct for r in case_results), 4) if total else 0.0,
-            "temporal_accuracy": round(mean(r.temporal_valid for r in case_results), 4) if total else 0.0,
-            "citation_accuracy": round(mean(bool(r.citation_valid) for r in answer_cases), 4) if answer_cases else None,
-            "average_latency_ms": round(mean(r.latency_ms for r in case_results), 3) if total else 0.0,
-        }
+        summary = self._metric_block(case_results)
+        error_counts: dict[str, int] = {}
+        for row in case_results:
+            for error_type in row.error_types:
+                error_counts[error_type] = error_counts.get(error_type, 0) + 1
+        summary["error_type_counts"] = dict(sorted(error_counts.items()))
         return {
-            "version": "1.0.0",
+            "version": "1.1.0",
             "summary": summary,
+            "metrics_by_category": self._grouped_metrics(case_results, "category"),
+            "metrics_by_difficulty": self._grouped_metrics(case_results, "difficulty"),
             "cases": [result.to_dict() for result in case_results],
         }
 

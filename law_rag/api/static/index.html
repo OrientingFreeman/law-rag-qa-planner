@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="법무·컴플라이언스를 위한 근거 기반 법령 AI 포트폴리오 데모">
   <title>근거 기반 법령 AI 데모</title>
-  <link rel="stylesheet" href="/static/app.css?v=4.11.4">
+  <link rel="stylesheet" href="/static/app.css?v=4.13.4">
 </head>
 <body>
 <header class="site-header">
@@ -48,12 +48,28 @@
     <section id="qa-panel" class="panel active">
       <form id="query-form" class="query-card">
         <div class="field-full"><label for="question">법률 질문</label><textarea id="question" rows="4" required maxlength="1000" placeholder="예: 개인정보 처리위탁 시 필요한 조치는 무엇인가요?"></textarea></div>
-        <div class="sample-title">기업 법무·법률 데이터 예시 질문</div>
-        <div class="sample-questions">
-          <button type="button" data-question="개인정보 수집 동의 요건은 무엇인가요?">개인정보 수집 동의</button>
-          <button type="button" data-question="개인정보 처리위탁 시 필요한 조치는 무엇인가요?">개인정보 처리위탁</button>
-          <button type="button" data-question="법인의 설립등기는 어디에 해야 하나요?">법인 설립등기 장소</button>
-          <button type="button" data-question="근로기준법상 연장근로 한도는 어떻게 되나요?">연장근로 한도</button>
+        <div class="sample-title">검증 시나리오를 선택하면 질문과 검색 도메인이 함께 설정됩니다.</div>
+        <div class="sample-catalog">
+          <section class="sample-group statute-samples">
+            <div class="sample-group-heading"><span>Statute</span><div><h3>법령 직접 확인</h3><p>조문이 직접 규범 근거가 되는 질문</p></div></div>
+            <div class="sample-questions">
+              <button type="button" data-domain="digital_business" data-question="개인정보 수집 동의 요건은 무엇인가요?">개인정보 수집 동의</button>
+              <button type="button" data-domain="digital_business" data-question="개인정보 처리위탁 시 필요한 조치는 무엇인가요?">개인정보 처리위탁</button>
+              <button type="button" data-domain="labor" data-question="근로기준법상 연장근로 한도는 어떻게 되나요?">연장근로 한도</button>
+              <button type="button" data-domain="electronic_finance" data-question="전자금융거래에 오류가 있으면 이용자는 어떤 조치를 요구할 수 있나요?">전자금융 오류 정정</button>
+            </div>
+          </section>
+          <section class="sample-group precedent-samples">
+            <div class="sample-group-heading"><span>Precedent</span><div><h3>판례 해석·적용</h3><p>조문의 의미·경계·적용 시점을 묻는 질문</p></div></div>
+            <div class="sample-questions">
+              <button type="button" data-domain="labor" data-question="통상임금이 되려면 고정성이 반드시 있어야 하나요?">통상임금과 고정성</button>
+              <button type="button" data-domain="labor" data-question="도급계약서를 쓰고 개인사업자로 등록했으면 근로기준법상 근로자가 아닌가?">개인사업자의 근로자성</button>
+              <button type="button" data-domain="digital_business" data-question="재판에 필요하다는 이유로 입주민 개인정보가 담긴 자료를 법원에 제출하면 언제나 개인정보 보호법 위반이 아닌가?">법원 제출 개인정보</button>
+              <button type="button" data-domain="electronic_finance" data-question="보이스피싱 금융사고에서 이용자의 중대한 과실은 어떤 기준으로 판단하나?">보이스피싱 중대한 과실</button>
+              <button type="button" data-domain="civil_transactions" data-question="계약 당시부터 이행할 수 없었던 경우와 계약 후 이행할 수 없게 된 경우의 구제수단은 같은가?">원시적·후발적 이행불능</button>
+              <button type="button" data-domain="digital_business" data-question="개인정보를 외부 업체에 넘긴 행위가 제3자 제공인지 처리위탁인지 무엇을 기준으로 구별해야 하나?">제3자 제공·처리위탁</button>
+            </div>
+          </section>
         </div>
         <div class="form-grid">
           <div><label for="domain">검색 도메인</label><select id="domain"><option value="all">전체 법령</option></select></div>
@@ -73,8 +89,12 @@
           <div id="answer-content" class="structured-answer"></div>
           <div id="citation-status" class="citation-status"></div>
         </article>
-        <div class="subheading"><h3>근거 법령</h3><p>검색 점수와 시행일, 공식 출처를 함께 표시합니다.</p></div>
+        <div class="subheading"><h3>규범 근거 · 법령</h3><p>일반적 법적 기준을 정하는 조문과 공식 출처입니다.</p></div>
         <div id="result-list" class="result-list"></div>
+        <section id="precedent-section" hidden>
+          <div class="subheading precedent-heading"><h3>해석·적용 근거 · 판례</h3><p id="precedent-routing-note">질문의 해석·적용 쟁점과 관련된 검증 판례입니다.</p></div>
+          <div id="precedent-list" class="result-list precedent-list"></div>
+        </section>
         <details id="prompt-panel" class="prompt-panel" hidden><summary>근거 기반 생성 프롬프트 확인</summary><pre id="prompt-content"></pre></details>
       </section>
     </section>
@@ -117,6 +137,6 @@
   </section>
 </main>
 <footer><strong>법령 AI 포트폴리오 데모</strong><span>비공식 채용 포트폴리오 · 법률 자문 아님</span></footer>
-<script src="/static/app.js?v=4.11.4" defer></script>
+<script src="/static/app.js?v=4.13.4" defer></script>
 </body>
 </html>

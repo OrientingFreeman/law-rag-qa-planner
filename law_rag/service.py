@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 import re
@@ -9,7 +10,13 @@ from time import perf_counter
 from law_rag import __version__
 from law_rag.confidence import score_confidence
 from law_rag.domain.config import DomainRegistry
+from law_rag.domain.models import SearchResult
 from law_rag.generation.answer import generate_grounded_answer
+from law_rag.generation.display_answer import build_display_answer
+from law_rag.generation.precedent_answer import (
+    generate_precedent_grounded_answer,
+    validate_precedent_evidence,
+)
 from law_rag.generation.analysis import (
     build_answer_structure,
     build_related_provisions,
@@ -23,6 +30,7 @@ from law_rag.ingestion.json_source import JsonLegalDocumentSource
 from law_rag.observability import JsonlRunLogger
 from law_rag.retrieval.aggregation import aggregate_evidence
 from law_rag.retrieval.hybrid import HybridRetriever
+from law_rag.retrieval.precedent import PrecedentRetriever
 from law_rag.retrieval.ontology_filter import (
     rerank_with_ontology,
     ensure_compound_concept_coverage,
@@ -40,12 +48,14 @@ class LawRagService:
         data_path: str | Path = "data/legal_corpus.json",
         domains_path: str | Path = "domains",
         llm_provider: LlmProvider | None = None,
+        precedent_data_path: str | Path = "data/precedent_poc.json",
     ) -> None:
         self.data_path = Path(data_path)
         self.domains_path = Path(domains_path)
         self.provisions = JsonLegalDocumentSource().load(self.data_path)
         self.registry = DomainRegistry(self.domains_path).load_all()
         self.retriever = HybridRetriever(self.provisions)
+        self.precedent_retriever = PrecedentRetriever(precedent_data_path)
         self.law_graph = LawGraph(self.provisions)
         self.reasoning_builder = ReasoningChainBuilder()
         self.intent_planner = LegalIntentPlanner()
@@ -127,6 +137,30 @@ class LawRagService:
         aggregated = aggregate_evidence(raw_results, self.provisions, limit=max(requested_top_k * 3, requested_top_k))
         results = annotate_ontology_metadata(plan, aggregated)
         results = filter_graph_evidence(plan, results)[:requested_top_k]
+        allowed_laws = set(domain.laws) if domain else None
+        precedent = self.precedent_retriever.retrieve(
+            normalized_question, top_k=min(3, requested_top_k), allowed_laws=allowed_laws
+        )
+        precedent_validation = validate_precedent_evidence(precedent["results"])
+        statute_precedent_alignment = self._statute_precedent_alignment(
+            results, precedent["results"], precedent_validation
+        )
+        precedent_linked_results = []
+        if statute_precedent_alignment["checked"] and not statute_precedent_alignment["aligned"]:
+            precedent_linked_results = self._precedent_linked_results(
+                precedent["results"], precedent_validation, as_of_date=as_of_date
+            )
+            linked_keys = {
+                (row.provision.law_id, row.provision.article_no.replace(" ", ""))
+                for row in precedent_linked_results
+            }
+            results = [
+                *precedent_linked_results,
+                *[
+                    row for row in results
+                    if (row.provision.law_id, row.provision.article_no.replace(" ", "")) not in linked_keys
+                ],
+            ][:requested_top_k]
         for rank, result in enumerate(results, 1):
             result.rank = rank
         evidence_graph = build_evidence_graph(plan, results)
@@ -134,19 +168,186 @@ class LawRagService:
         # 높으면 답변 생성을 허용한다. 기존 0.80 임계값은 조문 표현과 질문 표현이
         # 다른 정상 질의까지 과도하게 유보했다. 0.70 미만의 저신뢰 후보는 계속
         # 답변 근거로 채택하지 않는다.
-        abstain = (not results) or (
+        statute_abstain = (not results) or (
             (not evidence_graph.get("issues"))
             and results[0].score < 0.70
         )
+        if statute_precedent_alignment["checked"] and not statute_precedent_alignment["aligned"]:
+            statute_abstain = True
+        precedent_supported = bool(precedent_validation["answer_supported"])
+        abstain = statute_abstain and not precedent_supported
+        if abstain:
+            evidence_status = self._evidence_status(results, abstain=True)
+        elif statute_abstain and precedent_supported:
+            evidence_status = {
+                "level": "partial",
+                "message": "직접 법령 검색은 제한적이지만 공식 판례의 검증 요약이 질문의 해석 쟁점을 충분히 뒷받침합니다.",
+            }
+        else:
+            evidence_status = self._evidence_status(results, abstain=False)
         return {
             "question": normalized_question,
             "domain": domain_id or "all",
             "results": [self._serialize_result(result) for result in results],
             "abstain": abstain,
-            "evidence_status": self._evidence_status(results, abstain=abstain),
+            "evidence_status": evidence_status,
             "legal_intent": plan.to_dict(),
             "evidence_graph": evidence_graph,
             "legal_reasoning_path": evidence_graph.get("reasoning_path", {}),
+            "precedent_evidence": precedent["results"],
+            "precedent_validation": precedent_validation,
+            "evidence_routing": {
+                "statute": True,
+                "precedent": bool(precedent["routed"]),
+                "precedent_reason": precedent["reason"],
+                "statute_sufficient": not statute_abstain,
+                "answer_basis": "precedent" if statute_abstain and precedent_supported else "statute",
+                "statute_precedent_alignment": statute_precedent_alignment,
+                "precedent_linked_statutes": [
+                    {
+                        "document_id": row.provision.document_id,
+                        "law_id": row.provision.law_id,
+                        "law_name": row.provision.law_name,
+                        "article_no": row.provision.article_no,
+                    }
+                    for row in precedent_linked_results
+                ],
+            },
+        }
+
+    def _precedent_linked_results(
+        self,
+        precedents,
+        validation,
+        *,
+        as_of_date: date | None,
+    ) -> list[SearchResult]:
+        """Materialize verified precedent-to-statute links from the local corpus.
+
+        Only substantive provisions already present in the official corpus are
+        returned. These rows are provenance-labelled and never presented as
+        ordinary lexical/semantic hits.
+        """
+        qualified = set(map(str, validation.get("qualified_precedent_ids", [])))
+        primary = next(
+            (row for row in precedents if str(row.get("precedent_id")) in qualified),
+            None,
+        )
+        if not primary:
+            return []
+        precedent_score = float(primary.get("score", 0.0))
+        output: list[SearchResult] = []
+        seen: set[tuple[str, str]] = set()
+        for link in primary.get("related_statutes", []):
+            law_id = str(link.get("law_id", ""))
+            article_no = str(link.get("article_no", "")).replace(" ", "")
+            key = (law_id, article_no)
+            if not law_id or not article_no or key in seen:
+                continue
+            seen.add(key)
+            matches = [
+                provision for provision in self.provisions
+                if provision.law_id == law_id
+                and provision.article_no.replace(" ", "") == article_no
+                and len(re.sub(r"\s+", "", provision.text)) >= 20
+                and (
+                    as_of_date is None
+                    or (
+                        (provision.effective_from is None or provision.effective_from <= as_of_date)
+                        and (provision.effective_to is None or as_of_date <= provision.effective_to)
+                    )
+                )
+            ]
+            if not matches:
+                continue
+            matches.sort(key=lambda provision: (
+                provision.paragraph_no or "",
+                provision.item_no or "",
+                provision.subitem_no or "",
+            ))
+            representative = matches[0]
+            text_parts: list[str] = []
+            for provision in matches:
+                text = provision.text.strip()
+                if text and text not in text_parts:
+                    text_parts.append(text)
+            merged = replace(
+                representative,
+                document_id=f"{law_id}:{article_no}",
+                paragraph_no=None,
+                item_no=None,
+                subitem_no=None,
+                text="\n".join(text_parts),
+            )
+            output.append(SearchResult(
+                provision=merged,
+                score=precedent_score,
+                lexical_score=0.0,
+                semantic_score=0.0,
+                retrieval_reason="precedent_linked",
+                relation_score=precedent_score,
+                evidence_scope="article",
+                sub_provisions=[
+                    {
+                        "document_id": provision.document_id,
+                        "citation": provision.citation_label(),
+                        "text": provision.text,
+                    }
+                    for provision in matches
+                ],
+                evidence_role="contextual",
+            ))
+        return output
+
+    @staticmethod
+    def _statute_precedent_alignment(results, precedents, validation) -> dict[str, object]:
+        """Check whether statute Top-1 matches the verified precedent's statute links.
+
+        A mismatch does not delete retrieval output. It prevents those candidates
+        from being promoted to direct normative evidence when a verified precedent
+        provides a more specific issue-to-statute mapping.
+        """
+        qualified = set(map(str, validation.get("qualified_precedent_ids", [])))
+        primary = next(
+            (row for row in precedents if str(row.get("precedent_id")) in qualified),
+            None,
+        )
+        linked = [] if not primary else [
+            {
+                "law_id": str(item.get("law_id", "")),
+                "law_name": str(item.get("law_name", "")),
+                "article_no": str(item.get("article_no", "")).replace(" ", ""),
+            }
+            for item in primary.get("related_statutes", [])
+            if item.get("law_id") and item.get("article_no")
+        ]
+        if not results or not linked:
+            return {
+                "checked": False,
+                "aligned": True,
+                "top1": None,
+                "precedent_id": str(primary.get("precedent_id")) if primary else None,
+                "linked_statutes": linked,
+                "reason": "검증 판례 또는 연결 조문이 없어 정합성 가드를 적용하지 않았습니다.",
+            }
+        top = results[0].provision
+        top_key = (str(top.law_id), str(top.article_no).replace(" ", ""))
+        aligned = any((item["law_id"], item["article_no"]) == top_key for item in linked)
+        return {
+            "checked": True,
+            "aligned": aligned,
+            "top1": {
+                "law_id": str(top.law_id),
+                "law_name": str(top.law_name),
+                "article_no": str(top.article_no).replace(" ", ""),
+            },
+            "precedent_id": str(primary.get("precedent_id")),
+            "linked_statutes": linked,
+            "reason": (
+                "법령 Top-1이 검증 판례의 연결 조문과 일치합니다."
+                if aligned else
+                "법령 Top-1이 검증 판례의 연결 조문과 불일치하여 법령 결과를 검색 후보로 강등했습니다."
+            ),
         }
 
     def query(
@@ -174,7 +375,12 @@ class LawRagService:
         reasoning_chain = self.reasoning_builder.build(results, expanded)
         reasoning_path = response.get("legal_reasoning_path", {})
         graph_ids = [str(node.get("document_id")) for node in response.get("evidence_graph", {}).get("nodes", [])]
-        candidates = {row.provision.document_id: row for row in [*results, *expanded]}
+        linked = self._precedent_linked_results(
+            response.get("precedent_evidence", []),
+            response.get("precedent_validation", {}),
+            as_of_date=as_of_date,
+        )
+        candidates = {row.provision.document_id: row for row in [*results, *expanded, *linked]}
         authoritative_results = [candidates[doc_id] for doc_id in graph_ids if doc_id in candidates]
         if not authoritative_results:
             authoritative_results = results
@@ -215,24 +421,45 @@ class LawRagService:
         reasoning_chain = self.reasoning_builder.build(results, expanded)
         reasoning_path = response.get("legal_reasoning_path", {})
         graph_ids = [str(node.get("document_id")) for node in response.get("evidence_graph", {}).get("nodes", [])]
-        candidates = {row.provision.document_id: row for row in [*results, *expanded]}
+        linked = self._precedent_linked_results(
+            response.get("precedent_evidence", []),
+            response.get("precedent_validation", {}),
+            as_of_date=as_of_date,
+        )
+        candidates = {row.provision.document_id: row for row in [*results, *expanded, *linked]}
         reasoning_results = [candidates[doc_id] for doc_id in graph_ids if doc_id in candidates]
         if not reasoning_results:
             reasoning_results = results
         for rank, row in enumerate(reasoning_results, 1):
             row.rank = rank
-        generation_results = [] if response.get("abstain") else reasoning_results
-        generated = generate_grounded_answer(
-            str(response["question"]),
-            generation_results,
-            self.llm_provider,
-            reasoning_chain=reasoning_chain,
-            legal_intent=response.get("legal_intent"),
-            legal_reasoning_path=reasoning_path,
+        precedent_only = (
+            response.get("evidence_routing", {}).get("answer_basis") == "precedent"
+            and response.get("precedent_validation", {}).get("answer_supported") is True
         )
+        if precedent_only:
+            generated = generate_precedent_grounded_answer(
+                response.get("precedent_evidence", []),
+                response.get("precedent_validation", {}),
+            )
+        else:
+            generation_results = [] if response.get("abstain") else reasoning_results
+            generated = generate_grounded_answer(
+                str(response["question"]),
+                generation_results,
+                self.llm_provider,
+                reasoning_chain=reasoning_chain,
+                legal_intent=response.get("legal_intent"),
+                legal_reasoning_path=reasoning_path,
+            )
         response.update(
             {
                 "answer": generated.answer,
+                "display_answer": build_display_answer(
+                    generated.answer,
+                    generated.composition,
+                    precedents=response.get("precedent_evidence", []),
+                    precedent_only=precedent_only,
+                ),
                 "generation_status": generated.generation_status,
                 "provider": generated.provider,
                 "model": generated.model,
@@ -269,10 +496,11 @@ class LawRagService:
                 "answer_structure": build_answer_structure(str(response["question"]), results),
                 "related_provisions": build_related_provisions(results),
                 "retrieval_explanation": build_retrieval_explanation(results),
-                "confidence": score_confidence(
+                "confidence": self._answer_confidence(
                     reasoning_results,
-                    generated.citation_validation.get("valid"),
-                    float(generated.grounding_validation.get("coverage", 0.0)),
+                    generated,
+                    response.get("precedent_evidence", []),
+                    precedent_only=precedent_only,
                 ),
                 "metadata": self._metadata(started),
             }
@@ -290,6 +518,35 @@ class LawRagService:
             "latency_ms": response["metadata"]["latency_ms"],
         })
         return response
+
+    @staticmethod
+    def _answer_confidence(reasoning_results, generated, precedents, *, precedent_only: bool):
+        if generated.generation_status == "abstained":
+            return {
+                "score": 0.0,
+                "level": "low",
+                "reasons": ["answer_abstained", "insufficient_evidence"],
+                "components": {"retrieval": 0.0, "coverage": 0.0, "citation": 0.0, "grounding": 0.0},
+            }
+        if not precedent_only:
+            return score_confidence(
+                reasoning_results,
+                generated.citation_validation.get("valid"),
+                float(generated.grounding_validation.get("coverage", 0.0)),
+            )
+        top_score = float(precedents[0].get("score", 0.0)) if precedents else 0.0
+        value = round(min(0.79, 0.45 + top_score * 0.4), 4)
+        return {
+            "score": value,
+            "level": "medium" if value >= 0.55 else "low",
+            "reasons": ["verified_precedent", "official_source", "statute_retrieval_limited"],
+            "components": {
+                "retrieval": round(top_score, 4),
+                "coverage": 1.0,
+                "citation": 1.0,
+                "grounding": 1.0,
+            },
+        }
 
     def list_domains(self) -> list[dict[str, object]]:
         return [

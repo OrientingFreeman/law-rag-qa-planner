@@ -36,11 +36,15 @@ def create_app(
     *,
     data_path: str | Path | None = None,
     domains_path: str | Path | None = None,
+    precedent_data_path: str | Path | None = None,
     evaluation_dataset_path: str | Path | None = None,
     evaluation_report_path: str | Path | None = None,
 ) -> FastAPI:
     resolved_data_path = Path(data_path or os.getenv("LAW_RAG_DATA_PATH", "data/legal_corpus.json"))
     resolved_domains_path = Path(domains_path or os.getenv("LAW_RAG_DOMAINS_PATH", "domains"))
+    resolved_precedent_path = Path(
+        precedent_data_path or os.getenv("LAW_RAG_PRECEDENT_DATA_PATH", "data/precedent_poc.json")
+    )
     resolved_dataset_path = Path(
         evaluation_dataset_path
         or os.getenv("LAW_RAG_EVALUATION_DATASET", "evaluation/datasets/core_cases.json")
@@ -63,6 +67,7 @@ def create_app(
         app.state.law_rag_service = LawRagService(
             data_path=resolved_data_path,
             domains_path=resolved_domains_path,
+            precedent_data_path=resolved_precedent_path,
         )
         app.state.evaluation_dataset_path = resolved_dataset_path
         app.state.evaluation_report_path = resolved_report_path

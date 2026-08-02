@@ -31,18 +31,36 @@ class FailureCaseLogger:
 
 
 def diagnose_failure(case: dict[str, Any]) -> list[str]:
+    """Classify failures using stable, machine-observable evaluation signals."""
     reasons: list[str] = []
     if not case.get("abstention_correct", True):
-        reasons.append("abstention_mismatch")
+        reasons.append("incorrect_abstention")
     if not case.get("temporal_valid", True):
-        reasons.append("temporal_filter_failure")
+        reasons.append("temporal_mismatch")
     if case.get("citation_valid") is False:
-        reasons.append("citation_validation_failure")
-    if not case.get("expected_abstain", False) and not case.get("hit_at_k", False):
-        reasons.append("expected_evidence_not_retrieved")
-    if case.get("expected_abstain", False) and not case.get("actual_abstain", False):
-        reasons.append("unexpected_evidence_retrieved")
-    return reasons or ["evaluation_failure"]
+        reasons.append("unsupported_citation")
+
+    expected_abstain = bool(case.get("expected_abstain", False))
+    if not expected_abstain:
+        hit_at_k = bool(case.get("hit_at_k", False))
+        top1_hit = bool(case.get("top1_hit", False))
+        recall = float(case.get("recall_at_k", 0.0) or 0.0)
+        if not hit_at_k:
+            reasons.append("retrieval_miss")
+        elif not top1_hit:
+            reasons.append("wrong_top1")
+        if 0.0 < recall < 1.0:
+            reasons.append("under_retrieval")
+
+        expected_count = len(case.get("expected_article_nos", []) or case.get("expected_document_ids", []))
+        actual_count = len(case.get("retrieved_articles", []) or case.get("retrieved_document_ids", []))
+        if expected_count and recall >= 1.0 and actual_count > expected_count:
+            reasons.append("over_retrieval")
+
+    coverage = case.get("answer_point_coverage")
+    if coverage is not None and float(coverage) < 1.0:
+        reasons.append("incomplete_answer")
+    return list(dict.fromkeys(reasons))
 
 
 def failure_payload(case: dict[str, Any], *, dataset: str | None = None) -> dict[str, Any]:
@@ -69,6 +87,9 @@ def failure_payload(case: dict[str, Any], *, dataset: str | None = None) -> dict
             "recall_at_k": case.get("recall_at_k", 0.0),
             "reciprocal_rank": case.get("reciprocal_rank", 0.0),
             "citation_valid": case.get("citation_valid"),
+            "answer_point_coverage": case.get("answer_point_coverage"),
             "latency_ms": case.get("latency_ms", 0.0),
         },
+        "category": case.get("category"),
+        "difficulty": case.get("difficulty"),
     }

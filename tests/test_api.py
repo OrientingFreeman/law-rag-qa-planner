@@ -77,8 +77,15 @@ def test_web_ui_and_static_assets_are_served():
         internal_evaluation = api.get("/internal/evaluation")
         evaluation_script = api.get("/static/evaluation.js")
     assert home.status_code == 200
-    assert "기업 법무·컴플라이언스를 위한" in home.text
+    assert "법무·컴플라이언스를 위한" in home.text
     assert "평가 리포트" not in home.text
+    assert "해석·적용 근거 · 판례" in home.text
+    assert "precedent_evidence" in script.text
+    assert "법령 직접 확인" in home.text
+    assert "판례 해석·적용" in home.text
+    assert home.text.count("data-question=") == 10
+    assert 'data-domain="electronic_finance"' in home.text
+    assert "button.dataset.domain" in script.text
     assert home.headers["cache-control"] == "no-cache, no-store, must-revalidate"
     assert script.status_code == 200
     assert "run-evaluation" not in script.text
@@ -129,6 +136,62 @@ def test_v1_answer_metadata_confidence_and_logging(tmp_path, monkeypatch):
     assert list((tmp_path / "logs").glob("*.jsonl"))
 
 
+def test_answer_exposes_routed_precedent_evidence_without_mixing_results(monkeypatch):
+    monkeypatch.setenv("LAW_RAG_LLM_PROVIDER", "deterministic")
+    with client() as api:
+        response = api.post("/answer", json={
+            "question": "통상임금이 되려면 고정성이 반드시 있어야 하나요?",
+            "domain": "labor",
+            "top_k": 3,
+        })
+    assert response.status_code == 200
+    body = response.json()
+    assert body["evidence_routing"]["precedent"] is True
+    assert body["precedent_evidence"][0]["case_number"] == "2020다247190"
+    assert all("precedent_id" not in row for row in body["results"])
+    assert body["abstain"] is False
+    assert body["generation_status"] == "completed"
+    assert body["provider"] == "verified-precedent"
+    assert body["evidence_routing"]["answer_basis"] == "precedent"
+    assert body["precedent_validation"]["valid"] is True
+    assert "고정성을 통상임금의 개념적 징표에서 제외" in body["answer"]
+    assert "2020다247190" in body["answer"]
+    assert body["display_answer"] != body["answer"]
+    assert "판단 기준" in body["display_answer"]
+    assert "사안 적용" in body["display_answer"]
+    assert body["display_answer"].count("2020다247190") == 1
+
+
+def test_web_answer_is_compact_without_changing_audited_answer(monkeypatch):
+    monkeypatch.setenv("LAW_RAG_LLM_PROVIDER", "deterministic")
+    with TestClient(create_app(data_path="data/legal_corpus.json", domains_path="domains")) as api:
+        response = api.post("/answer", json={
+            "question": "개인정보 처리위탁 시 필요한 조치는 무엇인가요?",
+            "domain": "digital_business",
+            "top_k": 3,
+        })
+    assert response.status_code == 200
+    body = response.json()
+    display = body["display_answer"]
+    assert display != body["answer"]
+    positions = [display.find(title) for title in ("결론", "판단 기준", "사안 적용", "유보사항")]
+    assert all(position >= 0 for position in positions)
+    assert positions == sorted(positions)
+    assert len(display) < len(body["answer"])
+    assert display.count("개인정보 보호법 제26조") <= 1
+    assert "관련 판례는" in display
+
+
+def test_web_ui_prefers_compact_display_answer():
+    with client() as api:
+        script = api.get("/static/app.js")
+    assert script.status_code == 200
+    assert "data.display_answer || data.answer" in script.text
+    assert "법령 Top-1과 판례 연결 조문 불일치 감지" in script.text
+    assert "판례 연결 조문" in script.text
+    assert "연결 출처 검증 판례" in script.text
+
+
 def test_unknown_ontology_issue_abstains():
     from law_rag.service import LawRagService
 
@@ -142,6 +205,7 @@ def test_unknown_ontology_issue_abstains():
     assert body["evidence_graph"]["coverage"] == 0.0
     assert body["abstain"] is True
     assert body["generation_status"] == "abstained"
+    assert body["confidence"]["level"] == "low"
 
 
 

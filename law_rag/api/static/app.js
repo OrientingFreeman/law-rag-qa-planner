@@ -19,10 +19,16 @@ const ANSWER_SECTION_LABELS = new Map([
   ['결론', '결론'],
   ['요약 답변', '결론'],
   ['쟁점별 법적 판단', '상세 판단'],
+  ['판단 기준', '판단 기준'],
+  ['사안 적용', '사안 적용'],
+  ['유보사항', '유보사항'],
   ['실무상 조치', '핵심 체크리스트'],
   ['추가 확인 사실', '추가 확인 사항'],
   ['추가 확인 사항', '추가 확인 사항'],
   ['답변 한계', '답변 한계'],
+  ['판례상 해석', '판례상 해석'],
+  ['적용상 주의사항', '적용상 주의사항'],
+  ['근거 판례', '근거 판례'],
   ['근거 조문', '근거 조문'],
 ]);
 
@@ -127,6 +133,9 @@ async function loadDomains() {
 
 $$('[data-question]').forEach((button) => button.addEventListener('click', () => {
   $('#question').value = button.dataset.question;
+  if (button.dataset.domain) $('#domain').value = button.dataset.domain;
+  $('#mode').value = 'answer';
+  $$('[data-question]').forEach((item) => item.classList.toggle('selected', item === button));
   $('#question').focus();
 }));
 
@@ -137,35 +146,74 @@ function renderQuery(data) {
   $('#evidence-badge').className = `evidence-badge ${status.level}`;
   $('#status-message').textContent = status.message;
   $('#result-list').innerHTML = '';
+  $('#precedent-list').innerHTML = '';
 
   const answerCard = $('#answer-card');
   if ('answer' in data) {
     answerCard.hidden = false;
-    renderStructuredAnswer(data.answer || '(생성된 답변이 없습니다.)');
+    renderStructuredAnswer(data.display_answer || data.answer || '(생성된 답변이 없습니다.)');
     const generationText = {
       completed: '근거 검증 완료', citation_invalid: '인용 검증 실패', failed: '생성 실패', abstained: '답변 유보'
     }[data.generation_status] || data.generation_status;
     $('#generation-badge').textContent = generationText;
     $('#generation-badge').className = `generation ${data.generation_status}`;
-    const validation = data.citation_validation || {};
-    $('#citation-status').innerHTML = `인용 검증: <strong>${validation.valid ? '통과' : '확인 필요'}</strong>${validation.unsupported_articles?.length ? ` · 근거에서 확인되지 않은 인용 ${escapeHtml(validation.unsupported_articles.join(', '))}` : ''}`;
+    const precedentOnly = data.evidence_routing?.answer_basis === 'precedent';
+    if (precedentOnly) {
+      const validation = data.precedent_validation || {};
+      const alignment = data.evidence_routing?.statute_precedent_alignment || {};
+      const alignmentNote = alignment.checked && !alignment.aligned
+        ? ' · 법령 Top-1과 판례 연결 조문 불일치 감지'
+        : '';
+      $('#citation-status').innerHTML = `판례 근거 검증: <strong>${validation.valid ? '통과' : '확인 필요'}</strong> · 공식 출처 기반 검증 요약 · 법령 검색과 별도 검증${alignmentNote}`;
+    } else {
+      const validation = data.citation_validation || {};
+      $('#citation-status').innerHTML = `법령 인용 검증: <strong>${validation.valid ? '통과' : '확인 필요'}</strong>${validation.unsupported_articles?.length ? ` · 근거에서 확인되지 않은 인용 ${escapeHtml(validation.unsupported_articles.join(', '))}` : ''}`;
+    }
   } else {
     answerCard.hidden = true;
   }
 
   const abstained = data.generation_status === 'abstained' || data.abstain === true;
+  const precedentOnly = data.evidence_routing?.answer_basis === 'precedent';
   const evidenceHeading = document.querySelector('#result-section .subheading h3');
   const evidenceDescription = document.querySelector('#result-section .subheading p');
-  if (evidenceHeading) evidenceHeading.textContent = abstained ? '검색 후보 조문' : '근거 법령';
+  if (evidenceHeading) evidenceHeading.textContent = abstained || precedentOnly ? '관련 법령 검색 후보' : '규범 근거 · 법령';
+  const alignment = data.evidence_routing?.statute_precedent_alignment || {};
   if (evidenceDescription) evidenceDescription.textContent = abstained
     ? '답변 근거로 채택되지 않은 검색 후보입니다. 질문을 더 구체화하거나 도메인을 조정해 주세요.'
+    : precedentOnly
+      ? (alignment.checked && !alignment.aligned
+          ? '법령 Top-1이 검증 판례의 연결 조문과 일치하지 않아 검색 후보로 강등했습니다. 아래 판례 카드의 관련 조문을 함께 확인하세요.'
+          : '이 조문들은 판례 답변의 직접 근거로 채택되지 않았습니다. 판례와 연결된 정확한 조문은 아래 판례 카드에서 확인합니다.')
     : '검색 점수와 시행일, 공식 출처를 함께 표시합니다.';
 
   (data.results || []).forEach((result) => {
     const element = document.createElement('article');
     element.className = 'result-card';
-    element.innerHTML = `<div class="result-card-header"><h3><span class="rank">${result.rank}</span>${escapeHtml(result.citation)}</h3><span class="reason">${abstained ? '검색 후보' : (result.retrieval_reason === 'direct' ? '직접 근거' : '관련 근거')}</span></div><p>${escapeHtml(result.text)}</p><div class="result-meta"><span>종합 점수 ${Number(result.score).toFixed(4)}</span><span>키워드 ${Number(result.lexical_score).toFixed(4)}</span><span>의미 ${Number(result.semantic_score).toFixed(4)}</span><span>시행일 ${escapeHtml(result.effective_from || '미상')}</span>${result.source_url ? `<a href="${escapeHtml(result.source_url)}" target="_blank" rel="noopener noreferrer">공식 출처 열기</a>` : ''}</div>`;
+    const linkedByPrecedent = result.retrieval_reason === 'precedent_linked';
+    const reasonLabel = linkedByPrecedent
+      ? '판례 연결 조문'
+      : (abstained || precedentOnly ? '검색 후보' : (result.retrieval_reason === 'direct' ? '직접 근거' : '관련 근거'));
+    const scoreMeta = linkedByPrecedent
+      ? `<span>판례 관련도 ${Number(result.relation_score).toFixed(4)}</span><span>연결 출처 검증 판례</span>`
+      : `<span>종합 점수 ${Number(result.score).toFixed(4)}</span><span>키워드 ${Number(result.lexical_score).toFixed(4)}</span><span>의미 ${Number(result.semantic_score).toFixed(4)}</span>`;
+    element.innerHTML = `<div class="result-card-header"><h3><span class="rank">${result.rank}</span>${escapeHtml(result.citation)}</h3><span class="reason">${reasonLabel}</span></div><p>${escapeHtml(result.text)}</p><div class="result-meta">${scoreMeta}<span>시행일 ${escapeHtml(result.effective_from || '미상')}</span>${result.source_url ? `<a href="${escapeHtml(result.source_url)}" target="_blank" rel="noopener noreferrer">공식 출처 열기</a>` : ''}</div>`;
     $('#result-list').append(element);
+  });
+
+  const precedentSection = $('#precedent-section');
+  const precedents = data.precedent_evidence || [];
+  precedentSection.hidden = precedents.length === 0;
+  $('#precedent-routing-note').textContent = data.evidence_routing?.precedent_reason
+    || '질문의 해석·적용 쟁점과 관련된 검증 판례입니다.';
+  precedents.forEach((precedent) => {
+    const related = (precedent.related_statutes || [])
+      .map((item) => `${item.law_name} ${item.article_no}`)
+      .join(', ');
+    const element = document.createElement('article');
+    element.className = 'result-card precedent-card';
+    element.innerHTML = `<div class="result-card-header"><h3><span class="rank">${precedent.rank}</span>${escapeHtml(precedent.court)} ${escapeHtml(precedent.decision_date)} 선고 ${escapeHtml(precedent.case_number)}</h3><span class="reason precedent-reason">해석·적용 근거</span></div><p class="case-name">${escapeHtml(precedent.case_name)}</p><p>${escapeHtml(precedent.holding_summary)}</p><details class="precedent-detail"><summary>판단 요소와 적용상 주의사항</summary><p>${escapeHtml(precedent.reasoning_summary)}</p><p class="context-note">${escapeHtml(precedent.legal_context_note)}</p></details><div class="result-meta"><span>관련 조문 ${escapeHtml(related || '미상')}</span><span>관련도 ${Number(precedent.score).toFixed(4)}</span><a href="${escapeHtml(precedent.source_url)}" target="_blank" rel="noopener noreferrer">공식 판례 열기</a></div>`;
+    $('#precedent-list').append(element);
   });
 
   $('#prompt-panel').hidden = !data.prompt;

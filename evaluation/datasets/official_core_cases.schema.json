@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/official-core-cases.schema.json",
+  "title": "Evidence-Grounded Legal AI official evaluation dataset",
+  "type": "array",
+  "minItems": 40,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "case_id",
+      "question",
+      "category",
+      "difficulty",
+      "expected_law_id",
+      "expected_article_nos",
+      "expected_answer_points",
+      "expected_abstain",
+      "annotation_note"
+    ],
+    "properties": {
+      "case_id": {"type": "string", "minLength": 3},
+      "question": {"type": "string", "minLength": 5},
+      "category": {
+        "enum": [
+          "direct_statute_retrieval",
+          "lay_to_legal_mapping",
+          "similar_provision_disambiguation",
+          "multi_requirement",
+          "ambiguous_question",
+          "abstention",
+          "temporal_revision",
+          "false_premise"
+        ]
+      },
+      "difficulty": {"enum": ["easy", "medium", "hard"]},
+      "domain": {"type": "string"},
+      "top_k": {"type": "integer", "minimum": 1, "maximum": 20},
+      "as_of_date": {"type": "string", "format": "date"},
+      "expected_law_id": {"type": ["string", "null"]},
+      "expected_article_nos": {
+        "type": "array",
+        "items": {"type": "string"},
+        "uniqueItems": true
+      },
+      "expected_answer_points": {
+        "type": "array",
+        "items": {"type": "string", "minLength": 2}
+      },
+      "expected_abstain": {"type": "boolean"},
+      "annotation_note": {"type": "string", "minLength": 5},
+      "evaluate_answer": {"type": "boolean"}
+    }
+  }
+}
