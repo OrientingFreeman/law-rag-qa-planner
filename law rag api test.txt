@@ -1,5 +1,7 @@
 uvicorn law_rag.api.app:app --reload
 
+sudo systemctl restart law-rag
+
 ./regression_test.sh
 ./strategy_regression_test.sh
 
