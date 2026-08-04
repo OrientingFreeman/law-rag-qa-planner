@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "verification_name": "kali_portfolio_final_verification",
+  "verification_name": "legal_kb_final_verification",
   "status": "pass",
   "metrics": {
     "corpus_documents": 4833,
@@ -29,7 +29,7 @@
     },
     {
       "name": "k2_baseline_change_analysis",
-      "command": "python tools/analyze_legal_kb_update.py --output /tmp/law-rag-kali-kb-update.json",
+      "command": "python tools/analyze_legal_kb_update.py --output /tmp/law-rag-legal-kb-update.json",
       "status": "pass",
       "exit_code": 0,
       "pytest_passed": null,
@@ -76,12 +76,12 @@
       "output_tail": "OK: 49 cases; metadata and corpus article references validated"
     },
     {
-      "name": "k_series_tests",
-      "command": "python -m pytest tests/test_legal_knowledge_base.py tests/test_legal_kb_update.py tests/test_legal_kb_evaluation.py tests/test_amendment_case_candidates.py tests/test_k4_amendment_case.py tests/test_k5_amendment_review.py tests/test_k6_kali_verification.py -q",
+      "name": "targeted_tests",
+      "command": "python -m pytest tests/test_legal_knowledge_base.py tests/test_legal_kb_update.py tests/test_legal_kb_evaluation.py tests/test_amendment_case_candidates.py tests/test_k4_amendment_case.py tests/test_k5_amendment_review.py tests/test_legal_kb_verification.py -q",
       "status": "pass",
       "exit_code": 0,
       "pytest_passed": 39,
-      "output_tail": ".......................................                                  [100%]\n39 passed in 2.37s"
+      "output_tail": ".......................................                                  [100%]\n39 passed in 2.27s"
     },
     {
       "name": "full_regression",
@@ -89,7 +89,7 @@
       "status": "pass",
       "exit_code": 0,
       "pytest_passed": 197,
-      "output_tail": "........................................................................ [ 73%]\n.....................................................                    [100%]\n=============================== warnings summary ===============================\nvenv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  <PROJECT_ROOT>/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n197 passed, 1 warning in 41.31s"
+      "output_tail": "........................................................................ [ 73%]\n.....................................................                    [100%]\n=============================== warnings summary ===============================\nvenv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  <PROJECT_ROOT>/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n197 passed, 1 warning in 42.06s"
     }
   ],
   "invariant_checks": [
@@ -142,41 +142,41 @@
     },
     {
       "path": "README.md",
-      "expected_token": "9/9",
+      "expected_token": "9개 필수 항목",
       "passed": true
     },
     {
       "path": "README.md",
-      "expected_token": "통합 검증 9/9",
+      "expected_token": "통합 검증 역시 9개 단계",
       "passed": true
     },
     {
-      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "path": "docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md",
       "expected_token": "4,833개",
       "passed": true
     },
     {
-      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "path": "docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md",
       "expected_token": "41개",
       "passed": true
     },
     {
-      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "path": "docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md",
       "expected_token": "30문항",
       "passed": true
     },
     {
-      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "path": "docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md",
       "expected_token": "2/2",
       "passed": true
     },
     {
-      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "path": "docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md",
       "expected_token": "9/9",
       "passed": true
     },
     {
-      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "path": "docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md",
       "expected_token": "통합 검증 9/9",
       "passed": true
     }

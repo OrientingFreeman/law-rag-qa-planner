@@ -2,7 +2,7 @@ from copy import deepcopy
 from pathlib import Path
 import subprocess
 
-from tools.run_kali_verification import (
+from tools.run_legal_kb_verification import (
     ROOT,
     build_result,
     collect_metrics,
@@ -29,7 +29,7 @@ def test_stale_submission_number_is_detected(tmp_path: Path):
     metrics = collect_metrics()
     (tmp_path / "docs").mkdir()
     (tmp_path / "README.md").write_text("stale", encoding="utf-8")
-    (tmp_path / "docs" / "APPLICATION_PROJECT_SUMMARY_KALI.md").write_text("stale", encoding="utf-8")
+    (tmp_path / "docs" / "LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md").write_text("stale", encoding="utf-8")
     assert any(not row["passed"] for row in verify_document_claims(metrics, tmp_path))
 
 

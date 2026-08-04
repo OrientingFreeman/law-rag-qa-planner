@@ -10,8 +10,8 @@ from typing import Any, Callable
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT = ROOT / "data" / "kali_final_verification.json"
-DEFAULT_REPORT = ROOT / "docs" / "KALI_FINAL_VERIFICATION.md"
+DEFAULT_OUTPUT = ROOT / "data" / "legal_kb_verification.json"
+DEFAULT_REPORT = ROOT / "docs" / "LEGAL_KB_VERIFICATION.md"
 
 
 def load_json(path: Path) -> Any:
@@ -52,8 +52,16 @@ def expected_claims(metrics: dict[str, Any]) -> dict[str, list[str]]:
     temporal = f"{metrics['temporal_boundary_passed']}/{metrics['temporal_boundary_cases']}"
     reviews = f"{metrics['k5_passed_checks']}/{metrics['k5_required_checks']}"
     return {
-        "README.md": [corpus, concepts, kb_cases, "실제 개정 1건", temporal, reviews, "통합 검증 9/9"],
-        "docs/APPLICATION_PROJECT_SUMMARY_KALI.md": [corpus, concepts, kb_cases, temporal, reviews, "통합 검증 9/9"],
+        "README.md": [
+            corpus,
+            concepts,
+            kb_cases,
+            "실제 개정 1건",
+            temporal,
+            f"{metrics['k5_required_checks']}개 필수 항목",
+            "통합 검증 역시 9개 단계",
+        ],
+        "docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md": [corpus, concepts, kb_cases, temporal, reviews, "통합 검증 9/9"],
     }
 
 
@@ -118,7 +126,7 @@ def build_result(steps: list[dict[str, Any]], metrics: dict[str, Any], claim_che
     full_regression = next((row for row in steps if row["name"] == "full_regression"), None)
     return {
         "schema_version": "1.0.0",
-        "verification_name": "kali_portfolio_final_verification",
+        "verification_name": "legal_kb_final_verification",
         "status": status,
         "metrics": metrics,
         "steps": steps,
@@ -151,7 +159,7 @@ def render_report(result: dict[str, Any]) -> str:
     claim_passed = sum(row["passed"] for row in result["documentation_claim_checks"])
     claim_total = len(result["documentation_claim_checks"])
     limitation_rows = "\n".join(f"- {text}" for text in result["limitations"])
-    return f"""# 한국법령정보원 지원용 최종 재현 검증 보고서
+    return f"""# 법령 지식베이스 최종 재현 검증 보고서
 
 ## 1. 최종 결과
 
@@ -174,25 +182,25 @@ def render_report(result: dict[str, Any]) -> str:
 | 실질 변경 | {m['substantive_amendment_changes']}건 |
 | 영향 개념 / 평가 문항 | {m['impacted_concepts']} / {m['impacted_evaluation_cases']} |
 | 시행일 경계 평가 | {m['temporal_boundary_passed']}/{m['temporal_boundary_cases']} |
-| K5 검수 | {m['k5_passed_checks']}/{m['k5_required_checks']} ({m['k5_decision'].upper()}) |
+| 개정 검수 | {m['k5_passed_checks']}/{m['k5_required_checks']} ({m['k5_decision'].upper()}) |
 
-## 3. K1~K5 통합 실행 결과
+## 3. 지식베이스·개정 관리 통합 실행 결과
 
 | 단계 | 판정 | 재현 명령 |
 |---|---:|---|
 {step_rows}
 
-## 4. 제출 문서 수치 검증
+## 4. 공개 문서 수치 검증
 
-README와 `APPLICATION_PROJECT_SUMMARY_KALI.md`에 표시된 코퍼스 문서 수,
+README와 `LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md`에 표시된 코퍼스 문서 수,
 개념 수, 평가 문항 수, 개정 사례, 시행일 평가와 검수 통과 수치를 실제
-JSON 데이터에서 계산한 값과 비교했다. 불일치가 생기면 K6 전체 판정은
+JSON 데이터에서 계산한 값과 비교했다. 불일치가 생기면 통합 검증의 전체 판정은
 FAIL이 된다.
 
 ## 5. 재현 명령
 
 ```bash
-python tools/run_kali_verification.py
+python tools/run_legal_kb_verification.py
 ```
 
 ## 6. 해석상 한계
@@ -205,19 +213,19 @@ python tools/run_kali_verification.py
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run the final K1-K5 verification for the KALI portfolio")
+    parser = argparse.ArgumentParser(description="Run the final legal knowledge-base verification")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     args = parser.parse_args()
     commands = [
         ("k1_knowledge_validation", ["tools/validate_legal_knowledge_base.py"]),
-        ("k2_baseline_change_analysis", ["tools/analyze_legal_kb_update.py", "--output", "/tmp/law-rag-kali-kb-update.json"]),
+        ("k2_baseline_change_analysis", ["tools/analyze_legal_kb_update.py", "--output", "/tmp/law-rag-legal-kb-update.json"]),
         ("k3_closed_set_evaluation", ["tools/evaluate_legal_knowledge_base.py"]),
         ("k4_candidate_validation", ["tools/validate_amendment_case_candidates.py"]),
         ("k4_actual_amendment", ["tools/run_k4_amendment_case.py"]),
         ("k5_review_gate", ["tools/review_k5_amendment_update.py"]),
         ("official_dataset_validation", ["tools/validate_evaluation_dataset.py"]),
-        ("k_series_tests", ["-m", "pytest", "tests/test_legal_knowledge_base.py", "tests/test_legal_kb_update.py", "tests/test_legal_kb_evaluation.py", "tests/test_amendment_case_candidates.py", "tests/test_k4_amendment_case.py", "tests/test_k5_amendment_review.py", "tests/test_k6_kali_verification.py", "-q"]),
+        ("targeted_tests", ["-m", "pytest", "tests/test_legal_knowledge_base.py", "tests/test_legal_kb_update.py", "tests/test_legal_kb_evaluation.py", "tests/test_amendment_case_candidates.py", "tests/test_k4_amendment_case.py", "tests/test_k5_amendment_review.py", "tests/test_legal_kb_verification.py", "-q"]),
         ("full_regression", ["-m", "pytest", "-q"]),
     ]
     steps = [run_step(name, command) for name, command in commands]

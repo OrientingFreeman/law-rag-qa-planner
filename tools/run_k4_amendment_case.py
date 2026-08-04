@@ -22,7 +22,7 @@ DEFAULT_EVALUATION = ROOT / "evaluation" / "datasets" / "official_core_cases.jso
 DEFAULT_CURRENT_CORPUS = ROOT / "data" / "legal_corpus.json"
 DEFAULT_CANDIDATES = ROOT / "data" / "amendment_case_candidates.json"
 DEFAULT_OUTPUT = ROOT / "data" / "k4_amendment_impact_manifest.json"
-DEFAULT_REPORT = ROOT / "docs" / "K4_AMENDMENT_IMPACT_REPORT.md"
+DEFAULT_REPORT = ROOT / "docs" / "AMENDMENT_IMPACT_REPORT.md"
 
 
 def _active_on(row: dict[str, Any], as_of: date) -> bool:
@@ -153,7 +153,7 @@ def render_report(result: dict[str, Any]) -> str:
         for row in temporal["results"]
     )
     sources = amendment["official_sources"]
-    return f"""# K4 실제 법령 개정 영향 분석 보고서
+    return f"""# 실제 법령 개정 영향 분석 보고서
 
 ## 1. 결론
 

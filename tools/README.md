@@ -8,7 +8,7 @@ python tools/validate_legal_knowledge_base.py
 python -m pytest tests/test_legal_knowledge_base.py -q
 ```
 
-## K4 official amendment case validation
+## Official amendment case validation
 
 ```bash
 python tools/validate_amendment_case_candidates.py
@@ -29,9 +29,9 @@ python -m pytest tests/test_k4_amendment_case.py -q
 This compares isolated before/after Article 15 fixtures, traces impacted KB and
 evaluation records, evaluates the 2025-10-02 effective-date boundary, and
 regenerates `data/k4_amendment_impact_manifest.json` plus
-`docs/K4_AMENDMENT_IMPACT_REPORT.md`.
+`docs/AMENDMENT_IMPACT_REPORT.md`.
 
-## K5 amendment review and release gate
+## Amendment review and release gate
 
 ```bash
 python tools/review_k5_amendment_update.py
@@ -43,17 +43,17 @@ effective-date consistency, impact-review evidence, ordered role stages, and
 test evidence. It emits `pass`, `revise`, or `reject`; a requested pass cannot
 override failed gate conditions.
 
-## K6 final KALI portfolio verification
+## Final legal knowledge-base verification
 
 ```bash
-python tools/run_kali_verification.py
+python tools/run_legal_kb_verification.py
 ```
 
-This command reruns K1-K5 validators, evaluations and gates, executes targeted
-and full regression tests, recalculates every portfolio count from JSON, and
-fails when README or the KALI application summary contains a stale key number.
-It regenerates `data/kali_final_verification.json` and
-`docs/KALI_FINAL_VERIFICATION.md`.
+This command reruns the knowledge-base validators, amendment analysis,
+evaluations and review gate, executes targeted and full regression tests,
+recalculates every published count from JSON, and fails when README or the
+project summary contains a stale key number. It regenerates
+`data/legal_kb_verification.json` and `docs/LEGAL_KB_VERIFICATION.md`.
 
 The builder produces the reviewed legal-term/lay-term mappings from an
 inspectable record list. The validator checks concept identifiers, relation

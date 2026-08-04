@@ -1,4 +1,4 @@
-# 한국법령정보원 지원용 최종 재현 검증 보고서
+# 법령 지식베이스 최종 재현 검증 보고서
 
 ## 1. 최종 결과
 
@@ -21,33 +21,33 @@
 | 실질 변경 | 1건 |
 | 영향 개념 / 평가 문항 | 1 / 1 |
 | 시행일 경계 평가 | 2/2 |
-| K5 검수 | 9/9 (PASS) |
+| 개정 검수 | 9/9 (PASS) |
 
-## 3. K1~K5 통합 실행 결과
+## 3. 지식베이스·개정 관리 통합 실행 결과
 
 | 단계 | 판정 | 재현 명령 |
 |---|---:|---|
 | `k1_knowledge_validation` | PASS | `python tools/validate_legal_knowledge_base.py` |
-| `k2_baseline_change_analysis` | PASS | `python tools/analyze_legal_kb_update.py --output /tmp/law-rag-kali-kb-update.json` |
+| `k2_baseline_change_analysis` | PASS | `python tools/analyze_legal_kb_update.py --output /tmp/law-rag-legal-kb-update.json` |
 | `k3_closed_set_evaluation` | PASS | `python tools/evaluate_legal_knowledge_base.py` |
 | `k4_candidate_validation` | PASS | `python tools/validate_amendment_case_candidates.py` |
 | `k4_actual_amendment` | PASS | `python tools/run_k4_amendment_case.py` |
 | `k5_review_gate` | PASS | `python tools/review_k5_amendment_update.py` |
 | `official_dataset_validation` | PASS | `python tools/validate_evaluation_dataset.py` |
-| `k_series_tests` | PASS | `python -m pytest tests/test_legal_knowledge_base.py tests/test_legal_kb_update.py tests/test_legal_kb_evaluation.py tests/test_amendment_case_candidates.py tests/test_k4_amendment_case.py tests/test_k5_amendment_review.py tests/test_k6_kali_verification.py -q` |
+| `targeted_tests` | PASS | `python -m pytest tests/test_legal_knowledge_base.py tests/test_legal_kb_update.py tests/test_legal_kb_evaluation.py tests/test_amendment_case_candidates.py tests/test_k4_amendment_case.py tests/test_k5_amendment_review.py tests/test_legal_kb_verification.py -q` |
 | `full_regression` | PASS | `python -m pytest -q` |
 
-## 4. 제출 문서 수치 검증
+## 4. 공개 문서 수치 검증
 
-README와 `APPLICATION_PROJECT_SUMMARY_KALI.md`에 표시된 코퍼스 문서 수,
+README와 `LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md`에 표시된 코퍼스 문서 수,
 개념 수, 평가 문항 수, 개정 사례, 시행일 평가와 검수 통과 수치를 실제
-JSON 데이터에서 계산한 값과 비교했다. 불일치가 생기면 K6 전체 판정은
+JSON 데이터에서 계산한 값과 비교했다. 불일치가 생기면 통합 검증의 전체 판정은
 FAIL이 된다.
 
 ## 5. 재현 명령
 
 ```bash
-python tools/run_kali_verification.py
+python tools/run_legal_kb_verification.py
 ```
 
 ## 6. 해석상 한계

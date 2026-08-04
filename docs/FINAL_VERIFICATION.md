@@ -31,7 +31,7 @@ LAW_RAG_LLM_PROVIDER=deterministic python -m pytest -q
 
 최초 실행에서는 `tests/test_api.py`가 현재 홈페이지 문구인 “법무·컴플라이언스를 위한”이 아니라 이전 문구 “기업 법무·컴플라이언스를 위한”을 기대해 1건 실패했다. 현재 사용자 UI를 변경하지 않고 테스트 기대 문구만 실제 HTML과 일치시켰으며, 이후 추가된 판례·법령 정합성 및 검색 보강 테스트를 포함해 최종적으로 전체 158개가 통과했다.
 
-경고 1건은 현재 TestClient가 사용하는 `httpx`와 Starlette의 향후 호환성에 관한 deprecation warning이다. 현재 테스트 또는 API 동작 실패는 아니며 이번 지원용 보강의 기능 범위에는 영향을 주지 않는다.
+경고 1건은 현재 TestClient가 사용하는 `httpx`와 Starlette의 향후 호환성에 관한 deprecation warning이다. 현재 테스트 또는 API 동작 실패는 아니며 이번 프로젝트 보강의 기능 범위에는 영향을 주지 않는다.
 
 ## 3. 평가 데이터 검증
 
@@ -102,7 +102,7 @@ FastAPI TestClient와 fixture corpus를 이용해 다음 경로를 확인했다.
 - `tests/test_evaluation.py`
 - `tests/test_benchmark.py`
 
-### 가이드·보고서·지원 문서
+### 가이드·보고서·요약 문서
 
 - `docs/DATA_ANNOTATION_GUIDE.md`
 - `docs/EVALUATION_REPORT.md`
@@ -126,7 +126,7 @@ FastAPI TestClient와 fixture corpus를 이용해 다음 경로를 확인했다.
 
 ## 7. 최종 상태와 한계
 
-지원용 보강 목표였던 평가 데이터 확대, annotation 기준, 정량 평가, 유형·난이도 분석, 실패 분류, 실제 보고서, README 직무 맞춤화, 판례 10건 PoC가 모두 독립적으로 검증 가능한 상태다.
+평가 데이터 확대, annotation 기준, 정량 평가, 유형·난이도 분석, 실패 분류, 실제 보고서, README 설명 보강, 판례 10건 PoC가 모두 독립적으로 검증 가능한 상태다.
 
 다만 다음을 과장하지 않는다.
 

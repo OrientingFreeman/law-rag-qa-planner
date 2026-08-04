@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = ROOT / "data" / "k5_amendment_review_input.json"
 DEFAULT_MANIFEST = ROOT / "data" / "k4_amendment_impact_manifest.json"
 DEFAULT_OUTPUT = ROOT / "data" / "k5_amendment_review.json"
-DEFAULT_REPORT = ROOT / "docs" / "K5_AMENDMENT_REVIEW_REPORT.md"
+DEFAULT_REPORT = ROOT / "docs" / "AMENDMENT_REVIEW_REPORT.md"
 
 REQUIRED_STAGES = ["collection", "annotation", "legal_review", "release_gate"]
 REQUIRED_CHECKS = {
@@ -157,7 +157,7 @@ def render_report(result: dict[str, Any], review: dict[str, Any]) -> str:
         f"| `{row['check_id']}` | {row['status'].upper()} | {row['evidence']} |"
         for row in review["checklist"]
     )
-    return f"""# K5 법령 개정 검수·승인 보고서
+    return f"""# 법령 개정 검수·승인 보고서
 
 ## 1. 최종 판정
 
