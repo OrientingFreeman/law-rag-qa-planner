@@ -63,27 +63,19 @@ RAG 검색 오류를 분석하면서 법령용어, 일상용어, 근거 조문�
 | KB 전용 평가 | 30문항, 6개 유형, 3개 난이도 |
 | 폐쇄형 평가 결과 | 개념 Top-1 100%, 조문 Precision/Recall 100%, 유보 100%, 제한적 시점 100% |
 
-K5 실제 사례 검수는 **9/9** 필수 항목을 통과했다. K6 **통합 검증 9/9**
-단계도 통과했으며, K1~K5 전체 산출물과 README·지원 요약의 표시 수치는
-`python tools/run_kali_verification.py` 한 명령으로 다시 계산하고 대조할
-수 있다.
+실제 개정 사례에 대한 검수는 9개 필수 항목을 모두 통과했으며, 통합 검증 역시 9개 단계를 모두 통과했습니다. 법령 지식베이스 구축, 개정 영향 분석, 평가 및 검수 결과와 README·지원 요약에 기재된 주요 수치는 `python tools/run_kali_verification.py` 명령으로 다시 계산하고 대조할 수 있습니다.
 
-위 100% 수치는 **명시적으로 등록된 법령용어·일상용어의 연결과 참조
-무결성을 확인하는 폐쇄형 결정론 평가 결과**입니다. 자유로운 한국어
-질의의 의미검색 성능이나 생성형 LLM 답변 정확도를 뜻하지 않습니다.
-전체 코퍼스의 `kb_update_manifest.json`은 같은 4,833개 문서를 비교한
-`no_changes` 기준선 점검입니다. 이와 별도로 K4에서는 개인정보 보호법
-제15조제1항제7호 신설 사례의 개정 전후 fixture를 비교해 실제 변경과
-영향 범위를 검증했습니다.
+위 100% 수치는 명시적으로 등록된 법률용어와 일상용어의 연결 및 참조 무결성을 확인한 폐쇄형·결정론적 평가 결과입니다. 따라서 자유로운 한국어 질의에 대한 의미검색 성능이나 생성형 LLM 답변의 정확도를 의미하지 않습니다. 전체 코퍼스의 `kb_update_manifest.json`은 동일한 4,833개 문서를 비교하여 변경 사항이 없음을 확인한 기준선 점검 결과입니다. 이와 별도로 개인정보 보호법 제15조제1항제7호 신설 사례의 개정 전후 데이터를 비교하여 실제 법령 변경을 탐지하고, 관련 법률 개념과 평가 문항에 미치는 영향 범위를 검증했습니다.
+
 
 - [법령용어 지식베이스](data/legal_knowledge_base.json)
-- [KB 전용 평가 데이터셋](evaluation/datasets/legal_kb_cases.json)
+- [법령 지식베이스 평가 데이터셋](evaluation/datasets/legal_kb_cases.json)
 - [법령 제·개정 업데이트 가이드](docs/LEGAL_KB_UPDATE_GUIDE.md)
-- [실제 법령 개정 영향 분석 보고서](docs/K4_AMENDMENT_IMPACT_REPORT.md)
-- [법령 개정 검수·승인 보고서](docs/K5_AMENDMENT_REVIEW_REPORT.md)
-- [한국법령정보원 지원용 최종 재현 검증](docs/KALI_FINAL_VERIFICATION.md)
-- [KB 품질 평가 보고서](docs/LEGAL_KB_QUALITY_REPORT.md)
-- [한국법령정보원 지원용 프로젝트 요약](docs/APPLICATION_PROJECT_SUMMARY_KALI.md)
+- [실제 법령 개정 영향 분석 보고서](docs/AMENDMENT_IMPACT_REPORT.md)
+- [법령 개정 검수·승인 보고서](docs/AMENDMENT_REVIEW_REPORT.md)
+- [법령 지식베이스 통합 검증](docs/LEGAL_KB_VERIFICATION.md)
+- [법령 지식베이스 품질 평가 보고서](docs/LEGAL_KB_QUALITY_REPORT.md)
+- [법률 데이터 품질 프로젝트 요약](docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md)
 
 ## 1. 프로젝트 소개
 
