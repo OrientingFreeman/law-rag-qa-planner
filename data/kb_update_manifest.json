@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-04T09:35:02Z",
+  "mode": "baseline_integrity_check",
+  "status": "no_changes",
+  "baseline_sha256": "de45415959e58ae6bcb8a2594166a852bad31728edecf2304d46d863e4318b7a",
+  "candidate_sha256": "de45415959e58ae6bcb8a2594166a852bad31728edecf2304d46d863e4318b7a",
+  "summary": {
+    "baseline_documents": 4833,
+    "candidate_documents": 4833,
+    "changed_documents": 0,
+    "impacted_concepts": 0,
+    "impacted_evaluation_cases": 0,
+    "temporal_errors": 0
+  },
+  "changes": [],
+  "impacted_concepts": [],
+  "impacted_evaluation_cases": [],
+  "temporal_errors": [],
+  "required_actions": [
+    "record_baseline_check"
+  ]
+}

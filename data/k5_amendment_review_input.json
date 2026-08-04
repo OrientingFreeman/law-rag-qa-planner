@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0.0",
+  "review_id": "k5-pipa-2025-art15-review",
+  "case_id": "pipa-2025-public-safety-basis",
+  "input_manifest_path": "data/k4_amendment_impact_manifest.json",
+  "input_manifest_sha256": "9e10a89bdace0e858965738727bf19d06418f55e21abd8043211a6dc2e328f19",
+  "review_model": "staged_self_review",
+  "review_limitation": "포트폴리오 작성자가 단계별 역할을 분리해 재검수한 기록이며 독립된 제3자 검수 결과가 아니다.",
+  "stages": [
+    {
+      "stage": "collection",
+      "sequence": 1,
+      "actor_role": "collector",
+      "actor_label": "project_author",
+      "completed_on": "2026-08-04"
+    },
+    {
+      "stage": "annotation",
+      "sequence": 2,
+      "actor_role": "annotator",
+      "actor_label": "project_author",
+      "completed_on": "2026-08-04"
+    },
+    {
+      "stage": "legal_review",
+      "sequence": 3,
+      "actor_role": "reviewer",
+      "actor_label": "project_author_second_pass",
+      "completed_on": "2026-08-04"
+    },
+    {
+      "stage": "release_gate",
+      "sequence": 4,
+      "actor_role": "approver",
+      "actor_label": "deterministic_gate",
+      "completed_on": "2026-08-04"
+    }
+  ],
+  "checklist": [
+    {
+      "check_id": "official_sources",
+      "status": "pass",
+      "evidence": "개정 전·후 본문과 제정·개정문이 모두 국가법령정보센터 URL로 기록됐다."
+    },
+    {
+      "check_id": "before_after_text",
+      "status": "pass",
+      "evidence": "개정 후 제15조제1항제7호 본문이 현행 legal_corpus.json과 정확히 일치한다."
+    },
+    {
+      "check_id": "effective_date",
+      "status": "pass",
+      "evidence": "시행일 2025-10-02와 개정 전 유효종료일 2025-10-01이 연속된다."
+    },
+    {
+      "check_id": "change_classification",
+      "status": "pass",
+      "evidence": "제15조제1항제7호 1건을 added로, 공통 문서의 버전 전환을 temporal_metadata_changed로 분리했다."
+    },
+    {
+      "check_id": "knowledge_impact",
+      "status": "pass",
+      "evidence": "pipa_collection_use를 재검수 대상으로 추적했다."
+    },
+    {
+      "check_id": "evaluation_impact",
+      "status": "pass",
+      "evidence": "pipa-collection-basis를 재검수 대상으로 추적했다."
+    },
+    {
+      "check_id": "temporal_boundary",
+      "status": "pass",
+      "evidence": "시행일 전날·당일 경계 평가 2건이 모두 통과했다."
+    },
+    {
+      "check_id": "targeted_tests",
+      "status": "pass",
+      "evidence": "K4·K5 전용 검증 명령을 로컬 환경에서 재실행한다."
+    },
+    {
+      "check_id": "full_regression",
+      "status": "pass",
+      "evidence": "전체 pytest 회귀검증을 로컬 환경에서 재실행한다."
+    }
+  ],
+  "requested_decision": "pass",
+  "review_note": "현행 운영 코퍼스는 이미 신설 제7호를 포함한다. K5는 과거 버전을 운영 검색에 병합하지 않고, K4 사례의 검증 증거와 승인 가능 여부를 감사 기록으로 고정한다."
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "K5 amendment review result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "review_id", "case_id", "input_manifest_sha256",
+    "decision", "requested_decision", "decision_matches_request",
+    "baseline_promotion_allowed", "review_model", "review_limitation",
+    "stage_count", "check_summary", "reject_reasons", "revise_reasons",
+    "evidence_errors", "review_note", "release_actions"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "review_id": {"type": "string", "minLength": 3},
+    "case_id": {"type": "string", "minLength": 3},
+    "input_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision": {"enum": ["pass", "revise", "reject"]},
+    "requested_decision": {"enum": ["pass", "revise", "reject"]},
+    "decision_matches_request": {"type": "boolean"},
+    "baseline_promotion_allowed": {"type": "boolean"},
+    "review_model": {"enum": ["independent_review", "staged_self_review"]},
+    "review_limitation": {"type": "string"},
+    "stage_count": {"type": "integer", "minimum": 0},
+    "check_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "passed", "revise", "rejected"],
+      "properties": {
+        "required": {"type": "integer", "minimum": 0},
+        "passed": {"type": "integer", "minimum": 0},
+        "revise": {"type": "integer", "minimum": 0},
+        "rejected": {"type": "integer", "minimum": 0}
+      }
+    },
+    "reject_reasons": {"type": "array", "items": {"type": "string"}},
+    "revise_reasons": {"type": "array", "items": {"type": "string"}},
+    "evidence_errors": {"type": "array", "items": {"type": "string"}},
+    "review_note": {"type": "string"},
+    "release_actions": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-04T00:00:00Z",
+  "case_id": "pipa-2025-public-safety-basis",
+  "status": "pass",
+  "official_amendment": {
+    "law_id": "011357",
+    "law_name": "개인정보 보호법",
+    "promulgation_number": "법률 제20897호",
+    "promulgated_at": "2025-04-01",
+    "effective_from": "2025-10-02",
+    "provision_ref": "제15조제1항제7호",
+    "official_sources": {
+      "before_text_url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=248613",
+      "after_text_url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=270351",
+      "amendment_document_url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=270351&viewCls=lsRvsDocInfoR"
+    }
+  },
+  "comparison": {
+    "schema_version": "1.0.0",
+    "generated_at": "2026-08-04T00:00:00Z",
+    "mode": "verified_official_amendment_case",
+    "status": "changes_detected",
+    "baseline_sha256": "662e3ab94c9e4716fdb2e14af556e6f0b6257cb950d514d1525a85e2c7c44725",
+    "candidate_sha256": "d2d89115aae967848cba4c67f5603d2f46da76c1540a30cd220e6e5ce1dcb6c1",
+    "summary": {
+      "baseline_documents": 7,
+      "candidate_documents": 8,
+      "changed_documents": 8,
+      "impacted_concepts": 1,
+      "impacted_evaluation_cases": 1,
+      "temporal_errors": 0
+    },
+    "changes": [
+      {
+        "change_type": "temporal_metadata_changed",
+        "document_id": "011357:제15조:①",
+        "law_id": "011357",
+        "law_name": "개인정보 보호법",
+        "article_no": "제15조",
+        "changed_fields": [
+          "effective_from",
+          "effective_to",
+          "revision_date",
+          "is_current",
+          "version_id",
+          "source_url"
+        ]
+      },
+      {
+        "change_type": "temporal_metadata_changed",
+        "document_id": "011357:제15조:①:제1호",
+        "law_id": "011357",
+        "law_name": "개인정보 보호법",
+        "article_no": "제15조",
+        "changed_fields": [
+          "effective_from",
+          "effective_to",
+          "revision_date",
+          "is_current",
+          "version_id",
+          "source_url"
+        ]
+      },
+      {
+        "change_type": "temporal_metadata_changed",
+        "document_id": "011357:제15조:①:제2호",
+        "law_id": "011357",
+        "law_name": "개인정보 보호법",
+        "article_no": "제15조",
+        "changed_fields": [
+          "effective_from",
+          "effective_to",
+          "revision_date",
+          "is_current",
+          "version_id",
+          "source_url"
+        ]
+      },
+      {
+        "change_type": "temporal_metadata_changed",
+        "document_id": "011357:제15조:①:제3호",
+        "law_id": "011357",
+        "law_name": "개인정보 보호법",
+        "article_no": "제15조",
+        "changed_fields": [
+          "effective_from",
+          "effective_to",
+          "revision_date",
+          "is_current",
+          "version_id",
+          "source_url"
+        ]
+      },
+      {
+        "change_type": "temporal_metadata_changed",
+        "document_id": "011357:제15조:①:제4호",
+        "law_id": "011357",
+        "law_name": "개인정보 보호법",
+        "article_no": "제15조",
+        "changed_fields": [
+          "effective_from",
+          "effective_to",
+          "revision_date",
+          "is_current",
+          "version_id",
+          "source_url"
+        ]
+      },
+      {
+        "change_type": "temporal_metadata_changed",
+        "document_id": "011357:제15조:①:제5호",
+        "law_id": "011357",
+        "law_name": "개인정보 보호법",
+        "article_no": "제15조",
+        "changed_fields": [
+          "effective_from",
+          "effective_to",
+          "revision_date",
+          "is_current",
+          "version_id",
+          "source_url"
+        ]
+      },
+      {
+        "change_type": "temporal_metadata_changed",
+        "document_id": "011357:제15조:①:제6호",
+        "law_id": "011357",
+        "law_name": "개인정보 보호법",
+        "article_no": "제15조",
+        "changed_fields": [
+          "effective_from",
+          "effective_to",
+          "revision_date",
+          "is_current",
+          "version_id",
+          "source_url"
+        ]
+      },
+      {
+        "change_type": "added",
+        "document_id": "011357:제15조:①:제7호",
+        "law_id": "011357",
+        "law_name": "개인정보 보호법",
+        "article_no": "제15조",
+        "changed_fields": []
+      }
+    ],
+    "impacted_concepts": [
+      {
+        "concept_id": "pipa_collection_use",
+        "law_id": "011357",
+        "article_refs": [
+          "제15조"
+        ],
+        "reason": "linked_article_changed"
+      }
+    ],
+    "impacted_evaluation_cases": [
+      {
+        "case_id": "pipa-collection-basis",
+        "law_id": "011357",
+        "article_refs": [
+          "제15조"
+        ]
+      }
+    ],
+    "temporal_errors": [],
+    "required_actions": [
+      "review_changed_official_sources",
+      "review_and_version_impacted_concepts",
+      "rerun_impacted_evaluation_cases",
+      "validate_knowledge_base",
+      "run_full_regression"
+    ]
+  },
+  "substantive_changes": [
+    {
+      "change_type": "added",
+      "document_id": "011357:제15조:①:제7호",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_no": "제15조",
+      "changed_fields": []
+    }
+  ],
+  "detected_expected_addition": true,
+  "temporal_evaluation": {
+    "total": 2,
+    "passed": 2,
+    "accuracy": 1.0,
+    "results": [
+      {
+        "case_id": "pipa-art15-public-safety-before-effective-date",
+        "as_of_date": "2025-10-01",
+        "target_document_id": "011357:제15조:①:제7호",
+        "expected_present": false,
+        "actual_present": false,
+        "passed": true,
+        "selected_version_ids": [
+          "248613"
+        ]
+      },
+      {
+        "case_id": "pipa-art15-public-safety-on-effective-date",
+        "as_of_date": "2025-10-02",
+        "target_document_id": "011357:제15조:①:제7호",
+        "expected_present": true,
+        "actual_present": true,
+        "passed": true,
+        "selected_version_ids": [
+          "270351"
+        ]
+      }
+    ]
+  },
+  "fixture_provenance_errors": [],
+  "scope_note": "제15조제1항의 개정 전후만 분리한 검증 fixture이며 운영 검색 코퍼스에는 과거 버전을 혼합하지 않는다."
+}

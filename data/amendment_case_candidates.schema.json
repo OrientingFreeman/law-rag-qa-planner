@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "K4 amendment case candidates",
+  "type": "object",
+  "required": ["schema_version", "researched_at", "selection_policy", "candidates"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "researched_at": {"type": "string", "format": "date"},
+    "purpose": {"type": "string"},
+    "selection_policy": {"type": "object"},
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "case_id", "status", "law_id", "law_name", "promulgation_number",
+          "promulgated_at", "effective_from", "article_no", "provision_ref",
+          "change_kind", "before", "after", "impact_summary",
+          "impacted_concept_ids", "impacted_evaluation_case_ids",
+          "official_sources", "verification"
+        ],
+        "properties": {
+          "case_id": {"type": "string", "minLength": 1},
+          "status": {"enum": ["selected", "hold", "rejected"]},
+          "law_id": {"type": "string", "minLength": 1},
+          "law_name": {"type": "string", "minLength": 1},
+          "promulgation_number": {"type": "string", "minLength": 1},
+          "promulgated_at": {"type": "string", "format": "date"},
+          "effective_from": {"type": "string", "format": "date"},
+          "article_no": {"type": "string", "minLength": 1},
+          "provision_ref": {"type": "string", "minLength": 1},
+          "change_kind": {"enum": ["article_added", "item_added", "content_changed", "article_removed"]},
+          "before": {"type": "object", "required": ["lsi_seq", "effective_from", "text", "finding"]},
+          "after": {"type": "object", "required": ["lsi_seq", "effective_from", "text", "finding"]},
+          "impact_summary": {"type": "string", "minLength": 1},
+          "impacted_concept_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "impacted_evaluation_case_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "official_sources": {
+            "type": "object",
+            "required": ["before_text_url", "after_text_url", "amendment_document_url"]
+          },
+          "verification": {"type": "object", "required": ["status", "basis", "note"]}
+        }
+      }
+    }
+  }
+}

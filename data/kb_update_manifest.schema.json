@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Legal KB update impact manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_at", "mode", "status", "baseline_sha256", "candidate_sha256", "summary", "changes", "impacted_concepts", "impacted_evaluation_cases", "temporal_errors", "required_actions"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "generated_at": {"type": "string"},
+    "mode": {"type": "string"},
+    "status": {"enum": ["no_changes", "changes_detected", "invalid"]},
+    "baseline_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "summary": {
+      "type": "object",
+      "required": ["baseline_documents", "candidate_documents", "changed_documents", "impacted_concepts", "impacted_evaluation_cases", "temporal_errors"],
+      "additionalProperties": false,
+      "properties": {
+        "baseline_documents": {"type": "integer", "minimum": 0},
+        "candidate_documents": {"type": "integer", "minimum": 0},
+        "changed_documents": {"type": "integer", "minimum": 0},
+        "impacted_concepts": {"type": "integer", "minimum": 0},
+        "impacted_evaluation_cases": {"type": "integer", "minimum": 0},
+        "temporal_errors": {"type": "integer", "minimum": 0}
+      }
+    },
+    "changes": {"type": "array"},
+    "impacted_concepts": {"type": "array"},
+    "impacted_evaluation_cases": {"type": "array"},
+    "temporal_errors": {"type": "array", "items": {"type": "string"}},
+    "required_actions": {"type": "array", "items": {"type": "string"}}
+  }
+}

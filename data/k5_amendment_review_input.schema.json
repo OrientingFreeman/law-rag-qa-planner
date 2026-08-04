@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "K5 amendment review input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "review_id", "case_id", "input_manifest_path", "input_manifest_sha256", "review_model", "review_limitation", "stages", "checklist", "requested_decision", "review_note"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "review_id": {"type": "string", "minLength": 3},
+    "case_id": {"type": "string", "minLength": 3},
+    "input_manifest_path": {"type": "string", "minLength": 3},
+    "input_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_model": {"enum": ["independent_review", "staged_self_review"]},
+    "review_limitation": {"type": "string", "minLength": 5},
+    "stages": {"type": "array", "minItems": 4},
+    "checklist": {"type": "array", "minItems": 9},
+    "requested_decision": {"enum": ["pass", "revise", "reject"]},
+    "review_note": {"type": "string", "minLength": 5}
+  }
+}

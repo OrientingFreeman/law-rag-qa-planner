@@ -1,0 +1,30 @@
+[
+  {
+    "case_id": "pipa-art15-public-safety-before-effective-date",
+    "question": "2025년 10월 1일 기준, 공중위생 등 공공의 안전과 안녕을 위해 긴급히 필요한 경우가 개인정보 보호법 제15조제1항의 독립적인 수집·이용 근거인가?",
+    "as_of_date": "2025-10-01",
+    "expected_law_id": "011357",
+    "expected_article_no": "제15조",
+    "target_document_id": "011357:제15조:①:제7호",
+    "expected_present": false,
+    "expected_answer_points": [
+      "2025년 10월 1일에는 제15조제1항제7호가 아직 시행되지 않았다.",
+      "당시 적용되는 제15조제1항의 근거에 제7호를 포함해서는 안 된다."
+    ],
+    "annotation_note": "신설 조문의 시행일 바로 전날을 기준으로 미래 조문 혼입을 검증한다."
+  },
+  {
+    "case_id": "pipa-art15-public-safety-on-effective-date",
+    "question": "2025년 10월 2일 기준, 공중위생 등 공공의 안전과 안녕을 위해 긴급히 필요한 경우가 개인정보 보호법 제15조제1항의 독립적인 수집·이용 근거인가?",
+    "as_of_date": "2025-10-02",
+    "expected_law_id": "011357",
+    "expected_article_no": "제15조",
+    "target_document_id": "011357:제15조:①:제7호",
+    "expected_present": true,
+    "expected_answer_points": [
+      "2025년 10월 2일부터 제15조제1항제7호가 시행된다.",
+      "공중위생 등 공공의 안전과 안녕을 위해 긴급히 필요한 경우를 수집·이용 근거로 제시한다."
+    ],
+    "annotation_note": "신설 조문의 시행 당일을 기준으로 정확한 버전 전환을 검증한다."
+  }
+]

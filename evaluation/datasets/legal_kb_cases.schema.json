@@ -1,0 +1,24 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"Legal KB evaluation cases",
+  "type":"array",
+  "minItems":20,
+  "maxItems":30,
+  "items":{
+    "type":"object",
+    "additionalProperties":false,
+    "required":["case_id","query","category","difficulty","expected_concept_ids","expected_law_id","expected_article_refs","expected_abstain","reference_date","annotation_note"],
+    "properties":{
+      "case_id":{"type":"string","pattern":"^kb-[a-z0-9-]+$"},
+      "query":{"type":"string","minLength":1},
+      "category":{"enum":["lay_to_legal","legal_to_article","similar_concept","ambiguous","out_of_scope","temporal"]},
+      "difficulty":{"enum":["easy","medium","hard"]},
+      "expected_concept_ids":{"type":"array","uniqueItems":true,"items":{"type":"string"}},
+      "expected_law_id":{"type":["string","null"]},
+      "expected_article_refs":{"type":"array","uniqueItems":true,"items":{"type":"string"}},
+      "expected_abstain":{"type":"boolean"},
+      "reference_date":{"type":"string","format":"date"},
+      "annotation_note":{"type":"string","minLength":1}
+    }
+  }
+}

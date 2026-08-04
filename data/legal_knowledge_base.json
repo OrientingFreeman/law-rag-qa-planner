@@ -1,0 +1,951 @@
+{
+  "schema_version": "1.0.0",
+  "source_checked_at": "2026-08-04",
+  "description": "현재 legal_corpus.json에 존재하는 조문만을 근거로 작성한 법령용어-일상용어 지식베이스",
+  "concepts": [
+    {
+      "concept_id": "pipa_collection_use",
+      "legal_term": "개인정보의 수집·이용",
+      "lay_terms": [
+        "개인정보 받기",
+        "고객정보 모으기",
+        "정보 사용하기"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "개인정보 수집·이용의 법적 근거와 동의 요건",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제15조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제15조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "수집과 이용은 사안에 따라 각각의 처리 단계로 검토한다."
+    },
+    {
+      "concept_id": "pipa_minimum_collection",
+      "legal_term": "개인정보의 수집 제한",
+      "lay_terms": [
+        "필요한 만큼만 받기",
+        "정보를 너무 많이 받기",
+        "최소 수집"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "목적에 필요한 최소한의 개인정보 수집 원칙",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제16조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제16조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "최소 수집 여부는 구체적 처리 목적에 따라 달라진다."
+    },
+    {
+      "concept_id": "pipa_third_party_provision",
+      "legal_term": "개인정보의 제3자 제공",
+      "lay_terms": [
+        "다른 회사에 정보 넘기기",
+        "외부 제공",
+        "고객정보 공유"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "개인정보를 제3자에게 제공하는 법적 근거와 고지 사항",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제17조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제17조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "처리위탁과 제3자 제공은 동일한 개념이 아니다."
+    },
+    {
+      "concept_id": "pipa_purpose_outside",
+      "legal_term": "개인정보의 목적 외 이용·제공 제한",
+      "lay_terms": [
+        "처음 말한 목적과 다르게 쓰기",
+        "다른 용도로 사용",
+        "목적 외 사용"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "수집 목적 범위를 벗어난 이용 또는 제공의 제한",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제18조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제18조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "마케팅 이용은 수집 목적과 법적 근거를 별도로 확인한다."
+    },
+    {
+      "concept_id": "pipa_destruction",
+      "legal_term": "개인정보의 파기",
+      "lay_terms": [
+        "개인정보 삭제",
+        "정보 폐기",
+        "보유기간이 끝난 정보 없애기"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "보유기간 경과 또는 처리 목적 달성 후 개인정보 파기",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제21조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제21조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "삭제라는 일상어가 언제나 법정 파기 절차의 완료를 뜻하지는 않는다."
+    },
+    {
+      "concept_id": "pipa_consent_method",
+      "legal_term": "동의를 받는 방법",
+      "lay_terms": [
+        "동의서 받기",
+        "필수 동의와 선택 동의",
+        "동의 항목 표시"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "정보주체의 동의를 받을 때 구분·표시해야 하는 사항",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제22조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제22조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "동의가 모든 개인정보 처리를 정당화하는 포괄적 근거는 아니다."
+    },
+    {
+      "concept_id": "pipa_child_consent",
+      "legal_term": "아동의 개인정보 보호",
+      "lay_terms": [
+        "어린이 개인정보 동의",
+        "아이 회원가입 동의",
+        "법정대리인 동의"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "아동의 개인정보 처리에 필요한 동의",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제22조의2"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제22조의2:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "질문의 아동 연령과 현행 조문 기준을 함께 확인한다."
+    },
+    {
+      "concept_id": "pipa_resident_number",
+      "legal_term": "주민등록번호 처리의 제한",
+      "lay_terms": [
+        "주민번호 받기",
+        "회원가입 때 주민번호 수집",
+        "주민번호 사용"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "주민등록번호를 처리할 수 있는 법적 근거의 제한",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제24조의2"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제24조의2:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "편의 목적만으로 처리할 수 있는지를 구별한다."
+    },
+    {
+      "concept_id": "pipa_processing_delegation",
+      "legal_term": "업무위탁에 따른 개인정보 처리 제한",
+      "lay_terms": [
+        "개인정보 업무 외주",
+        "개인정보 처리위탁",
+        "외주업체에 고객정보 맡기기"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "처리업무 위탁 시 문서와 관리·감독 요건",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제26조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제26조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "제3자 제공과 구별하여 매핑한다."
+    },
+    {
+      "concept_id": "pipa_privacy_policy",
+      "legal_term": "개인정보 처리방침",
+      "lay_terms": [
+        "개인정보 안내문",
+        "개인정보 정책",
+        "처리방침 공개"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "처리방침에 포함하고 공개해야 하는 사항",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제30조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제30조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "개별 동의서와 처리방침은 역할이 다르다."
+    },
+    {
+      "concept_id": "pipa_breach_notice",
+      "legal_term": "개인정보 유출 등의 통지·신고",
+      "lay_terms": [
+        "개인정보가 새었을 때 알리기",
+        "유출 신고",
+        "정보 유출 통지"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "개인정보 유출 시 정보주체 통지와 기관 신고",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제34조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제34조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "통지와 신고의 상대방 및 세부 기한은 구분한다."
+    },
+    {
+      "concept_id": "pipa_stop_processing",
+      "legal_term": "개인정보의 처리정지",
+      "lay_terms": [
+        "내 정보 사용 중단",
+        "개인정보 사용 그만하기",
+        "처리 중지 요청"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "정보주체의 개인정보 처리정지 요구와 제한",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제37조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제37조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "삭제·파기 요구와 처리정지 요구를 동일시하지 않는다."
+    },
+    {
+      "concept_id": "pipa_damages",
+      "legal_term": "개인정보 침해 손해배상책임",
+      "lay_terms": [
+        "개인정보 피해 보상",
+        "정보 유출 손해배상",
+        "개인정보 위반 배상"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "법 위반으로 발생한 손해의 배상책임",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "article_refs": [
+        "제39조"
+      ],
+      "effective_from": "2025-10-02",
+      "effective_to": null,
+      "source_document_ids": [
+        "011357:제39조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "구체적 책임 성립과 배상액은 사실관계 검토가 필요하다."
+    },
+    {
+      "concept_id": "pipa_sensitive_biometrics",
+      "legal_term": "민감정보인 생체인식정보",
+      "lay_terms": [
+        "지문 정보",
+        "홍채 정보",
+        "얼굴인식 정보"
+      ],
+      "relation_type": "narrower_term",
+      "scope_note": "개인 식별 목적으로 처리되는 생체정보의 민감정보 해당 범위",
+      "law_id": "011468",
+      "law_name": "개인정보 보호법 시행령",
+      "article_refs": [
+        "제18조"
+      ],
+      "effective_from": "2026-05-19",
+      "effective_to": null,
+      "source_document_ids": [
+        "011468:제18조:제1항"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "모든 생체정보가 동일하게 해당한다고 단정하지 않는다."
+    },
+    {
+      "concept_id": "pipa_breach_report_deadline",
+      "legal_term": "개인정보 유출 신고기한",
+      "lay_terms": [
+        "유출 72시간 신고",
+        "정보 유출 신고 시한",
+        "개인정보 사고 신고기한"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "개인정보 유출 신고의 세부 기준과 시간 요건",
+      "law_id": "011468",
+      "law_name": "개인정보 보호법 시행령",
+      "article_refs": [
+        "제40조"
+      ],
+      "effective_from": "2026-05-19",
+      "effective_to": null,
+      "source_document_ids": [
+        "011468:제40조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "법률상 의무와 시행령상 세부 기준을 함께 검토한다."
+    },
+    {
+      "concept_id": "eft_access_media",
+      "legal_term": "접근매체의 선정·사용 및 관리",
+      "lay_terms": [
+        "통장 빌려주기",
+        "카드 대여",
+        "비밀번호 넘기기"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "전자금융 접근매체의 양도·대여 등 제한",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제6조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제6조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "접근매체 유형과 구체적인 행위 태양을 확인한다."
+    },
+    {
+      "concept_id": "eft_provider_liability",
+      "legal_term": "금융회사 또는 전자금융업자의 책임",
+      "lay_terms": [
+        "전자금융사고 보상",
+        "해킹 피해 금융회사 책임",
+        "전자금융 피해배상"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "전자금융사고로 이용자에게 발생한 손해에 대한 책임",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제9조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제9조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "사고 유형과 이용자 귀책 여부에 따라 결론이 달라질 수 있다."
+    },
+    {
+      "concept_id": "eft_security_duty",
+      "legal_term": "전자금융거래의 안전성 확보 의무",
+      "lay_terms": [
+        "전자금융 보안",
+        "금융회사 보안의무",
+        "안전한 전자거래"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "전자금융거래의 안전성과 신뢰성 확보 의무",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제21조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제21조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "개인정보 보호법상 안전조치와 법적 근거를 구별한다."
+    },
+    {
+      "concept_id": "eft_record_retention",
+      "legal_term": "전자금융거래기록의 생성·보존 및 파기",
+      "lay_terms": [
+        "거래기록 보관",
+        "전자금융 기록 삭제",
+        "계좌거래 기록 보존기간"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "거래기록의 생성·보존기간과 파기",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제22조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제22조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "개인정보 파기 의무와 기록 보존 의무를 함께 고려한다."
+    },
+    {
+      "concept_id": "eft_information_provision",
+      "legal_term": "전자금융거래정보의 제공",
+      "lay_terms": [
+        "계좌내역 외부 제공",
+        "금융거래 정보 넘기기",
+        "고객 금융정보 공유"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "전자금융거래정보의 제공 또는 누설 제한",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제26조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제26조:제1항"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "개인정보 보호법상 제3자 제공과 적용 법률을 구별한다."
+    },
+    {
+      "concept_id": "labor_worker",
+      "legal_term": "근로자",
+      "lay_terms": [
+        "직원",
+        "알바생",
+        "아르바이트생",
+        "회사에서 일하는 사람"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "임금을 목적으로 사업이나 사업장에 근로를 제공하는 사람",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제2조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제2조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "계약 명칭만으로 근로자성을 확정하지 않는다."
+    },
+    {
+      "concept_id": "labor_written_terms",
+      "legal_term": "근로조건의 명시",
+      "lay_terms": [
+        "근로계약서 작성",
+        "급여와 근무시간 서면 안내",
+        "계약조건 적어주기"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "임금·근로시간 등 근로조건의 명시와 서면 교부",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제17조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제17조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "명시 대상과 서면 교부 대상을 구분한다."
+    },
+    {
+      "concept_id": "labor_dismissal_restriction",
+      "legal_term": "해고 등의 제한",
+      "lay_terms": [
+        "산재 치료 중 해고",
+        "아픈 직원 해고",
+        "해고 제한기간"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "정당한 이유 없는 해고와 특정 기간의 해고 제한",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제23조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제23조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "제한 사유와 예외를 사실관계별로 검토한다."
+    },
+    {
+      "concept_id": "labor_dismissal_notice",
+      "legal_term": "해고의 예고",
+      "lay_terms": [
+        "해고 미리 알리기",
+        "30일 전 해고통보",
+        "해고예고수당"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "해고 전 예고기간 또는 예고수당",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제26조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제26조:제1항"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "해고 사유의 정당성과 해고예고 의무는 별도 쟁점이다."
+    },
+    {
+      "concept_id": "labor_dismissal_writing",
+      "legal_term": "해고사유 등의 서면통지",
+      "lay_terms": [
+        "해고를 글로 통보",
+        "문자 해고통지",
+        "해고 사유와 날짜 적어주기"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "해고사유와 해고시기의 서면 통지 및 효력",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제27조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제27조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "구두 통보와 서면 통지의 법적 효과를 구별한다."
+    },
+    {
+      "concept_id": "labor_final_payment",
+      "legal_term": "금품 청산",
+      "lay_terms": [
+        "퇴직금품 정산",
+        "퇴사 후 임금 지급",
+        "퇴직자 돈 정리"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "퇴직 또는 사망 시 임금·보상금 등 금품 지급기한",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제36조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제36조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "퇴직급여 성립 요건과 금품 청산 기한은 구분한다."
+    },
+    {
+      "concept_id": "labor_wage_payment",
+      "legal_term": "임금 지급의 원칙",
+      "lay_terms": [
+        "급여를 현금으로 받기",
+        "월급에서 임의 공제",
+        "상품권으로 월급 주기"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "임금의 통화·직접·전액·정기 지급 원칙",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제43조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제43조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "법령 또는 단체협약에 따른 예외 가능성을 함께 검토한다."
+    },
+    {
+      "concept_id": "labor_waiting_time",
+      "legal_term": "근로시간과 대기시간",
+      "lay_terms": [
+        "회사에서 지시 기다리는 시간",
+        "대기시간도 근무시간인지",
+        "업무 준비시간"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "사용자의 지휘·감독 아래 있는 대기시간의 근로시간 해당 여부",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제50조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제50조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "장소만이 아니라 사용자의 지휘·감독 여부를 확인한다."
+    },
+    {
+      "concept_id": "labor_break",
+      "legal_term": "휴게",
+      "lay_terms": [
+        "쉬는 시간",
+        "점심시간",
+        "4시간 일할 때 휴식"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "근로시간 도중 부여해야 하는 휴게시간",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제54조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제54조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "대기시간과 자유롭게 이용할 수 있는 휴게시간을 구별한다."
+    },
+    {
+      "concept_id": "labor_annual_leave",
+      "legal_term": "연차 유급휴가",
+      "lay_terms": [
+        "연차",
+        "유급휴가",
+        "원하는 날 연차 쓰기"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "연차 유급휴가의 발생과 사용 시기",
+      "law_id": "001872",
+      "law_name": "근로기준법",
+      "article_refs": [
+        "제60조"
+      ],
+      "effective_from": "2025-10-23",
+      "effective_to": null,
+      "source_document_ids": [
+        "001872:제60조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "발생일수와 사용자의 시기변경 가능성을 구분한다."
+    },
+    {
+      "concept_id": "civil_unfair_juristic_act",
+      "legal_term": "불공정한 법률행위",
+      "lay_terms": [
+        "너무 불리한 계약",
+        "궁박함을 이용한 계약",
+        "폭리 계약"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "궁박·경솔·무경험으로 현저하게 공정을 잃은 법률행위",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제104조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제104조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "단순히 결과가 불리하다는 사정만으로 확정하지 않는다."
+    },
+    {
+      "concept_id": "civil_secret_intent",
+      "legal_term": "진의 아닌 의사표시",
+      "lay_terms": [
+        "속마음과 다르게 계약",
+        "농담으로 한 계약",
+        "진짜 의사와 다른 표시"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "표의자가 진의 아님을 알고 한 의사표시의 효력",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제107조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제107조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "통정허위표시 및 착오와 구별한다."
+    },
+    {
+      "concept_id": "civil_mistake",
+      "legal_term": "착오로 인한 의사표시",
+      "lay_terms": [
+        "계약 내용을 잘못 알기",
+        "중요한 부분을 착각",
+        "실수로 계약"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "법률행위 내용의 중요부분에 착오가 있는 의사표시",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제109조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제109조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "중요부분 여부와 표의자의 중대한 과실을 검토한다."
+    },
+    {
+      "concept_id": "civil_fraud_duress",
+      "legal_term": "사기·강박에 의한 의사표시",
+      "lay_terms": [
+        "속아서 계약",
+        "협박받아 계약",
+        "사기 계약 취소"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "사기 또는 강박으로 이루어진 의사표시의 취소",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제110조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제110조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "제3자 행위인 경우 상대방의 인식 요건을 확인한다."
+    },
+    {
+      "concept_id": "civil_nonperformance_damages",
+      "legal_term": "채무불이행과 손해배상",
+      "lay_terms": [
+        "약속을 지키지 않아 생긴 손해",
+        "계약 위반 배상",
+        "채무를 이행하지 않음"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "채무 내용에 따른 이행이 없을 때의 손해배상",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제390조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제390조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "이행불능·이행지체 등 유형과 귀책사유를 확인한다."
+    },
+    {
+      "concept_id": "civil_special_damages",
+      "legal_term": "특별손해",
+      "lay_terms": [
+        "특별한 사정으로 생긴 손해",
+        "예상 밖의 추가 손해",
+        "간접 손해"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "특별한 사정으로 인한 손해의 배상 범위",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제393조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제393조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "간접손해라는 표현과 특별손해가 항상 일치하지는 않는다."
+    },
+    {
+      "concept_id": "civil_contributory_negligence",
+      "legal_term": "과실상계",
+      "lay_terms": [
+        "피해자에게도 잘못이 있는 경우",
+        "쌍방 과실",
+        "배상액에서 내 잘못 반영"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "손해배상에서 채권자의 과실을 참작",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제396조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제396조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "책임 성립과 손해배상액 산정 단계를 구별한다."
+    },
+    {
+      "concept_id": "civil_simultaneous_performance",
+      "legal_term": "동시이행의 항변권",
+      "lay_terms": [
+        "상대방이 안 하면 나도 거절",
+        "서로 동시에 이행",
+        "맞교환할 때 이행 거절"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "상대방의 이행 제공 전 자기 채무 이행을 거절할 권리",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제536조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제536조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "채무가 서로 대가관계에 있는지를 확인한다."
+    },
+    {
+      "concept_id": "civil_delay_termination",
+      "legal_term": "이행지체와 해제",
+      "lay_terms": [
+        "계약을 안 지켜서 해제",
+        "이행을 재촉한 뒤 계약 끝내기",
+        "계약 위반 해제"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "이행지체 시 상당한 기간의 최고와 계약 해제",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제544조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제544조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "모든 계약 위반이 즉시 해제사유가 되는 것은 아니다."
+    },
+    {
+      "concept_id": "civil_restoration",
+      "legal_term": "해제의 효과와 원상회복의무",
+      "lay_terms": [
+        "계약을 깨고 돌려주기",
+        "해제 후 원상복구",
+        "받은 돈 반환"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "계약 해제 후 당사자의 원상회복의무",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제548조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제548조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "취소·무효에 따른 반환과 법적 근거를 구별한다."
+    },
+    {
+      "concept_id": "civil_tort",
+      "legal_term": "불법행위",
+      "lay_terms": [
+        "남에게 잘못해서 손해를 입힘",
+        "위법한 가해행위",
+        "사고 손해배상"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "고의 또는 과실로 위법하게 타인에게 손해를 가한 경우의 책임",
+      "law_id": "001706",
+      "law_name": "민법",
+      "article_refs": [
+        "제750조"
+      ],
+      "effective_from": "2026-03-17",
+      "effective_to": null,
+      "source_document_ids": [
+        "001706:제750조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "계약상 채무불이행 책임과 구별한다."
+    }
+  ]
+}

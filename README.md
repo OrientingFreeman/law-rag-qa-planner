@@ -46,6 +46,45 @@
 - [최종 검증 보고서](docs/FINAL_VERIFICATION.md)
 - [LLM·데이터 품질 직무용 프로젝트 요약](docs/APPLICATION_PROJECT_SUMMARY.md)
 
+## 법령정보지식베이스 구축·관리 결과
+
+RAG 검색 오류를 분석하면서 법령용어, 일상용어, 근거 조문과 시행일을
+독립적으로 등록·검수·갱신할 수 있는 소규모 법령정보지식베이스로
+프로젝트를 확장했습니다.
+
+| 항목 | 실제 구현·검증 결과 |
+|---|---|
+| 법령 구조 데이터 | 4,833개 조·항·호 문서 |
+| 법령 지식개념 | 41개, 법률용어·일상용어·관계 유형·적용범위·유효기간 구조화 |
+| 참조 무결성 | 모든 개념의 법령 ID·조문·원문 문서 ID 존재 여부 자동 검증 |
+| 제·개정 영향 분석 | 개인정보 보호법 제15조 실제 개정 1건 처리, 신설 조문·영향 개념·평가 문항 추적 |
+| 실제 개정 시점 평가 | 시행일 전날·당일 2/2 통과(이 사례에 한정된 경계 평가) |
+| 검수·승인 게이트 | 공식 출처·시행일·영향 검수·테스트 증거를 확인해 `pass/revise/reject` 자동 판정 |
+| KB 전용 평가 | 30문항, 6개 유형, 3개 난이도 |
+| 폐쇄형 평가 결과 | 개념 Top-1 100%, 조문 Precision/Recall 100%, 유보 100%, 제한적 시점 100% |
+
+K5 실제 사례 검수는 **9/9** 필수 항목을 통과했다. K6 **통합 검증 9/9**
+단계도 통과했으며, K1~K5 전체 산출물과 README·지원 요약의 표시 수치는
+`python tools/run_kali_verification.py` 한 명령으로 다시 계산하고 대조할
+수 있다.
+
+위 100% 수치는 **명시적으로 등록된 법령용어·일상용어의 연결과 참조
+무결성을 확인하는 폐쇄형 결정론 평가 결과**입니다. 자유로운 한국어
+질의의 의미검색 성능이나 생성형 LLM 답변 정확도를 뜻하지 않습니다.
+전체 코퍼스의 `kb_update_manifest.json`은 같은 4,833개 문서를 비교한
+`no_changes` 기준선 점검입니다. 이와 별도로 K4에서는 개인정보 보호법
+제15조제1항제7호 신설 사례의 개정 전후 fixture를 비교해 실제 변경과
+영향 범위를 검증했습니다.
+
+- [법령용어 지식베이스](data/legal_knowledge_base.json)
+- [KB 전용 평가 데이터셋](evaluation/datasets/legal_kb_cases.json)
+- [법령 제·개정 업데이트 가이드](docs/LEGAL_KB_UPDATE_GUIDE.md)
+- [실제 법령 개정 영향 분석 보고서](docs/K4_AMENDMENT_IMPACT_REPORT.md)
+- [법령 개정 검수·승인 보고서](docs/K5_AMENDMENT_REVIEW_REPORT.md)
+- [한국법령정보원 지원용 최종 재현 검증](docs/KALI_FINAL_VERIFICATION.md)
+- [KB 품질 평가 보고서](docs/LEGAL_KB_QUALITY_REPORT.md)
+- [한국법령정보원 지원용 프로젝트 요약](docs/APPLICATION_PROJECT_SUMMARY_KALI.md)
+
 ## 1. 프로젝트 소개
 
 이 프로젝트는 한국 법령 문서를 대상으로 질문에 관련된 조문을 검색하고, 검색된 근거 범위 안에서 답변을 생성하는 법령 RAG(Retrieval-Augmented Generation) 시스템입니다.

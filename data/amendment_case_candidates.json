@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "researched_at": "2026-08-04",
+  "purpose": "K4 실제 개정 영향 분석에 사용할 공식 법령 사례를 구현 전에 선별한다.",
+  "selection_policy": {
+    "official_sources_required": true,
+    "must_change_existing_kb_article": true,
+    "must_impact_existing_concept": true,
+    "must_impact_existing_evaluation_case": true,
+    "automatic_old_new_comparison_is_reference_only": true
+  },
+  "candidates": [
+    {
+      "case_id": "pipa-2025-public-safety-basis",
+      "status": "selected",
+      "law_id": "011357",
+      "law_name": "개인정보 보호법",
+      "promulgation_number": "법률 제20897호",
+      "promulgated_at": "2025-04-01",
+      "effective_from": "2025-10-02",
+      "article_no": "제15조",
+      "provision_ref": "제15조제1항제7호",
+      "change_kind": "item_added",
+      "before": {
+        "lsi_seq": "248613",
+        "effective_from": "2024-03-15",
+        "text": null,
+        "finding": "직전 공식 본문에는 제15조제1항제7호가 존재하지 않는다."
+      },
+      "after": {
+        "lsi_seq": "270351",
+        "effective_from": "2025-10-02",
+        "text": "7. 공중위생 등 공공의 안전과 안녕을 위하여 긴급히 필요한 경우",
+        "finding": "동의 없이 개인정보를 수집·이용할 수 있는 근거로 제7호가 신설되었다."
+      },
+      "impact_summary": "개인정보 수집·이용의 법적 근거 목록이 여섯 가지에서 일곱 가지로 변경되므로, 해당 목록을 설명하는 지식 항목과 직접 조문 평가 문항의 정답 포인트를 함께 검수해야 한다.",
+      "impacted_concept_ids": [
+        "pipa_collection_use"
+      ],
+      "impacted_evaluation_case_ids": [
+        "pipa-collection-basis"
+      ],
+      "official_sources": {
+        "before_text_url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=248613",
+        "after_text_url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=270351",
+        "amendment_document_url": "https://www.law.go.kr/LSW/lsInfoP.do?lsiSeq=270351&viewCls=lsRvsDocInfoR"
+      },
+      "verification": {
+        "status": "pass",
+        "basis": [
+          "official_before_text",
+          "official_after_text",
+          "official_amendment_document",
+          "current_corpus_match"
+        ],
+        "note": "자동 생성 신·구법 비교만으로 확정하지 않고 국가법령정보센터의 직전 본문, 현행 본문, 제정·개정문을 대조했다."
+      }
+    }
+  ]
+}

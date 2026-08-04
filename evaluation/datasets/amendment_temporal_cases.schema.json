@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Official amendment temporal boundary cases",
+  "type": "array",
+  "minItems": 2,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "case_id", "question", "as_of_date", "expected_law_id",
+      "expected_article_no", "target_document_id", "expected_present",
+      "expected_answer_points", "annotation_note"
+    ],
+    "properties": {
+      "case_id": {"type": "string", "minLength": 3},
+      "question": {"type": "string", "minLength": 5},
+      "as_of_date": {"type": "string", "format": "date"},
+      "expected_law_id": {"type": "string", "minLength": 1},
+      "expected_article_no": {"type": "string", "minLength": 2},
+      "target_document_id": {"type": "string", "minLength": 3},
+      "expected_present": {"type": "boolean"},
+      "expected_answer_points": {
+        "type": "array",
+        "minItems": 1,
+        "items": {"type": "string", "minLength": 2}
+      },
+      "annotation_note": {"type": "string", "minLength": 5}
+    }
+  }
+}

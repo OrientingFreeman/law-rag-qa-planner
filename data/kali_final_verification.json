@@ -1,0 +1,198 @@
+{
+  "schema_version": "1.0.0",
+  "verification_name": "kali_portfolio_final_verification",
+  "status": "pass",
+  "metrics": {
+    "corpus_documents": 4833,
+    "knowledge_concepts": 41,
+    "kb_evaluation_cases": 30,
+    "official_rag_evaluation_cases": 49,
+    "verified_amendment_cases": 1,
+    "substantive_amendment_changes": 1,
+    "impacted_concepts": 1,
+    "impacted_evaluation_cases": 1,
+    "temporal_boundary_cases": 2,
+    "temporal_boundary_passed": 2,
+    "k5_required_checks": 9,
+    "k5_passed_checks": 9,
+    "k5_decision": "pass",
+    "review_model": "staged_self_review"
+  },
+  "steps": [
+    {
+      "name": "k1_knowledge_validation",
+      "command": "python tools/validate_legal_knowledge_base.py",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": null,
+      "output_tail": "OK: 41 concepts; metadata and all corpus article/document references validated"
+    },
+    {
+      "name": "k2_baseline_change_analysis",
+      "command": "python tools/analyze_legal_kb_update.py --output /tmp/law-rag-kali-kb-update.json",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": null,
+      "output_tail": "OK: status=no_changes; changed=0; impacted_concepts=0; impacted_cases=0"
+    },
+    {
+      "name": "k3_closed_set_evaluation",
+      "command": "python tools/evaluate_legal_knowledge_base.py",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": null,
+      "output_tail": "OK: 30 cases; exact=1.0000; concept_top1=1.0000; abstention=1.0000"
+    },
+    {
+      "name": "k4_candidate_validation",
+      "command": "python tools/validate_amendment_case_candidates.py",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": null,
+      "output_tail": "OK: 1 candidate; selected=pipa-2025-public-safety-basis; concepts=1; evaluation_cases=1"
+    },
+    {
+      "name": "k4_actual_amendment",
+      "command": "python tools/run_k4_amendment_case.py",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": null,
+      "output_tail": "OK: status=pass; substantive_changes=1; impacted_concepts=1; impacted_cases=1; temporal=2/2"
+    },
+    {
+      "name": "k5_review_gate",
+      "command": "python tools/review_k5_amendment_update.py",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": null,
+      "output_tail": "OK: decision=pass; checks=9/9; baseline_promotion_allowed=True"
+    },
+    {
+      "name": "official_dataset_validation",
+      "command": "python tools/validate_evaluation_dataset.py",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": null,
+      "output_tail": "OK: 49 cases; metadata and corpus article references validated"
+    },
+    {
+      "name": "k_series_tests",
+      "command": "python -m pytest tests/test_legal_knowledge_base.py tests/test_legal_kb_update.py tests/test_legal_kb_evaluation.py tests/test_amendment_case_candidates.py tests/test_k4_amendment_case.py tests/test_k5_amendment_review.py tests/test_k6_kali_verification.py -q",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": 39,
+      "output_tail": ".......................................                                  [100%]\n39 passed in 2.37s"
+    },
+    {
+      "name": "full_regression",
+      "command": "python -m pytest -q",
+      "status": "pass",
+      "exit_code": 0,
+      "pytest_passed": 197,
+      "output_tail": "........................................................................ [ 73%]\n.....................................................                    [100%]\n=============================== warnings summary ===============================\nvenv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  <PROJECT_ROOT>/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n197 passed, 1 warning in 41.31s"
+    }
+  ],
+  "invariant_checks": [
+    {
+      "check": "k4_actual_case_passed",
+      "passed": true
+    },
+    {
+      "check": "k4_substantive_change_detected",
+      "passed": true
+    },
+    {
+      "check": "k4_temporal_boundary_passed",
+      "passed": true
+    },
+    {
+      "check": "k5_gate_passed",
+      "passed": true
+    },
+    {
+      "check": "k5_required_checks_passed",
+      "passed": true
+    }
+  ],
+  "documentation_claim_checks": [
+    {
+      "path": "README.md",
+      "expected_token": "4,833개",
+      "passed": true
+    },
+    {
+      "path": "README.md",
+      "expected_token": "41개",
+      "passed": true
+    },
+    {
+      "path": "README.md",
+      "expected_token": "30문항",
+      "passed": true
+    },
+    {
+      "path": "README.md",
+      "expected_token": "실제 개정 1건",
+      "passed": true
+    },
+    {
+      "path": "README.md",
+      "expected_token": "2/2",
+      "passed": true
+    },
+    {
+      "path": "README.md",
+      "expected_token": "9/9",
+      "passed": true
+    },
+    {
+      "path": "README.md",
+      "expected_token": "통합 검증 9/9",
+      "passed": true
+    },
+    {
+      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "expected_token": "4,833개",
+      "passed": true
+    },
+    {
+      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "expected_token": "41개",
+      "passed": true
+    },
+    {
+      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "expected_token": "30문항",
+      "passed": true
+    },
+    {
+      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "expected_token": "2/2",
+      "passed": true
+    },
+    {
+      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "expected_token": "9/9",
+      "passed": true
+    },
+    {
+      "path": "docs/APPLICATION_PROJECT_SUMMARY_KALI.md",
+      "expected_token": "통합 검증 9/9",
+      "passed": true
+    }
+  ],
+  "summary": {
+    "steps_total": 9,
+    "steps_passed": 9,
+    "full_regression_tests_passed": 197,
+    "failed_steps": [],
+    "failed_invariants": [],
+    "failed_documentation_claims": []
+  },
+  "limitations": [
+    "KB 30문항 결과는 등록 어휘 기반 폐쇄형 결정론 평가이며 자유 질의 의미검색 성능이 아니다.",
+    "실제 개정 평가는 개인정보 보호법 제15조제1항의 단일 사례에 한정된다.",
+    "검수 기록은 단계 분리 자기검수이며 독립된 제3자 검수가 아니다.",
+    "외부 생성형 LLM의 답변 정확도는 이 통합 검증에 포함하지 않는다."
+  ]
+}

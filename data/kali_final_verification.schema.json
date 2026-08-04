@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KALI final portfolio verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "verification_name", "status", "metrics", "steps", "invariant_checks", "documentation_claim_checks", "summary", "limitations"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "verification_name": {"const": "kali_portfolio_final_verification"},
+    "status": {"enum": ["pass", "fail"]},
+    "metrics": {"type": "object"},
+    "steps": {"type": "array"},
+    "invariant_checks": {"type": "array"},
+    "documentation_claim_checks": {"type": "array"},
+    "summary": {"type": "object"},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  }
+}
