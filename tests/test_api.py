@@ -83,9 +83,14 @@ def test_web_ui_and_static_assets_are_served():
     assert "precedent_evidence" in script.text
     assert "법령 직접 확인" in home.text
     assert "판례 해석·적용" in home.text
-    assert home.text.count("data-question=") == 10
+    assert "기업법무 복합 검토" in home.text
+    assert home.text.count("data-question=") == 12
+    assert home.text.count('data-domain="all" data-top-k="5"') == 2
+    assert "직무발명·특허·저작권" in home.text
+    assert "부정결제·개인정보 유출" in home.text
     assert 'data-domain="electronic_finance"' in home.text
     assert "button.dataset.domain" in script.text
+    assert "button.dataset.topK" in script.text
     assert home.headers["cache-control"] == "no-cache, no-store, must-revalidate"
     assert script.status_code == 200
     assert "run-evaluation" not in script.text

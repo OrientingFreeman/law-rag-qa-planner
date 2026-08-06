@@ -244,6 +244,7 @@ async function loadDomains() {
 $$('[data-question]').forEach((button) => button.addEventListener('click', () => {
   $('#question').value = button.dataset.question;
   if (button.dataset.domain) $('#domain').value = button.dataset.domain;
+  if (button.dataset.topK) $('#top-k').value = button.dataset.topK;
   $('#mode').value = 'answer';
   $$('[data-question]').forEach((item) => item.classList.toggle('selected', item === button));
   $('#question').focus();
