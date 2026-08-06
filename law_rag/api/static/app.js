@@ -83,6 +83,116 @@ function renderStructuredAnswer(text) {
   });
 }
 
+function appendReviewText(parent, tagName, text, className = '') {
+  const element = document.createElement(tagName);
+  if (className) element.className = className;
+  element.textContent = text || '';
+  parent.append(element);
+  return element;
+}
+
+function renderConditionalReview(data) {
+  const panel = $('#conditional-review-panel');
+  const review = data.conditional_review || {};
+  const issueReviews = Array.isArray(review.issue_reviews) ? review.issue_reviews : [];
+  if (!review.enabled || !issueReviews.length) {
+    panel.hidden = true;
+    $('#review-issue-list').innerHTML = '';
+    return;
+  }
+
+  panel.hidden = false;
+  const statusBadge = $('#review-status-badge');
+  statusBadge.textContent = review.review_status_label || '검색 근거 범위 검토';
+  statusBadge.className = `review-status ${review.review_status === 'additional_facts_required' ? 'needs-facts' : 'evidence-scoped'}`;
+  $('#review-conclusion').textContent = review.conclusion || '';
+
+  const priorityFacts = Array.isArray(review.priority_facts) ? review.priority_facts : [];
+  const reviewLinks = Array.isArray(review.fact_issue_action_links)
+    ? review.fact_issue_action_links : [];
+  const linksByIssue = new Map(
+    reviewLinks.map((link) => [String(link.issue_id || ''), link])
+  );
+  const actions = Array.isArray(data.practical_action_generator?.actions)
+    ? data.practical_action_generator.actions : [];
+  const factsByIssue = new Map();
+  priorityFacts.forEach((fact) => {
+    const issueId = String(fact.issue_id || '');
+    if (!factsByIssue.has(issueId)) factsByIssue.set(issueId, []);
+    factsByIssue.get(issueId).push(fact);
+  });
+  const actionsByIssue = new Map();
+  actions.forEach((action) => {
+    const issueId = String(action.issue_id || '');
+    if (!actionsByIssue.has(issueId)) actionsByIssue.set(issueId, []);
+    actionsByIssue.get(issueId).push(action);
+  });
+
+  const container = $('#review-issue-list');
+  container.innerHTML = '';
+  issueReviews.forEach((issue, index) => {
+    const issueId = String(issue.issue_id || '');
+    const issueLink = linksByIssue.get(issueId) || {};
+    const linkedFactIds = new Set(issueLink.fact_ids || issue.priority_fact_ids || []);
+    const linkedActionIds = new Set(issueLink.action_ids || issue.action_ids || []);
+    const card = document.createElement('article');
+    card.className = 'review-issue-card';
+
+    const header = document.createElement('div');
+    header.className = 'review-issue-header';
+    appendReviewText(header, 'span', String(issue.issue_order || index + 1).padStart(2, '0'), 'review-issue-order');
+    const titleGroup = document.createElement('div');
+    appendReviewText(titleGroup, 'h5', issue.issue_label || issueId || '법적 쟁점');
+    appendReviewText(titleGroup, 'p', issue.conditional_conclusion || '', 'review-issue-conclusion');
+    header.append(titleGroup);
+    card.append(header);
+
+    const columns = document.createElement('div');
+    columns.className = 'review-columns';
+    const factsColumn = document.createElement('section');
+    appendReviewText(factsColumn, 'h6', '우선 확인 사실');
+    const factList = document.createElement('ol');
+    factList.className = 'review-fact-list';
+    (factsByIssue.get(issueId) || []).filter((fact) => linkedFactIds.has(fact.fact_id)).forEach((fact) => {
+      const item = document.createElement('li');
+      const line = document.createElement('div');
+      appendReviewText(line, 'span', fact.priority_label || '확인', `fact-priority priority-${fact.priority || 3}`);
+      appendReviewText(line, 'strong', fact.label || fact.fact_id || '확인사항');
+      item.append(line);
+      appendReviewText(item, 'p', fact.question || '');
+      factList.append(item);
+    });
+    if (!factList.children.length) appendReviewText(factsColumn, 'p', '현재 구조화된 추가 확인사항이 없습니다.', 'review-empty');
+    else factsColumn.append(factList);
+
+    const actionsColumn = document.createElement('section');
+    appendReviewText(actionsColumn, 'h6', '근거 연결 조치');
+    const actionList = document.createElement('ul');
+    actionList.className = 'review-action-list';
+    (actionsByIssue.get(issueId) || []).filter((action) => linkedActionIds.has(action.action_id)).forEach((action) => {
+      const item = document.createElement('li');
+      appendReviewText(item, 'strong', action.title || action.action_id || '후속 조치');
+      appendReviewText(item, 'p', action.instruction || '');
+      actionList.append(item);
+    });
+    if (!actionList.children.length) appendReviewText(actionsColumn, 'p', '검색 근거 범위에서 별도 조치가 생성되지 않았습니다.', 'review-empty');
+    else actionsColumn.append(actionList);
+    columns.append(factsColumn, actionsColumn);
+    card.append(columns);
+
+    const citations = Array.isArray(issueLink.citations)
+      ? issueLink.citations : (Array.isArray(issue.citations) ? issue.citations : []);
+    if (citations.length) {
+      const sourceRow = document.createElement('div');
+      sourceRow.className = 'review-sources';
+      appendReviewText(sourceRow, 'span', '연결 근거', 'review-source-label');
+      citations.forEach((citation) => appendReviewText(sourceRow, 'span', citation, 'review-source-chip'));
+      card.append(sourceRow);
+    }
+    container.append(card);
+  });
+}
+
 async function loadHealth() {
   try {
     const response = await fetch("/health");
@@ -151,6 +261,7 @@ function renderQuery(data) {
   const answerCard = $('#answer-card');
   if ('answer' in data) {
     answerCard.hidden = false;
+    renderConditionalReview(data);
     renderStructuredAnswer(data.display_answer || data.answer || '(생성된 답변이 없습니다.)');
     const generationText = {
       completed: '근거 검증 완료', citation_invalid: '인용 검증 실패', failed: '생성 실패', abstained: '답변 유보'
@@ -171,6 +282,7 @@ function renderQuery(data) {
     }
   } else {
     answerCard.hidden = true;
+    renderConditionalReview({});
   }
 
   const abstained = data.generation_status === 'abstained' || data.abstain === true;

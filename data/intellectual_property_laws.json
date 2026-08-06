@@ -1,0 +1,16 @@
+{
+  "laws": [
+    {
+      "domain_id": "intellectual_property",
+      "law_name": "특허법"
+    },
+    {
+      "domain_id": "intellectual_property",
+      "law_name": "발명진흥법"
+    },
+    {
+      "domain_id": "intellectual_property",
+      "law_name": "저작권법"
+    }
+  ]
+}

@@ -63,6 +63,89 @@ class LawRagService:
         self.run_logger = JsonlRunLogger()
         self.corpus_version = self._corpus_version()
 
+    def _matched_domain_query_paths(self, question: str):
+        """Build reusable domain-specific search paths from explicit query signals.
+
+        The router does not predict a legal conclusion or inject a gold article. It
+        reuses the public domain configurations: an alias or a query-rule trigger
+        must be present in the question before that path can participate.
+        """
+        lowered = question.lower()
+        matched = []
+        for config in self.registry.list():
+            paths: list[str] = []
+            for canonical, aliases in config.aliases.items():
+                terms = [str(canonical), *(str(alias) for alias in aliases)]
+                if any(term.lower() in lowered for term in terms):
+                    paths.append(" ".join([question, canonical, *aliases]))
+            for rule in config.query_rules:
+                all_terms = [str(term).lower() for term in rule.get("all", [])]
+                any_terms = [str(term).lower() for term in rule.get("any", [])]
+                if all_terms and not all(term in lowered for term in all_terms):
+                    continue
+                if any_terms and not any(term in lowered for term in any_terms):
+                    continue
+                expansions = [str(term) for term in rule.get("expand", [])]
+                if expansions:
+                    paths.append(" ".join([question, *expansions]))
+            deduped = list(dict.fromkeys(paths))
+            if deduped:
+                matched.append((config, deduped))
+        return matched
+
+    def _domain_routed_raw_results(
+        self,
+        question: str,
+        *,
+        requested_top_k: int,
+        as_of_date: date | None,
+    ):
+        routes = self._matched_domain_query_paths(question)
+        if not routes:
+            return None
+
+        candidate_limit = max(requested_top_k * 6, 30)
+        fused: dict[str, SearchResult] = {}
+        fusion_scores: dict[str, float] = defaultdict(float)
+        route_leader_counts: dict[str, int] = defaultdict(int)
+        route_count = 0
+        for config, queries in routes:
+            for route_query in queries:
+                route_count += 1
+                results = self.retriever.retrieve(
+                    route_query,
+                    domain=config,
+                    top_k=candidate_limit,
+                    as_of_date=as_of_date,
+                )
+                for rank, result in enumerate(results, start=1):
+                    document_id = result.provision.document_id
+                    fusion_scores[document_id] += 1.0 / (20 + rank)
+                    if rank <= 2:
+                        route_leader_counts[document_id] += 1
+                    current = fused.get(document_id)
+                    if current is None or result.score > current.score:
+                        fused[document_id] = result
+
+        if not fused:
+            return None
+        peak = max(fusion_scores.values()) or 1.0
+        normalized_route_count = max(route_count, 1)
+        merged = []
+        for document_id, result in fused.items():
+            rrf = fusion_scores[document_id] / peak
+            route_leadership = min(1.0, route_leader_counts[document_id] / normalized_route_count * 2.0)
+            result.score = min(0.995, result.score * 0.48 + rrf * 0.37 + route_leadership * 0.15)
+            result.retrieval_reason = "domain_routed"
+            # A positive relation score records an explicit configured route and
+            # prevents an unrelated single-domain ontology filter from deleting it.
+            result.relation_score = max(result.relation_score, 0.05)
+            merged.append(result)
+        merged.sort(key=lambda row: (row.score, row.semantic_score, row.lexical_score), reverse=True)
+        for rank, result in enumerate(merged, start=1):
+            result.rank = rank
+        return merged[:candidate_limit]
+
     def _planned_raw_results(
         self,
         question: str,
@@ -73,6 +156,19 @@ class LawRagService:
     ):
         plan = self.intent_planner.plan(question)
         candidate_limit = max(requested_top_k * 6, 30)
+        if domain is None:
+            routed = self._domain_routed_raw_results(
+                question,
+                requested_top_k=requested_top_k,
+                as_of_date=as_of_date,
+            )
+            if routed is not None:
+                # The default ontology currently covers privacy concepts most
+                # deeply. Applying it as a global reranker here would suppress
+                # valid finance or IP routes in the same question. Metadata is
+                # still annotated after aggregation, while explicit route
+                # provenance keeps each configured domain path auditable.
+                return plan, routed
         if not plan.is_compound:
             # Single-issue questions still benefit from planner expansions (especially
             # definition questions whose surface wording is sparse). Retrieve with the
@@ -484,6 +580,7 @@ class LawRagService:
                 "sentence_citation_map": generated.composition.get("sentence_citation_map", {}),
                 "missing_fact_detector": generated.composition.get("missing_fact_detector", {}),
                 "practical_action_generator": generated.composition.get("practical_action_generator", {}),
+                "conditional_review": generated.composition.get("conditional_review", {}),
                 "legal_argument_graph": generated.composition.get("legal_argument_graph", {}),
                 "multi_path_reasoning": generated.composition.get("multi_path_reasoning", {}),
                 "generation_error": generated.error,

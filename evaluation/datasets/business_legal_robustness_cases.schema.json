@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Business Legal Query Robustness Cases",
+  "type": "array",
+  "minItems": 24,
+  "maxItems": 24,
+  "items": {
+    "type": "object",
+    "required": [
+      "case_id", "pair_id", "variant", "question", "category", "difficulty",
+      "domain", "top_k", "expected_law_id", "expected_article_nos",
+      "expected_answer_points", "expected_abstain"
+    ],
+    "properties": {
+      "case_id": {"type": "string", "pattern": "^robust-"},
+      "pair_id": {"type": "string", "minLength": 1},
+      "variant": {"enum": ["reference", "lay"]},
+      "question": {"type": "string", "minLength": 1},
+      "category": {"const": "surface_form_robustness"},
+      "difficulty": {"enum": ["medium", "hard"]},
+      "domain": {"enum": ["electronic_finance", "digital_business", "intellectual_property"]},
+      "top_k": {"type": "integer", "minimum": 1},
+      "expected_law_id": {"type": "string", "minLength": 1},
+      "expected_article_nos": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+      "expected_answer_points": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+      "expected_abstain": {"const": false}
+    },
+    "additionalProperties": false
+  }
+}

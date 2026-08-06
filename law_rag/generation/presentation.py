@@ -103,6 +103,7 @@ def build_expert_report(
     sentence_citation_map: dict[str, object] | None = None,
     missing_fact_detector: dict[str, object] | None = None,
     practical_action_generator: dict[str, object] | None = None,
+    conditional_review: dict[str, object] | None = None,
     legal_argument_graph: dict[str, object] | None = None,
     multi_path_reasoning: dict[str, object] | None = None,
 ) -> dict[str, object]:
@@ -133,6 +134,7 @@ def build_expert_report(
         "sentence_citation_map": sentence_citation_map or {},
         "missing_fact_detector": missing_fact_detector or {},
         "practical_action_generator": practical_action_generator or {},
+        "conditional_review": conditional_review or {},
         "legal_argument_graph": legal_argument_graph or {},
         "multi_path_reasoning": multi_path_reasoning or {},
     }
@@ -156,6 +158,7 @@ def build_dual_output(
     sentence_citation_map: dict[str, object] | None = None,
     missing_fact_detector: dict[str, object] | None = None,
     practical_action_generator: dict[str, object] | None = None,
+    conditional_review: dict[str, object] | None = None,
     legal_argument_graph: dict[str, object] | None = None,
     multi_path_reasoning: dict[str, object] | None = None,
 ) -> dict[str, object]:
@@ -171,6 +174,7 @@ def build_dual_output(
             decision_trace=decision_trace, logic_driven_reasoning_path=logic_driven_reasoning_path,
             answer_composer=answer_composer, sentence_citation_map=sentence_citation_map,
             missing_fact_detector=missing_fact_detector, practical_action_generator=practical_action_generator,
+            conditional_review=conditional_review,
             legal_argument_graph=legal_argument_graph, multi_path_reasoning=multi_path_reasoning,
         ),
     }

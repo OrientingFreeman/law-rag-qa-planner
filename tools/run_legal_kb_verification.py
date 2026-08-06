@@ -141,7 +141,7 @@ def build_result(steps: list[dict[str, Any]], metrics: dict[str, Any], claim_che
             "failed_documentation_claims": failed_claims,
         },
         "limitations": [
-            "KB 30문항 결과는 등록 어휘 기반 폐쇄형 결정론 평가이며 자유 질의 의미검색 성능이 아니다.",
+            f"KB {metrics['kb_evaluation_cases']}문항 결과는 등록 어휘 기반 폐쇄형 결정론 평가이며 자유 질의 의미검색 성능이 아니다.",
             "실제 개정 평가는 개인정보 보호법 제15조제1항의 단일 사례에 한정된다.",
             "검수 기록은 단계 분리 자기검수이며 독립된 제3자 검수가 아니다.",
             "외부 생성형 LLM의 답변 정확도는 이 통합 검증에 포함하지 않는다."

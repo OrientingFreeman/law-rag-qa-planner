@@ -9,6 +9,16 @@ from law_rag.generation.composer import CompositionPlan, LegalRule
 ISSUE_LABELS = {
     "cross_border_transfer": "개인정보 국외이전",
     "processing_delegation": "개인정보 처리위탁",
+    "privacy_breach": "개인정보 유출 대응",
+    "employee_invention": "직무발명",
+    "patent_novelty": "특허 신규성",
+    "disclosure_exception": "공지예외",
+    "work_made_for_hire": "업무상 프로그램 저작자",
+    "eft_accident_liability": "전자금융사고 책임",
+    "eft_record_retention": "전자금융거래 기록 보존",
+    "destruction": "개인정보 파기",
+    "eft_terms_notice": "전자금융 약관 고지",
+    "eft_dispute_handling": "전자금융 분쟁처리",
 }
 
 STEP_LABELS = {
@@ -169,11 +179,30 @@ def build_answer_plan(
     issue_order = tuple(str(item) for item in path.get("issue_order", []))
     steps = [dict(item) for item in path.get("steps", [])]
     transitions = [dict(item) for item in path.get("issue_transitions", [])]
-    allowed = _unique(path.get("answer_contract", {}).get("allowed_citations", []) or composition_plan.allowed_citations)
+    # The reasoning graph may contain more candidates than the final composition
+    # plan can serialize. Keep the answer contract inside the evidence cards that
+    # can supply a concrete source binding.
+    allowed = _unique(composition_plan.allowed_citations)
+    allowed_set = set(allowed)
+    citation_issues: dict[str, list[str]] = {}
+    for step in steps:
+        issue_id = str(step.get("issue_id", "")).strip()
+        for citation in _unique(step.get("citations", [])):
+            if issue_id and citation in allowed_set:
+                citation_issues.setdefault(citation, []).append(issue_id)
+
+    def issue_for_citation(citation: str) -> str | None:
+        candidates = _unique(citation_issues.get(citation, []))
+        return next((issue for issue in issue_order if issue in candidates), candidates[0] if candidates else None)
+
+    # Do not expose a citation in the final contract when the reasoning path
+    # cannot explain which detected issue it supports.
+    allowed = tuple(citation for citation in allowed if issue_for_citation(citation))
+    allowed_set = set(allowed)
 
     conclusion: list[PlannedSentence] = []
     for index, transition in enumerate(transitions, start=1):
-        citations = _unique(transition.get("citations", []))
+        citations = tuple(citation for citation in _unique(transition.get("citations", [])) if citation in allowed_set)
         conclusion.append(_sentence(
             sentence_id=f"transition:{index}", sentence_type="issue_transition", issue_id=None,
             text=f"{transition.get('condition')}에는 {transition.get('conclusion')}해야 합니다.",
@@ -191,7 +220,7 @@ def build_answer_plan(
     for step in steps:
         step_no = int(step.get("step", len(judgments) + 1))
         issue_id = str(step.get("issue_id", "")) or None
-        citations = _unique(step.get("citations", []))
+        citations = tuple(citation for citation in _unique(step.get("citations", [])) if citation in allowed_set)
         judgments.append(_sentence(
             sentence_id=f"step:{step_no}", sentence_type=str(step.get("type", "reasoning_step")), issue_id=issue_id,
             text=_step_text(step, composition_plan), citations=citations, source_step=step_no,
@@ -200,14 +229,17 @@ def build_answer_plan(
 
     requirements: list[PlannedSentence] = []
     for index, rule in enumerate(composition_plan.rules, start=1):
+        rule_issue = issue_for_citation(rule.citation)
+        if not rule_issue:
+            continue
         requirements.append(_sentence(
-            sentence_id=f"requirement:{index}", sentence_type="rule_requirement", issue_id=None,
+            sentence_id=f"requirement:{index}", sentence_type="rule_requirement", issue_id=rule_issue,
             text=_lead(rule), citations=(rule.citation,), citation_bindings=_bindings((rule.citation,), composition_plan),
         ))
         for node_index, node in enumerate(rule.evidence_nodes[1:4], start=1):
             if node.source_text.strip():
                 requirements.append(_sentence(
-                    sentence_id=f"requirement:{index}:{node_index}", sentence_type="sub_requirement", issue_id=None,
+                    sentence_id=f"requirement:{index}:{node_index}", sentence_type="sub_requirement", issue_id=rule_issue,
                     text=node.source_text.strip(), citations=(node.citation,),
                     citation_bindings=(CitationBinding(node.citation, node.source_document_id, node.node_id),),
                 ))
@@ -227,9 +259,9 @@ def build_answer_plan(
         )
     else:
         practical = tuple(_sentence(
-            sentence_id=f"action:{index}", sentence_type="practical_action", issue_id=None,
+            sentence_id=f"action:{index}", sentence_type="practical_action", issue_id=issue_for_citation(rule.citation),
             text=_practical_text(rule), citations=(rule.citation,), citation_bindings=_bindings((rule.citation,), composition_plan),
-        ) for index, rule in enumerate(composition_plan.rules, start=1))
+        ) for index, rule in enumerate(composition_plan.rules, start=1) if issue_for_citation(rule.citation))
 
     missing_rows = list((missing_facts or {}).get("facts", []))
     if missing_rows:
@@ -238,11 +270,24 @@ def build_answer_plan(
                 sentence_id=f"additional:{row.get('fact_id', index)}",
                 sentence_type="additional_fact",
                 issue_id=str(row.get("issue_id", "")) or None,
-                text=f"{row.get('label')}: {row.get('question')} {row.get('reason')}",
+                # Missing-fact prompts are verification questions, not legal claims.
+                # Mark them explicitly so the grounding validator does not score
+                # an unanswered question as an unsupported substantive conclusion.
+                text=(
+                    f"추가 확인 - {row.get('label')}: "
+                    f"{str(row.get('question', '')).rstrip('?')} — {row.get('reason')}"
+                ),
                 citations=(),
             )
             for index, row in enumerate(missing_rows, start=1)
         )
+        conclusion.insert(0, _sentence(
+            sentence_id="conclusion:conditional",
+            sentence_type="conclusion",
+            issue_id=issue_order[0] if issue_order else None,
+            text="중요 사실이 확인되지 않아 현재 답변은 검색된 근거에 따른 조건부 검토이며 최종 판단이 아닙니다.",
+            citations=(),
+        ))
     else:
         additional = (_sentence(
             sentence_id="additional:1", sentence_type="additional_fact", issue_id=None,

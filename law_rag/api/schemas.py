@@ -278,6 +278,7 @@ class AnswerResponse(RetrieveResponse):
     sentence_citation_map: dict[str, object] = Field(default_factory=dict)
     missing_fact_detector: dict[str, object] = Field(default_factory=dict)
     practical_action_generator: dict[str, object] = Field(default_factory=dict)
+    conditional_review: dict[str, object] = Field(default_factory=dict)
     legal_argument_graph: dict[str, object] = Field(default_factory=dict)
     multi_path_reasoning: dict[str, object] = Field(default_factory=dict)
     generation_error: str | None = None

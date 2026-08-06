@@ -13,9 +13,9 @@ from tools.run_legal_kb_verification import (
 
 def test_metrics_are_computed_from_current_artifacts():
     metrics = collect_metrics()
-    assert metrics["corpus_documents"] == 4833
-    assert metrics["knowledge_concepts"] == 41
-    assert metrics["kb_evaluation_cases"] == 30
+    assert metrics["corpus_documents"] == 7516
+    assert metrics["knowledge_concepts"] == 49
+    assert metrics["kb_evaluation_cases"] == 42
     assert metrics["verified_amendment_cases"] == 1
     assert metrics["temporal_boundary_passed"] == metrics["temporal_boundary_cases"] == 2
     assert metrics["k5_passed_checks"] == metrics["k5_required_checks"] == 9

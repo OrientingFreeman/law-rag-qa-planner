@@ -1,0 +1,201 @@
+[
+  {
+    "case_id": "multi-privacy-delegation-breach",
+    "question": "개인정보 처리업무를 외주업체에 맡긴 뒤 고객정보 유출이 발생했습니다. 위탁 계약·감독과 정보주체 통지·기관 신고 근거를 함께 알려주세요.",
+    "difficulty": "hard",
+    "top_k": 10,
+    "expected_citations": [
+      {"law_id": "011357", "article_no": "제26조", "issue": "개인정보 처리위탁", "issue_id": "processing_delegation"},
+      {"law_id": "011357", "article_no": "제34조", "issue": "개인정보 유출 통지·신고", "issue_id": "privacy_breach"}
+    ],
+    "expected_missing_facts": [
+      {"fact_id": "delegation_purpose", "issue_id": "processing_delegation"},
+      {"fact_id": "delegate_identity", "issue_id": "processing_delegation"},
+      {"fact_id": "breach_discovery_time", "issue_id": "privacy_breach"},
+      {"fact_id": "breach_scope", "issue_id": "privacy_breach"}
+    ],
+    "expected_actions": [
+      {"action_id": "document_delegation", "issue_id": "processing_delegation"},
+      {"action_id": "control_delegate_scope", "issue_id": "processing_delegation"},
+      {"action_id": "record_breach_response", "issue_id": "privacy_breach"},
+      {"action_id": "prepare_breach_notice", "issue_id": "privacy_breach"}
+    ],
+    "expected_abstain": false
+  },
+  {
+    "case_id": "multi-employee-invention-disclosure",
+    "question": "직원이 업무 중 만든 기술을 출원 전에 공개했습니다. 직무발명 해당 여부와 특허 신규성·공지예외를 함께 검토하려면 어떤 조문이 필요한가요?",
+    "difficulty": "hard",
+    "top_k": 10,
+    "expected_citations": [
+      {"law_id": "000312", "article_no": "제2조", "issue": "직무발명 정의", "issue_id": "employee_invention"},
+      {"law_id": "001455", "article_no": "제29조", "issue": "특허 신규성", "issue_id": "patent_novelty"},
+      {"law_id": "001455", "article_no": "제30조", "issue": "공지예외", "issue_id": "disclosure_exception"}
+    ],
+    "expected_missing_facts": [
+      {"fact_id": "employee_duties", "issue_id": "employee_invention"},
+      {"fact_id": "invention_circumstances", "issue_id": "employee_invention"},
+      {"fact_id": "disclosure_timing", "issue_id": "patent_novelty"},
+      {"fact_id": "disclosure_confidentiality", "issue_id": "patent_novelty"},
+      {"fact_id": "disclosure_actor", "issue_id": "disclosure_exception"},
+      {"fact_id": "exception_filing_deadline", "issue_id": "disclosure_exception"}
+    ],
+    "expected_actions": [
+      {"action_id": "document_invention_context", "issue_id": "employee_invention"},
+      {"action_id": "review_invention_rules", "issue_id": "employee_invention"},
+      {"action_id": "freeze_external_disclosure", "issue_id": "patent_novelty"},
+      {"action_id": "compare_disclosure_and_filing", "issue_id": "patent_novelty"},
+      {"action_id": "preserve_disclosure_evidence", "issue_id": "disclosure_exception"},
+      {"action_id": "calendar_exception_deadline", "issue_id": "disclosure_exception"}
+    ],
+    "expected_abstain": false
+  },
+  {
+    "case_id": "multi-employee-invention-software-authorship",
+    "question": "직원이 회사 업무로 기술과 프로그램을 개발했습니다. 직무발명 판단과 프로그램 저작자 귀속을 함께 확인할 근거는 무엇인가요?",
+    "difficulty": "hard",
+    "top_k": 10,
+    "expected_citations": [
+      {"law_id": "000312", "article_no": "제2조", "issue": "직무발명 정의", "issue_id": "employee_invention"},
+      {"law_id": "000798", "article_no": "제9조", "issue": "업무상저작물 저작자", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_missing_facts": [
+      {"fact_id": "employee_duties", "issue_id": "employee_invention"},
+      {"fact_id": "invention_circumstances", "issue_id": "employee_invention"},
+      {"fact_id": "program_creation_duties", "issue_id": "work_made_for_hire"},
+      {"fact_id": "authorship_agreement", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_actions": [
+      {"action_id": "document_invention_context", "issue_id": "employee_invention"},
+      {"action_id": "review_invention_rules", "issue_id": "employee_invention"},
+      {"action_id": "document_program_creation", "issue_id": "work_made_for_hire"},
+      {"action_id": "review_authorship_terms", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_abstain": false
+  },
+  {
+    "case_id": "multi-payment-incident-privacy-breach",
+    "question": "인증수단 위조로 부정결제가 발생하면서 고객정보도 유출됐습니다. 전자금융사고 책임과 개인정보 유출 통지·신고를 함께 검토할 조문은 무엇인가요?",
+    "difficulty": "hard",
+    "top_k": 10,
+    "expected_citations": [
+      {"law_id": "010199", "article_no": "제9조", "issue": "전자금융사고 책임", "issue_id": "eft_accident_liability"},
+      {"law_id": "011357", "article_no": "제34조", "issue": "개인정보 유출 통지·신고", "issue_id": "privacy_breach"}
+    ],
+    "expected_missing_facts": [
+      {"fact_id": "incident_cause", "issue_id": "eft_accident_liability"},
+      {"fact_id": "user_fault", "issue_id": "eft_accident_liability"},
+      {"fact_id": "breach_discovery_time", "issue_id": "privacy_breach"},
+      {"fact_id": "breach_scope", "issue_id": "privacy_breach"}
+    ],
+    "expected_actions": [
+      {"action_id": "preserve_incident_evidence", "issue_id": "eft_accident_liability"},
+      {"action_id": "assess_incident_liability", "issue_id": "eft_accident_liability"},
+      {"action_id": "record_breach_response", "issue_id": "privacy_breach"},
+      {"action_id": "prepare_breach_notice", "issue_id": "privacy_breach"}
+    ],
+    "expected_abstain": false
+  },
+  {
+    "case_id": "multi-payment-record-privacy-destruction",
+    "question": "결제 거래기록은 보존해야 하지만 고객 개인정보는 목적이 끝나면 파기해야 합니다. 두 의무의 근거를 함께 확인해 주세요.",
+    "difficulty": "hard",
+    "top_k": 10,
+    "expected_citations": [
+      {"law_id": "010199", "article_no": "제22조", "issue": "전자금융거래기록 보존", "issue_id": "eft_record_retention"},
+      {"law_id": "011357", "article_no": "제21조", "issue": "개인정보 파기", "issue_id": "destruction"}
+    ],
+    "expected_missing_facts": [
+      {"fact_id": "record_type", "issue_id": "eft_record_retention"},
+      {"fact_id": "transaction_date", "issue_id": "eft_record_retention"},
+      {"fact_id": "purpose_end_date", "issue_id": "destruction"},
+      {"fact_id": "statutory_retention_basis", "issue_id": "destruction"}
+    ],
+    "expected_actions": [
+      {"action_id": "classify_transaction_records", "issue_id": "eft_record_retention"},
+      {"action_id": "apply_retention_schedule", "issue_id": "eft_record_retention"},
+      {"action_id": "separate_retained_data", "issue_id": "destruction"},
+      {"action_id": "execute_documented_destruction", "issue_id": "destruction"}
+    ],
+    "expected_abstain": false
+  },
+  {
+    "case_id": "multi-payment-terms-dispute",
+    "question": "결제서비스 약관을 변경한 뒤 고객 분쟁이 발생했습니다. 약관 변경통지와 분쟁처리·조정 절차를 함께 확인하려면 어떤 조문을 봐야 하나요?",
+    "difficulty": "hard",
+    "top_k": 10,
+    "expected_citations": [
+      {"law_id": "010199", "article_no": "제24조", "issue": "약관 변경통지", "issue_id": "eft_terms_notice"},
+      {"law_id": "010199", "article_no": "제27조", "issue": "분쟁처리·조정", "issue_id": "eft_dispute_handling"}
+    ],
+    "expected_missing_facts": [
+      {"fact_id": "terms_change_notice", "issue_id": "eft_terms_notice"},
+      {"fact_id": "terms_effective_date", "issue_id": "eft_terms_notice"},
+      {"fact_id": "dispute_details", "issue_id": "eft_dispute_handling"},
+      {"fact_id": "internal_dispute_process", "issue_id": "eft_dispute_handling"}
+    ],
+    "expected_actions": [
+      {"action_id": "preserve_terms_versions", "issue_id": "eft_terms_notice"},
+      {"action_id": "verify_terms_notice", "issue_id": "eft_terms_notice"},
+      {"action_id": "open_dispute_case", "issue_id": "eft_dispute_handling"},
+      {"action_id": "track_dispute_response", "issue_id": "eft_dispute_handling"}
+    ],
+    "expected_abstain": false
+  },
+  {
+    "case_id": "multi-delegation-software-authorship",
+    "question": "상담업무를 외주업체에 맡기면서 직원이 만든 프로그램도 제공하려 합니다. 개인정보 처리위탁과 업무상 프로그램 저작자 판단 근거를 함께 알려주세요.",
+    "difficulty": "hard",
+    "top_k": 10,
+    "expected_citations": [
+      {"law_id": "011357", "article_no": "제26조", "issue": "개인정보 처리위탁", "issue_id": "processing_delegation"},
+      {"law_id": "000798", "article_no": "제9조", "issue": "업무상저작물 저작자", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_missing_facts": [
+      {"fact_id": "delegation_purpose", "issue_id": "processing_delegation"},
+      {"fact_id": "delegate_identity", "issue_id": "processing_delegation"},
+      {"fact_id": "program_creation_duties", "issue_id": "work_made_for_hire"},
+      {"fact_id": "authorship_agreement", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_actions": [
+      {"action_id": "document_delegation", "issue_id": "processing_delegation"},
+      {"action_id": "control_delegate_scope", "issue_id": "processing_delegation"},
+      {"action_id": "document_program_creation", "issue_id": "work_made_for_hire"},
+      {"action_id": "review_authorship_terms", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_abstain": false
+  },
+  {
+    "case_id": "multi-technology-release-rights",
+    "question": "직원이 만든 기술과 소프트웨어를 외부에 공개하려 합니다. 직무발명, 특허 출원 전 공개, 업무상저작물 귀속을 함께 확인할 조문은 무엇인가요?",
+    "difficulty": "hard",
+    "top_k": 10,
+    "expected_citations": [
+      {"law_id": "000312", "article_no": "제2조", "issue": "직무발명 정의", "issue_id": "employee_invention"},
+      {"law_id": "001455", "article_no": "제29조", "issue": "특허 신규성", "issue_id": "patent_novelty"},
+      {"law_id": "001455", "article_no": "제30조", "issue": "공지예외", "issue_id": "disclosure_exception"},
+      {"law_id": "000798", "article_no": "제9조", "issue": "업무상저작물 저작자", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_missing_facts": [
+      {"fact_id": "employee_duties", "issue_id": "employee_invention"},
+      {"fact_id": "invention_circumstances", "issue_id": "employee_invention"},
+      {"fact_id": "disclosure_timing", "issue_id": "patent_novelty"},
+      {"fact_id": "disclosure_confidentiality", "issue_id": "patent_novelty"},
+      {"fact_id": "disclosure_actor", "issue_id": "disclosure_exception"},
+      {"fact_id": "exception_filing_deadline", "issue_id": "disclosure_exception"},
+      {"fact_id": "program_creation_duties", "issue_id": "work_made_for_hire"},
+      {"fact_id": "authorship_agreement", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_actions": [
+      {"action_id": "document_invention_context", "issue_id": "employee_invention"},
+      {"action_id": "review_invention_rules", "issue_id": "employee_invention"},
+      {"action_id": "freeze_external_disclosure", "issue_id": "patent_novelty"},
+      {"action_id": "compare_disclosure_and_filing", "issue_id": "patent_novelty"},
+      {"action_id": "preserve_disclosure_evidence", "issue_id": "disclosure_exception"},
+      {"action_id": "calendar_exception_deadline", "issue_id": "disclosure_exception"},
+      {"action_id": "document_program_creation", "issue_id": "work_made_for_hire"},
+      {"action_id": "review_authorship_terms", "issue_id": "work_made_for_hire"}
+    ],
+    "expected_abstain": false
+  }
+]

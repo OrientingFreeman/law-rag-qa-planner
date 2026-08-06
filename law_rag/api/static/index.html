@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="법무·컴플라이언스를 위한 근거 기반 법령 AI 포트폴리오 데모">
   <title>근거 기반 법령 AI 데모</title>
-  <link rel="stylesheet" href="/static/app.css?v=4.13.4">
+  <link rel="stylesheet" href="/static/app.css?v=4.14.1">
 </head>
 <body>
 <header class="site-header">
@@ -86,6 +86,14 @@
         <div id="status-message" class="status-message"></div>
         <article id="answer-card" class="answer-card" hidden>
           <div class="answer-header"><h3>답변 요약</h3><span id="generation-badge"></span></div>
+          <section id="conditional-review-panel" class="conditional-review" hidden aria-labelledby="conditional-review-title">
+            <div class="conditional-review-heading">
+              <div><span class="review-kicker">Conditional Review</span><h4 id="conditional-review-title">조건부 검토</h4></div>
+              <span id="review-status-badge" class="review-status"></span>
+            </div>
+            <p id="review-conclusion" class="review-conclusion"></p>
+            <div id="review-issue-list" class="review-issue-list"></div>
+          </section>
           <div id="answer-content" class="structured-answer"></div>
           <div id="citation-status" class="citation-status"></div>
         </article>
@@ -137,6 +145,6 @@
   </section>
 </main>
 <footer><strong>법령 AI 포트폴리오 데모</strong><span>비공식 채용 포트폴리오 · 법률 자문 아님</span></footer>
-<script src="/static/app.js?v=4.13.4" defer></script>
+<script src="/static/app.js?v=4.14.1" defer></script>
 </body>
 </html>

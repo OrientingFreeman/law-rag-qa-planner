@@ -154,7 +154,7 @@ def evaluate(cases: list[dict[str, Any]], kb: dict[str, Any], corpus: list[dict[
         for dimension, rows in groups.items()
     }
     return {
-        "evaluation_name": "legal_kb_closed_set_v1", "evaluation_mode": "deterministic_explicit_vocabulary_lookup",
+        "evaluation_name": "legal_kb_closed_set_v2", "evaluation_mode": "deterministic_explicit_vocabulary_lookup",
         "limitations": [
             "This is a closed-set terminology and reference-link integrity evaluation, not semantic retrieval or LLM generation evaluation.",
             "A correct match shows that an explicitly registered legal or lay term is linked to the expected concept and article.",
@@ -166,6 +166,8 @@ def evaluate(cases: list[dict[str, Any]], kb: dict[str, Any], corpus: list[dict[
 
 def render_markdown(report: dict[str, Any]) -> str:
     m = report["metrics"]
+    kb = load_json(DEFAULT_KB)
+    law_names = sorted({str(row["law_name"]) for row in kb["concepts"]})
     pct = lambda value: "N/A" if value is None else f"{value * 100:.2f}%"
     lines = [
         "# 법령정보지식베이스 품질 평가 보고서", "",
@@ -173,7 +175,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "이 보고서는 법령용어–일상용어 매핑과 근거 조문 연결의 구조적 품질을 평가한다. "
         "명시적으로 등록된 어휘만 사용하는 폐쇄형 결정론 평가이며, RAG 의미검색이나 생성형 LLM 답변 성능을 측정하지 않는다.", "",
         f"- 평가 문항: {m['case_count']}개", f"- 답변 대상: {m['answerable_case_count']}개", f"- 유보 대상: {m['abstention_case_count']}개",
-        "- 지식베이스 개념: 41개", "- 대상 법령: 개인정보 보호법·시행령, 전자금융거래법, 근로기준법, 민법", "",
+        f"- 지식베이스 개념: {len(kb['concepts'])}개", f"- 대상 법령: {', '.join(law_names)}", "",
         "## 전체 결과", "",
         "| 지표 | 결과 | 해석 |", "|---|---:|---|",
         f"| 전체 Exact Match | {pct(m['overall_exact_match'])} | 개념·법령·조문 또는 기대 유보가 모두 일치 |",
@@ -198,7 +200,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "", "## 재현 명령", "", "```bash", "python tools/evaluate_legal_knowledge_base.py", "python -m pytest tests/test_legal_kb_evaluation.py -q", "```", "",
         "## 한계와 다음 단계", "",
         "- 현재 평가는 명시적 문자열 포함 여부를 사용하므로 바꿔 말하기와 형태소 변형에 대한 일반화 성능은 측정하지 않는다.",
-        "- 이 30문항 평가는 현행 기준선의 용어·조문 연결 결과다. 실제 개정 전후 비교와 시행일 경계 평가는 K4 보고서에서 별도로 수행한다.",
+        f"- 이 {m['case_count']}문항 평가는 현행 기준선의 용어·조문 연결 결과다. 실제 개정 전후 비교와 시행일 경계 평가는 K4 보고서에서 별도로 수행한다.",
         "- 향후에는 독립 주석자가 작성한 비정형 표현, 다중 개념 질문, 구버전 법령 원문을 추가해 블라인드 평가해야 한다.",
     ]
     return "\n".join(lines) + "\n"

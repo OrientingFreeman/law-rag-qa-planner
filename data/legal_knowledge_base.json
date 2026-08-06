@@ -1,7 +1,7 @@
 {
-  "schema_version": "1.0.0",
-  "source_checked_at": "2026-08-04",
-  "description": "현재 legal_corpus.json에 존재하는 조문만을 근거로 작성한 법령용어-일상용어 지식베이스",
+  "schema_version": "1.1.0",
+  "source_checked_at": "2026-08-05",
+  "description": "현재 legal_corpus.json에 존재하는 조문만을 근거로 작성한 법령용어-일상용어 지식베이스. 결제기업 법무 질문에 필요한 전자금융·개인정보·지식재산 개념을 포함한다.",
   "concepts": [
     {
       "concept_id": "pipa_collection_use",
@@ -462,6 +462,190 @@
       ],
       "annotation_status": "reviewed",
       "annotation_note": "개인정보 보호법상 제3자 제공과 적용 법률을 구별한다."
+    },
+    {
+      "concept_id": "eft_transaction_confirmation",
+      "legal_term": "거래내용의 확인",
+      "lay_terms": [
+        "결제내역 확인",
+        "전자금융 거래내용 확인",
+        "거래 결과 확인"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "이용자가 전자금융거래의 내용을 확인할 수 있도록 정보를 제공하는 의무",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제7조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제7조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "거래기록 보존 의무와 이용자의 거래내용 확인 수단을 구별한다."
+    },
+    {
+      "concept_id": "eft_error_correction",
+      "legal_term": "오류의 정정",
+      "lay_terms": [
+        "결제 오류 정정",
+        "잘못된 거래 고치기",
+        "거래 오류 조사"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "이용자의 오류 정정 요구와 금융회사 등의 조사·처리 결과 통지",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제8조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제8조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "부정결제 손해배상책임과 거래내용의 오류 정정 절차를 구별한다."
+    },
+    {
+      "concept_id": "eft_terms_disclosure",
+      "legal_term": "약관의 명시와 변경통지",
+      "lay_terms": [
+        "결제 약관 설명",
+        "약관 사본 교부",
+        "결제서비스 약관 변경 알림"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "전자금융거래 계약 체결 시 약관 명시·교부·설명과 변경 통지",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제24조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제24조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "일반적인 계약 해석과 전자금융거래법상 약관 절차를 구별한다."
+    },
+    {
+      "concept_id": "eft_dispute_handling",
+      "legal_term": "분쟁처리 및 분쟁조정",
+      "lay_terms": [
+        "결제 분쟁 처리절차",
+        "부정결제 민원 절차",
+        "전자금융 분쟁조정"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "전자금융거래 관련 이의제기·손해배상 요구의 처리와 분쟁조정",
+      "law_id": "010199",
+      "law_name": "전자금융거래법",
+      "article_refs": [
+        "제27조"
+      ],
+      "effective_from": "2025-12-16",
+      "effective_to": null,
+      "source_document_ids": [
+        "010199:제27조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "사고 책임의 실체 판단과 민원·분쟁 처리절차를 구별한다."
+    },
+    {
+      "concept_id": "patent_novelty",
+      "legal_term": "특허요건 중 신규성",
+      "lay_terms": [
+        "공개 전 특허출원",
+        "깃허브 공개 전 출원",
+        "기술 공개와 신규성"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "출원 전 국내외 공지·공연 실시·간행물 또는 전기통신회선 공개와 신규성",
+      "law_id": "001455",
+      "law_name": "특허법",
+      "article_refs": [
+        "제29조"
+      ],
+      "effective_from": "2025-11-11",
+      "effective_to": null,
+      "source_document_ids": [
+        "001455:제29조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "구체적 특허 가능성을 단정하지 않고 공개 시점과 공개 내용을 확인한다."
+    },
+    {
+      "concept_id": "patent_disclosure_exception",
+      "legal_term": "공지 등이 되지 아니한 발명으로 보는 경우",
+      "lay_terms": [
+        "공개 후 12개월 특허출원",
+        "공지예외 주장",
+        "자기 공개 후 출원"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "권리자의 공개 등이 있은 뒤 일정 기간 내 출원한 경우의 공지예외",
+      "law_id": "001455",
+      "law_name": "특허법",
+      "article_refs": [
+        "제30조"
+      ],
+      "effective_from": "2025-11-11",
+      "effective_to": null,
+      "source_document_ids": [
+        "001455:제30조:①"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "공지예외를 일반적인 신규성 면제로 오해하지 않고 요건·절차를 별도로 확인한다."
+    },
+    {
+      "concept_id": "employee_invention",
+      "legal_term": "직무발명",
+      "lay_terms": [
+        "직원이 업무 중 개발한 기술",
+        "회사 업무로 만든 발명",
+        "직원 결제기술 발명"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "사용자의 업무 범위와 종업원의 현재 또는 과거 직무에 속하는 발명",
+      "law_id": "000312",
+      "law_name": "발명진흥법",
+      "article_refs": [
+        "제2조"
+      ],
+      "effective_from": "2025-10-01",
+      "effective_to": null,
+      "source_document_ids": [
+        "000312:제2조:제1항:제2호"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "직무발명 해당 여부와 권리 승계·보상 문제는 구분하여 검토한다."
+    },
+    {
+      "concept_id": "copyright_work_made_for_hire",
+      "legal_term": "업무상저작물의 저작자",
+      "lay_terms": [
+        "직원이 업무로 만든 프로그램",
+        "회사 기획 소프트웨어 저작권",
+        "사내 개발 코드 저작자"
+      ],
+      "relation_type": "contextual_mapping",
+      "scope_note": "법인 등의 기획 아래 업무 종사자가 작성한 업무상저작물의 저작자",
+      "law_id": "000798",
+      "law_name": "저작권법",
+      "article_refs": [
+        "제9조"
+      ],
+      "effective_from": "2026-05-11",
+      "effective_to": null,
+      "source_document_ids": [
+        "000798:제9조"
+      ],
+      "annotation_status": "reviewed",
+      "annotation_note": "외주개발자는 통상 업무 종사자와 동일하지 않으므로 계약 없는 권리귀속을 단정하지 않는다."
     },
     {
       "concept_id": "labor_worker",

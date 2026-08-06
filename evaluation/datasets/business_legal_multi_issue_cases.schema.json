@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Business Legal Multi-Issue Cases",
+  "type": "array",
+  "minItems": 8,
+  "maxItems": 8,
+  "items": {
+    "type": "object",
+    "required": ["case_id", "question", "difficulty", "top_k", "expected_citations", "expected_missing_facts", "expected_actions", "expected_abstain"],
+    "properties": {
+      "case_id": {"type": "string", "pattern": "^multi-"},
+      "question": {"type": "string", "minLength": 1},
+      "difficulty": {"const": "hard"},
+      "top_k": {"type": "integer", "minimum": 2},
+      "expected_citations": {
+        "type": "array",
+        "minItems": 2,
+        "items": {
+          "type": "object",
+          "required": ["law_id", "article_no", "issue", "issue_id"],
+          "properties": {
+            "law_id": {"type": "string", "minLength": 1},
+            "article_no": {"type": "string", "minLength": 1},
+            "issue": {"type": "string", "minLength": 1},
+            "issue_id": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        }
+      },
+      "expected_missing_facts": {
+        "type": "array",
+        "minItems": 4,
+        "items": {
+          "type": "object",
+          "required": ["fact_id", "issue_id"],
+          "properties": {
+            "fact_id": {"type": "string", "minLength": 1},
+            "issue_id": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        }
+      },
+      "expected_actions": {
+        "type": "array",
+        "minItems": 4,
+        "items": {
+          "type": "object",
+          "required": ["action_id", "issue_id"],
+          "properties": {
+            "action_id": {"type": "string", "minLength": 1},
+            "issue_id": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        }
+      },
+      "expected_abstain": {"const": false}
+    },
+    "additionalProperties": false
+  }
+}

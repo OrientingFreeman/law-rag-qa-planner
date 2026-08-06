@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from law_rag.domain.models import SearchResult
 from law_rag.generation.citations import validate_citations
 from law_rag.generation.answer_composer import (
-    build_answer_composer, build_missing_fact_detector,
+    build_answer_composer, build_conditional_review, build_missing_fact_detector,
     build_practical_action_generator, build_sentence_citation_map,
 )
 from law_rag.generation.composer import (
@@ -203,6 +203,7 @@ def generate_grounded_answer(
     )
     missing_fact_detector = build_missing_fact_detector(question, plan, legal_intent)
     practical_action_generator = build_practical_action_generator(plan, legal_intent)
+    conditional_review = build_conditional_review(missing_fact_detector, practical_action_generator)
     answer_plan = bind_rendered_sentences(build_answer_plan(
         question, plan, logic_driven_reasoning_path, answer_skeleton=answer_skeleton,
         practical_actions=practical_action_generator, missing_facts=missing_fact_detector,
@@ -248,6 +249,7 @@ def generate_grounded_answer(
         sentence_citation_map=sentence_citation_map,
         missing_fact_detector=missing_fact_detector,
         practical_action_generator=practical_action_generator,
+        conditional_review=conditional_review,
         legal_argument_graph=legal_argument_graph,
         multi_path_reasoning=multi_path_reasoning,
     )
@@ -291,6 +293,7 @@ def generate_grounded_answer(
             "sentence_citation_map": sentence_citation_map,
             "missing_fact_detector": missing_fact_detector,
             "practical_action_generator": practical_action_generator,
+            "conditional_review": conditional_review,
             "legal_argument_graph": legal_argument_graph,
             "multi_path_reasoning": multi_path_reasoning,
             "citation_binding_count": sum(len(sentence.citation_bindings) for section in answer_plan.sections for sentence in section.sentences),

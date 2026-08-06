@@ -17,10 +17,10 @@ def _fixtures():
     return load_json(DEFAULT_CASES), load_json(DEFAULT_KB), load_json(DEFAULT_CORPUS)
 
 
-def test_dataset_has_30_unique_structured_cases():
+def test_dataset_has_42_unique_structured_cases():
     cases, kb, corpus = _fixtures()
-    assert len(cases) == 30
-    assert len({case["case_id"] for case in cases}) == 30
+    assert len(cases) == 42
+    assert len({case["case_id"] for case in cases}) == 42
     assert validate_cases(cases, kb, corpus) == []
 
 
@@ -53,7 +53,8 @@ def test_mapping_before_effective_period_abstains():
 def test_invalid_abstention_gold_is_rejected():
     cases, kb, corpus = _fixtures()
     broken = deepcopy(cases)
-    broken[-1]["expected_concept_ids"] = ["pipa_collection_use"]
+    abstention_case = next(case for case in broken if case["expected_abstain"])
+    abstention_case["expected_concept_ids"] = ["pipa_collection_use"]
     assert any("abstention case must not contain gold" in error for error in validate_cases(broken, kb, corpus))
 
 
@@ -67,6 +68,7 @@ def test_unknown_gold_concept_is_rejected():
 def test_evaluation_produces_declared_metrics():
     cases, kb, corpus = _fixtures()
     report = evaluate(cases, kb, corpus)
+    assert report["evaluation_name"] == "legal_kb_closed_set_v2"
     assert report["evaluation_mode"] == "deterministic_explicit_vocabulary_lookup"
     assert set(report["metrics"]) == {
         "case_count", "answerable_case_count", "abstention_case_count",

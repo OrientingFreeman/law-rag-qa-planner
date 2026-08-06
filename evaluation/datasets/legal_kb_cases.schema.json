@@ -3,7 +3,7 @@
   "title":"Legal KB evaluation cases",
   "type":"array",
   "minItems":20,
-  "maxItems":30,
+  "maxItems":50,
   "items":{
     "type":"object",
     "additionalProperties":false,

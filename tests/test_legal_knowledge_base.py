@@ -7,16 +7,19 @@ def _fixtures():
     return load_json(DEFAULT_KB), load_json(DEFAULT_CORPUS)
 
 
-def test_legal_knowledge_base_has_41_reviewed_concepts():
+def test_legal_knowledge_base_has_49_reviewed_concepts():
     kb, corpus = _fixtures()
-    assert len(kb["concepts"]) == 41
+    assert len(kb["concepts"]) == 49
     assert {row["annotation_status"] for row in kb["concepts"]} == {"reviewed"}
     assert validate_knowledge_base(kb, corpus) == []
 
 
 def test_legal_knowledge_base_covers_all_supported_laws():
     kb, _ = _fixtures()
-    assert {row["law_id"] for row in kb["concepts"]} == {"011357", "011468", "010199", "001872", "001706"}
+    assert {row["law_id"] for row in kb["concepts"]} == {
+        "011357", "011468", "010199", "001872", "001706",
+        "001455", "000312", "000798",
+    }
 
 
 def test_duplicate_concept_id_is_rejected():
