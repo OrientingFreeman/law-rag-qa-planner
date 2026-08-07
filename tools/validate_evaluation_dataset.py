@@ -16,6 +16,11 @@ REQUIRED_CATEGORIES = {
     "abstention",
     "temporal_revision",
     "false_premise",
+    "safety_false_premise",
+    "safety_temporal_uncertainty",
+    "safety_out_of_domain",
+    "safety_scope_boundary",
+    "safety_answerable_control",
 }
 DIFFICULTIES = {"easy", "medium", "hard"}
 
@@ -28,8 +33,8 @@ def validate(dataset_path: Path, corpus_path: Path) -> list[str]:
     ids: set[str] = set()
     categories: Counter[str] = Counter()
 
-    if not 40 <= len(rows) <= 60:
-        errors.append(f"dataset size must be 40..60, got {len(rows)}")
+    if not 40 <= len(rows) <= 64:
+        errors.append(f"dataset size must be 40..64, got {len(rows)}")
     for index, row in enumerate(rows):
         prefix = f"row {index}"
         for field in (
@@ -62,6 +67,11 @@ def validate(dataset_path: Path, corpus_path: Path) -> list[str]:
                 errors.append(f"{case_id}: missing corpus article {law_id}:{article}")
         if row.get("expected_abstain") and (law_id or articles):
             errors.append(f"{case_id}: abstention case must not declare a gold article")
+        outcome = row.get("expected_outcome")
+        if outcome not in {None, "answer", "abstain", "request_more_facts"}:
+            errors.append(f"{case_id}: unsupported expected_outcome {outcome}")
+        if outcome == "request_more_facts" and not row.get("required_facts"):
+            errors.append(f"{case_id}: request_more_facts requires required_facts")
     missing_categories = REQUIRED_CATEGORIES.difference(categories)
     if missing_categories:
         errors.append(f"missing categories: {sorted(missing_categories)}")

@@ -95,9 +95,26 @@ def test_web_ui_and_static_assets_are_served():
     assert script.status_code == 200
     assert "run-evaluation" not in script.text
     assert internal_evaluation.status_code == 200
-    assert "회귀 평가와 실패 사례 점검" in internal_evaluation.text
+    assert "Agent 실행과 실험 결과를 함께 추적합니다" in internal_evaluation.text
+    assert 'href="/static/evaluation.html"' in home.text
+    assert "Agent 실행·평가 콘솔" in home.text
     assert evaluation_script.status_code == 200
     assert "run-evaluation" in evaluation_script.text
+    assert "run-agent" in evaluation_script.text
+    assert "run-baseline-experiment" in internal_evaluation.text
+    assert "run-agent-experiment" in internal_evaluation.text
+    assert 'fetch("/experiments/run"' in evaluation_script.text
+    assert "/experiments/verified-summary" in evaluation_script.text
+
+
+def test_verified_experiment_summary_endpoint():
+    with client() as api:
+        response = api.get("/experiments/verified-summary")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["dataset"]["case_count"] == 61
+    assert body["comparison"]["improved_cases"] == 6
+    assert body["comparison"]["regressed_cases"] == 0
 
 
 def test_evaluation_latest_and_run_endpoints(tmp_path):

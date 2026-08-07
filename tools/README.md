@@ -1,5 +1,26 @@
 # 도구 안내
 
+## Agent 실험과 비교
+
+동일한 평가 데이터로 기존 Baseline과 Agent Workflow를 실행하고 비교합니다.
+
+```bash
+python tools/validate_evaluation_dataset.py
+
+LAW_RAG_LLM_PROVIDER=deterministic python -m tools.run_rag_experiment \
+  --mode baseline --dataset evaluation/datasets/official_core_cases.json
+
+LAW_RAG_LLM_PROVIDER=deterministic python -m tools.run_rag_experiment \
+  --mode agent --dataset evaluation/datasets/official_core_cases.json
+
+python -m tools.compare_rag_experiments \
+  evaluation/experiments/{baseline-id}.json \
+  evaluation/experiments/{agent-id}.json \
+  --output evaluation/experiments/comparison.json
+```
+
+원시 결과는 `evaluation/experiments/`에 저장되며 기본적으로 Git에 포함하지 않습니다. 재현 가능한 검증 요약은 `evaluation/baselines/`에 둡니다.
+
 ## 법령 지식베이스 구축·검증
 
 ```bash

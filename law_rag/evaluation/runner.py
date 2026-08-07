@@ -29,6 +29,12 @@ class EvaluationCase:
     expected_answer_points: list[str] | None = None
     annotation_note: str = ""
     evaluate_answer: bool = False
+    expected_outcome: str | None = None
+    required_facts: list[str] | None = None
+    failure_tags: list[str] | None = None
+    dataset_version: str = "1.0"
+    review_status: str | None = None
+    review_comment: str | None = None
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any]) -> "EvaluationCase":
@@ -48,6 +54,12 @@ class EvaluationCase:
             expected_answer_points=list(raw.get("expected_answer_points", [])),
             annotation_note=str(raw.get("annotation_note", "")),
             evaluate_answer=bool(raw.get("evaluate_answer", False)),
+            expected_outcome=str(raw["expected_outcome"]) if raw.get("expected_outcome") else None,
+            required_facts=list(raw.get("required_facts", [])),
+            failure_tags=list(raw.get("failure_tags", [])),
+            dataset_version=str(raw.get("dataset_version", "1.0")),
+            review_status=str(raw["review_status"]) if raw.get("review_status") else None,
+            review_comment=str(raw["review_comment"]) if raw.get("review_comment") else None,
         )
 
     @property

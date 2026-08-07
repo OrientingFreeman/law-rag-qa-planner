@@ -12,6 +12,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from law_rag.api.schemas import (
+    AgentRunRequest,
+    AgentRunResponse,
+    ExperimentCompareRequest,
+    ExperimentResponse,
+    ExperimentRunRequest,
     AnswerResponse,
     DomainResponse,
     EvaluationRunRequest,
@@ -23,7 +28,10 @@ from law_rag.api.schemas import (
     RetrieveResponse,
 )
 from law_rag.evaluation.runner import EvaluationRunner, load_dataset, write_report
+from law_rag.evaluation.comparison import compare_experiments
+from law_rag.evaluation.experiments import ExperimentConfig, ExperimentRunner, ExperimentStore
 from law_rag.service import LawRagService
+from law_rag.workflow import AgentWorkflowRunner, InMemoryTraceStore, WorkflowConfig
 
 from law_rag import __version__
 
@@ -53,6 +61,11 @@ def create_app(
         evaluation_report_path
         or os.getenv("LAW_RAG_EVALUATION_REPORT", "evaluation/reports/latest.json")
     )
+    resolved_experiment_dir = Path(os.getenv("LAW_RAG_EXPERIMENT_DIR", "evaluation/experiments"))
+    resolved_verified_summary = Path(os.getenv(
+        "LAW_RAG_VERIFIED_EXPERIMENT_SUMMARY",
+        "evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json",
+    ))
     public_demo = os.getenv("LAW_RAG_PUBLIC_DEMO", "false").strip().lower() in {"1", "true", "yes", "on"}
     evaluation_run_enabled = os.getenv(
         "LAW_RAG_ENABLE_EVALUATION_RUN",
@@ -71,6 +84,12 @@ def create_app(
         )
         app.state.evaluation_dataset_path = resolved_dataset_path
         app.state.evaluation_report_path = resolved_report_path
+        app.state.agent_trace_store = InMemoryTraceStore()
+        app.state.agent_workflow = AgentWorkflowRunner(
+            app.state.law_rag_service, app.state.agent_trace_store
+        )
+        app.state.experiment_store = ExperimentStore(resolved_experiment_dir)
+        app.state.verified_experiment_summary = resolved_verified_summary
         yield
 
     app = FastAPI(
@@ -83,7 +102,7 @@ def create_app(
 
     @app.middleware("http")
     async def public_demo_rate_limit(request: Request, call_next):
-        limited_paths = {"/answer", "/query", "/retrieve"}
+        limited_paths = {"/answer", "/query", "/retrieve", "/agent/runs"}
         if public_demo and request.method == "POST" and request.url.path in limited_paths:
             client_key = request.client.host if request.client else "unknown"
             now = time.monotonic()
@@ -179,6 +198,107 @@ def create_app(
     def query(payload: QueryRequest, service: LawRagService = Depends(get_service)) -> dict[str, object]:
         validate_domain(service, payload.domain)
         return service.query(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
+
+    @app.post("/agent/runs", response_model=AgentRunResponse, tags=["agent"])
+    def run_agent(payload: AgentRunRequest, request: Request,
+                  service: LawRagService = Depends(get_service)) -> dict[str, object]:
+        validate_domain(service, payload.domain)
+        runner: AgentWorkflowRunner = request.app.state.agent_workflow
+        run = runner.run(
+            payload.question,
+            domain_id=payload.domain,
+            top_k=payload.top_k,
+            as_of_date=payload.as_of_date,
+            config=WorkflowConfig(
+                search_strategy=payload.search_strategy,
+                query_rewrite=payload.query_rewrite,
+                reranking=payload.reranking,
+                max_retries=payload.max_retries,
+                retry_top_k_increment=payload.retry_top_k_increment,
+                abstention_policy=payload.abstention_policy,
+            ),
+        )
+        return run.to_dict()
+
+    @app.get("/agent/runs", response_model=list[AgentRunResponse], tags=["agent"])
+    def list_agent_runs(request: Request, limit: int = 20) -> list[dict[str, object]]:
+        limit = max(1, min(limit, 100))
+        store: InMemoryTraceStore = request.app.state.agent_trace_store
+        return [run.to_dict() for run in store.list(limit)]
+
+    @app.get("/agent/runs/{run_id}", response_model=AgentRunResponse, tags=["agent"])
+    def get_agent_run(run_id: str, request: Request) -> dict[str, object]:
+        store: InMemoryTraceStore = request.app.state.agent_trace_store
+        run = store.get(run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"code": "agent_run_not_found", "message": "Agent 실행 기록을 찾을 수 없습니다."},
+            )
+        return run.to_dict()
+
+    @app.post("/experiments/run", response_model=ExperimentResponse, tags=["experiments"])
+    def run_experiment(payload: ExperimentRunRequest, request: Request,
+                       service: LawRagService = Depends(get_service)) -> dict[str, object]:
+        if not evaluation_run_enabled:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"code": "experiment_run_disabled", "message": "공개 데모에서는 실험 실행이 비활성화되어 있습니다."},
+            )
+        config = ExperimentConfig(
+            mode=payload.mode,
+            dataset_path=str(request.app.state.evaluation_dataset_path),
+            dataset_version=payload.dataset_version,
+            search_strategy=payload.search_strategy,
+            query_rewrite=payload.query_rewrite,
+            reranking=payload.reranking,
+            max_retries=payload.max_retries,
+            retry_top_k_increment=payload.retry_top_k_increment,
+            abstention_policy=payload.abstention_policy,
+        )
+        report = ExperimentRunner(service).run(config, case_ids=payload.case_ids, limit=payload.limit)
+        request.app.state.experiment_store.save(report)
+        return report
+
+    @app.get("/experiments", tags=["experiments"])
+    def list_experiments(request: Request) -> list[dict[str, object]]:
+        return request.app.state.experiment_store.list()
+
+    @app.get("/experiments/verified-summary", tags=["experiments"])
+    def verified_experiment_summary(request: Request) -> dict[str, object]:
+        path: Path = request.app.state.verified_experiment_summary
+        if not path.exists():
+            raise HTTPException(status_code=404, detail={
+                "code": "verified_summary_not_found",
+                "message": "검증된 실험 요약을 찾을 수 없습니다.",
+            })
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    @app.get("/experiments/{experiment_id}", response_model=ExperimentResponse, tags=["experiments"])
+    def get_experiment(experiment_id: str, request: Request) -> dict[str, object]:
+        report = request.app.state.experiment_store.get(experiment_id)
+        if report is None:
+            raise HTTPException(status_code=404, detail={"code": "experiment_not_found", "message": "실험 결과를 찾을 수 없습니다."})
+        return report
+
+    @app.post("/experiments/compare", tags=["experiments"])
+    def compare_saved_experiments(payload: ExperimentCompareRequest, request: Request) -> dict[str, object]:
+        store: ExperimentStore = request.app.state.experiment_store
+        baseline = store.get(payload.baseline_experiment_id)
+        candidate = store.get(payload.candidate_experiment_id)
+        if baseline is None or candidate is None:
+            raise HTTPException(status_code=404, detail={"code": "experiment_not_found", "message": "비교할 실험 결과를 찾을 수 없습니다."})
+        try:
+            return compare_experiments(baseline, candidate)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail={"code": "incompatible_experiments", "message": str(exc)}) from exc
+
+    @app.get("/experiments/{experiment_id}/failures", tags=["experiments"])
+    def experiment_failures(experiment_id: str, request: Request) -> list[dict[str, object]]:
+        report = request.app.state.experiment_store.get(experiment_id)
+        if report is None:
+            raise HTTPException(status_code=404, detail={"code": "experiment_not_found", "message": "실험 결과를 찾을 수 없습니다."})
+        return [row for row in report["cases"] if not row["passed"]]
 
     @app.get("/evaluation/latest", response_model=EvaluationRunResponse, tags=["evaluation"])
     def latest_evaluation(request: Request) -> dict[str, object]:

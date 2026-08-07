@@ -326,6 +326,64 @@ class EvaluationRunRequest(BaseModel):
     limit: int | None = Field(default=None, ge=1, le=500)
 
 
+class AgentRunRequest(QueryRequest):
+    search_strategy: Literal["lexical", "semantic", "hybrid"] = "hybrid"
+    query_rewrite: bool = True
+    reranking: bool = True
+    max_retries: int = Field(default=1, ge=0, le=2)
+    retry_top_k_increment: int = Field(default=3, ge=1, le=20)
+    abstention_policy: bool = True
+
+
+class AgentRunResponse(BaseModel):
+    run_id: str
+    question: str
+    domain: str
+    config: dict[str, object]
+    created_at: str
+    completed_at: str | None = None
+    status: str
+    outcome: str | None = None
+    stop_reason: str | None = None
+    retry_count: int
+    final_quality: str | None = None
+    execution_trace: list[dict[str, object]]
+    response: dict[str, object]
+
+
+class ExperimentRunRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["baseline", "agent"]
+    search_strategy: Literal["lexical", "semantic", "hybrid"] = "hybrid"
+    query_rewrite: bool = True
+    reranking: bool = True
+    case_ids: list[str] | None = None
+    limit: int | None = Field(default=None, ge=1, le=100)
+    dataset_version: str = "2.0"
+    max_retries: int = Field(default=1, ge=0, le=2)
+    retry_top_k_increment: int = Field(default=3, ge=1, le=20)
+    abstention_policy: bool = True
+
+
+class ExperimentResponse(BaseModel):
+    experiment_id: str
+    executed_at: str
+    dataset: dict[str, object]
+    code_version: str
+    config: dict[str, object]
+    environment: dict[str, object]
+    summary: dict[str, object]
+    cases: list[dict[str, object]]
+
+
+class ExperimentCompareRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    baseline_experiment_id: str
+    candidate_experiment_id: str
+
+
 class EvaluationSummary(BaseModel):
     total_cases: int
     passed_cases: int

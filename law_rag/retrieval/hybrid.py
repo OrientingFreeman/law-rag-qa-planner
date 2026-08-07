@@ -140,6 +140,8 @@ class HybridRetriever:
         top_k: int | None = None,
         as_of_date: date | None = None,
         include_related: bool = True,
+        strategy: str = "hybrid",
+        query_rewrite: bool = True,
     ) -> list[SearchResult]:
         candidates = [
             p for p in self.provisions
@@ -149,11 +151,18 @@ class HybridRetriever:
         if not candidates:
             return []
 
-        expanded_query = self.expand_query(query, domain)
+        if strategy not in {"lexical", "semantic", "hybrid"}:
+            raise ValueError(f"unsupported retrieval strategy: {strategy}")
+        expanded_query = self.expand_query(query, domain) if query_rewrite else query
         lexical = _normalize(BM25Retriever(candidates).score(expanded_query))
         semantic = _normalize(CharNgramSemanticRetriever(candidates).score(expanded_query))
-        lexical_weight = domain.retrieval.lexical_weight if domain else 0.55
-        semantic_weight = domain.retrieval.semantic_weight if domain else 0.45
+        if strategy == "lexical":
+            lexical_weight, semantic_weight = 1.0, 0.0
+        elif strategy == "semantic":
+            lexical_weight, semantic_weight = 0.0, 1.0
+        else:
+            lexical_weight = domain.retrieval.lexical_weight if domain else 0.55
+            semantic_weight = domain.retrieval.semantic_weight if domain else 0.45
 
         results = []
         for provision, lexical_score, semantic_score in zip(candidates, lexical, semantic):

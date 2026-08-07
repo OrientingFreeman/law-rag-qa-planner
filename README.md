@@ -1,24 +1,35 @@
-# 법령 문서 기반 RAG QA 시스템
+# Evidence-Grounded Legal RAG & Agent Evaluation
 
-> 법령 구조를 반영한 검색, 근거 기반 답변 생성, 인용 검증, 법적 추론 구조화 및 회귀 평가를 하나의 파이프라인으로 구현한 한국어 법령 AI 프로젝트입니다.
+> 법률처럼 정확성과 추적 가능성이 중요한 전문 도메인에서 RAG와 AI Agent의 실행 과정, 평가 결과 및 실패 원인을 재현 가능하게 관리하는 프로젝트입니다.
 
-현재 서비스 버전: **v4.14.2**
+현재 서비스 버전: **v4.17.0**
 
-## 데이터·평가 프로젝트 핵심 결과
+법령 수집·조문 구조화·시점 검색·하이브리드 검색·근거 기반 답변·인용 검증·법적 추론 기능 위에 다음 운영 계층을 추가했습니다.
 
-이 저장소는 법률 RAG 기능 구현에 더해, 법률 전문성을 활용해 **한국어 LLM 평가 데이터를 생성·정제·검수하고 실패 사례를 분석하는 프로젝트**로 확장했습니다.
+- 질의 분석부터 최종 답변 또는 안전한 보류까지 이어지는 10단계 Agent Workflow
+- 단계 상태·소요시간·검색 전략·선택 근거·경고·중단 사유를 기록하는 Execution Trace
+- 최대 1회의 제한된 재시도와 품질 개선 여부 기록
+- 같은 데이터와 설정으로 Baseline과 Agent를 비교하는 재현 가능한 실험
+- 검색·답변·안전성 지표의 분리
+- 법률 외에도 금융·컴플라이언스·내부 규정으로 확장 가능한 실행·평가 구조
+
+## 핵심 검증 결과
 
 | 항목 | 실제 구현·검증 결과 |
 | --- | --- |
-| 공식 평가 데이터 | 49개 문항, 8개 평가 유형, 3개 난이도 |
-| 평가 유형 | 직접 조문 검색, 일상어→법률용어, 유사 조문 구별, 복합 요건, 모호 질문, 유보, 시점·개정, 잘못된 전제 |
-| 데이터 품질 관리 | JSON Schema 및 필수 필드 검증, 정답 근거(gold)로 지정된 법률 ID와 조문이 법령 코퍼스(corpus)에 존재하는지 검증 |
-| 검색 기준선 | Top-1 34.88%, Hit@5 62.79%, Recall@5 62.79%, MRR 0.4465 |
-| 유보·시점 지표 | 답변 유보 정확도 77.55%, 제한적 시행일 유효성 검사 100% |
-| 실패 분석 | `retrieval_miss` 16건, `wrong_top1` 12건, `over_retrieval` 27건, `incorrect_abstention` 11건 자동 분류 |
-| 판례 근거 PoC | 공식 대법원 판례 10건, 판례 평가 20문항, 법령·판례 분리 검증 및 `precedent_linked` 조문 보강 |
+| 공식 평가 데이터 | 61개 문항: 기존 49개 + 안전성·경계 사례 12개 |
+| 경계 사례 | 가짜 조문, 기준일 누락, 도메인 밖 질문, 과도한 범위, 정상 답변 대조군 |
+| 검색 전략 | lexical, semantic, hybrid 실제 선택; query rewrite와 ontology reranking on/off |
+| Baseline | 통과율 59.02%, Top-1 44.44%, Hit@K 71.11%, MRR 0.5348 |
+| Agent Workflow | 통과율 68.85%, Top-1 44.44%, Hit@K 71.11%, MRR 0.5348 |
+| 안전성 변화 | 보류 대상 정확도 56.25% → 93.75%, 전체 outcome 정확도 75.41% → 83.61% |
+| 트레이드오프 | 불필요한 보류율 17.78% → 20.00%, 평균 응답시간 323.4ms → 337.2ms |
+| 사례 비교 | 개선 6개, 악화 0개, 동일 통과 36개, 동일 실패 19개 |
+| 재시도 | 12건, 최대 횟수 준수 100%, 품질 개선률 0% |
 
-위 수치는 2026-08-02 현재 49개 공식 데이터셋을 로컬 결정론 모드로 재실행한 **현재 검색 기준선**입니다. 외부 생성형 LLM을 사용하지 않았으므로 생성 답변의 인용 정확도와 답변 완결성은 이 수치에 포함되지 않습니다. 제한적 시행일 유효성 검사 100%는 과거 법령 내용의 정답률이 아니라, 기준일 이후에 시행되는 조문이 검색 결과에 포함되지 않았는지를 측정한 제한적 지표입니다.
+측정 조건은 61개 동일 데이터, 로컬 deterministic provider, hybrid 검색, query rewrite·ontology reranking 적용입니다. Agent의 개선은 검색 순위가 아니라 시점 불명·범위 과다·거짓 전제의 안전 판정에서 발생했습니다. 재시도는 이번 평가에서 품질을 개선하지 못했으므로 성능 향상 기능으로 주장하지 않습니다.
+
+위 수치는 폐쇄형 결정론 평가 결과입니다. 외부 생성형 모델의 자유로운 법률 답변 정확도나 실제 법률 판단의 정확도 100%를 뜻하지 않습니다. 자세한 조건과 한계는 [Agent Workflow 문서](docs/AGENT_WORKFLOW.md)와 [실험 비교 문서](docs/EXPERIMENT_COMPARISON.md)를 참고하십시오.
 
 ### 핵심 평가·근거 용어
 
@@ -44,7 +55,9 @@
 - [실제 평가 보고서](docs/EVALUATION_REPORT.md)
 - [대법원 판례 근거·라우팅 PoC](docs/PRECEDENT_POC.md)
 - [최종 검증 보고서](docs/FINAL_VERIFICATION.md)
-- [LLM·데이터 품질 직무용 프로젝트 요약](docs/APPLICATION_PROJECT_SUMMARY.md)
+- [Agent Workflow와 Execution Trace](docs/AGENT_WORKFLOW.md)
+- [Baseline·Agent 실험 비교](docs/EXPERIMENT_COMPARISON.md)
+- [LLM·데이터 품질 프로젝트 요약](docs/APPLICATION_PROJECT_SUMMARY.md)
 
 ## 법령 정보 지식베이스 구축·관리 결과
 
@@ -148,9 +161,9 @@ python -m law_rag.ingest_cli \
 
 이 프로젝트는 단순한 챗봇 구현보다 **검증 가능하고 추적 가능한 법령 AI 시스템 설계**에 초점을 둡니다.
 
-## 2. 채용 포트폴리오 관점의 핵심 역량
+## 2. 프로젝트가 검증하는 핵심 역량
 
-이 프로젝트는 두 종류의 직무 역량을 동시에 보여줍니다.
+이 프로젝트는 법률 업무 구조화와 AI 품질 관리 역량을 함께 검증합니다.
 
 ### 법률 실무 및 고객 업무
 
@@ -166,7 +179,7 @@ python -m law_rag.ingest_cli \
 - 문장별 근거 연결(Grounding)과 인용 검증(Citation Validation) 수행
 - 회귀 평가와 실패 사례를 활용한 품질 관리 체계 구축
 
-공개 데모는 특정 기업의 내부 문서나 비공개 데이터를 사용하지 않으며, 공개 법령 데이터만을 사용한 비공식 채용 포트폴리오입니다.
+공개 데모는 특정 조직의 내부 문서나 비공개 데이터를 사용하지 않으며, 공개 법령 데이터만 사용하는 비공식 기술 데모입니다.
 
 ## 3. 주요 기능
 
@@ -373,7 +386,7 @@ python3 -m law_rag.cli \
 
 공개 배포 시에는 평가 실행을 차단하고 저장된 평가 결과만 표시할 수 있습니다.
 
-## 10. 공개 포트폴리오 데모 설정
+## 10. 공개 기술 데모 설정
 
 공개 서버에서는 다음 환경변수 사용을 권장합니다.
 
@@ -434,19 +447,55 @@ curl -X POST 'http://127.0.0.1:8000/query' \
 
 ## 12. 평가 실행
 
-### 12.1 테스트 전체 실행
+### 12.1 Agent Workflow 실행
+
+```bash
+curl -X POST http://127.0.0.1:8000/agent/runs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "개정 전 개인정보 수집 동의 요건은 무엇인가?",
+    "domain": "digital_business",
+    "search_strategy": "hybrid",
+    "max_retries": 1
+  }'
+```
+
+응답의 `execution_trace`에는 10단계 상태, 소요시간, 검색 전략, 선택 근거 ID, 경고, 재시도와 중단 사유가 포함됩니다. `reasoning_trace`가 법적 추론 내용을 설명한다면 `execution_trace`는 시스템이 어떤 순서로 무엇을 실행하고 중단했는지를 설명합니다.
+
+### 12.2 재현 가능한 실험
+
+```bash
+LAW_RAG_LLM_PROVIDER=deterministic python -m tools.run_rag_experiment \
+  --mode baseline --dataset-version 2.0
+
+LAW_RAG_LLM_PROVIDER=deterministic python -m tools.run_rag_experiment \
+  --mode agent --dataset-version 2.0
+```
+
+두 결과를 비교합니다.
+
+```bash
+python -m tools.compare_rag_experiments \
+  evaluation/experiments/{baseline-id}.json \
+  evaluation/experiments/{agent-id}.json \
+  --output evaluation/experiments/comparison.json
+```
+
+실험 원문은 `evaluation/experiments/`에 저장되며 Git에는 포함되지 않습니다. 검증된 소형 요약은 `evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json`에 보존합니다.
+
+### 12.3 테스트 전체 실행
 
 ```bash
 pytest
 ```
 
-### 12.2 평가 리포트 조회
+### 12.4 평가 리포트 조회
 
 ```bash
 curl 'http://127.0.0.1:8000/evaluation/latest'
 ```
 
-### 12.3 전체 평가 실행
+### 12.5 전체 평가 실행
 
 공개 데모가 아닌 개발 환경에서만 사용하십시오.
 
@@ -565,4 +614,4 @@ curl -X POST 'http://127.0.0.1:8000/evaluation/run' \
 
 ## 19. 주의사항
 
-이 프로젝트의 답변은 기술 검증과 포트폴리오 시연을 위한 결과입니다. 실제 사건이나 기업의 의사결정에 적용하려면 사실관계, 최신 법령, 판례 및 행정해석을 추가로 확인하고 전문가의 검토를 받아야 합니다.
+이 프로젝트의 답변은 기술 검증을 위한 결과입니다. 실제 사건이나 조직의 의사결정에 적용하려면 사실관계, 최신 법령, 판례 및 행정해석을 추가로 확인하고 전문가의 검토를 받아야 합니다.

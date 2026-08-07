@@ -99,6 +99,8 @@ class LawRagService:
         *,
         requested_top_k: int,
         as_of_date: date | None,
+        search_strategy: str = "hybrid",
+        query_rewrite: bool = True,
     ):
         routes = self._matched_domain_query_paths(question)
         if not routes:
@@ -117,6 +119,8 @@ class LawRagService:
                     domain=config,
                     top_k=candidate_limit,
                     as_of_date=as_of_date,
+                    strategy=search_strategy,
+                    query_rewrite=query_rewrite,
                 )
                 for rank, result in enumerate(results, start=1):
                     document_id = result.provision.document_id
@@ -153,6 +157,9 @@ class LawRagService:
         domain,
         requested_top_k: int,
         as_of_date: date | None,
+        search_strategy: str = "hybrid",
+        query_rewrite: bool = True,
+        reranking: bool = True,
     ):
         plan = self.intent_planner.plan(question)
         candidate_limit = max(requested_top_k * 6, 30)
@@ -161,6 +168,8 @@ class LawRagService:
                 question,
                 requested_top_k=requested_top_k,
                 as_of_date=as_of_date,
+                search_strategy=search_strategy,
+                query_rewrite=query_rewrite,
             )
             if routed is not None:
                 # The default ontology currently covers privacy concepts most
@@ -173,11 +182,12 @@ class LawRagService:
             # Single-issue questions still benefit from planner expansions (especially
             # definition questions whose surface wording is sparse). Retrieve with the
             # original wording plus action-specific statutory anchors, then constrain.
-            expanded_query = " ".join(plan.subqueries)
+            expanded_query = " ".join(plan.subqueries) if query_rewrite else question
             raw = self.retriever.retrieve(
-                expanded_query, domain=domain, top_k=candidate_limit, as_of_date=as_of_date
+                expanded_query, domain=domain, top_k=candidate_limit, as_of_date=as_of_date,
+                strategy=search_strategy, query_rewrite=query_rewrite,
             )
-            return plan, rerank_with_ontology(question, plan, raw)
+            return plan, rerank_with_ontology(question, plan, raw) if reranking else raw
 
         # Reciprocal-rank fusion gives every independently detected legal act a fair
         # retrieval path, while retaining the original full-question search.
@@ -189,7 +199,8 @@ class LawRagService:
             anchors = set(re.findall(r"제\d+조(?:의\d+)?", subquery))
             anchored_articles.update(anchors)
             subresults = self.retriever.retrieve(
-                subquery, domain=domain, top_k=candidate_limit, as_of_date=as_of_date
+                subquery, domain=domain, top_k=candidate_limit, as_of_date=as_of_date,
+                strategy=search_strategy, query_rewrite=query_rewrite,
             )
             for rank, result in enumerate(subresults, start=1):
                 document_id = result.provision.document_id
@@ -209,8 +220,9 @@ class LawRagService:
             result.score = result.score * 0.50 + rrf * 0.40 + anchor_signal * 0.10
             result.retrieval_reason = "planned"
             merged.append(result)
-        merged = rerank_with_ontology(question, plan, merged)
-        merged = ensure_compound_concept_coverage(plan, merged, limit=candidate_limit)
+        if reranking:
+            merged = rerank_with_ontology(question, plan, merged)
+            merged = ensure_compound_concept_coverage(plan, merged, limit=candidate_limit)
         return plan, merged
 
     def retrieve(
@@ -220,12 +232,16 @@ class LawRagService:
         domain_id: str | None = None,
         top_k: int | None = None,
         as_of_date: date | None = None,
+        search_strategy: str = "hybrid",
+        query_rewrite: bool = True,
+        reranking: bool = True,
     ) -> dict[str, object]:
         normalized_question = question.strip()
         domain = self.registry.get(domain_id)
         requested_top_k = top_k or (domain.retrieval.top_k if domain else 5)
         plan, raw_results = self._planned_raw_results(
-            normalized_question, domain=domain, requested_top_k=requested_top_k, as_of_date=as_of_date
+            normalized_question, domain=domain, requested_top_k=requested_top_k, as_of_date=as_of_date,
+            search_strategy=search_strategy, query_rewrite=query_rewrite, reranking=reranking,
         )
         # Aggregation creates article/paragraph-level evidence units. Re-run the
         # ontology pass on those final units so ontology metadata is not stale or
@@ -453,6 +469,9 @@ class LawRagService:
         domain_id: str | None = None,
         top_k: int | None = None,
         as_of_date: date | None = None,
+        search_strategy: str = "hybrid",
+        query_rewrite: bool = True,
+        reranking: bool = True,
     ) -> dict[str, object]:
         started = perf_counter()
         response = self.retrieve(
@@ -460,11 +479,15 @@ class LawRagService:
             domain_id=domain_id,
             top_k=top_k,
             as_of_date=as_of_date,
+            search_strategy=search_strategy,
+            query_rewrite=query_rewrite,
+            reranking=reranking,
         )
         domain = self.registry.get(domain_id)
         requested_top_k = top_k or (domain.retrieval.top_k if domain else 5)
         _, raw_results = self._planned_raw_results(
-            str(response["question"]), domain=domain, requested_top_k=requested_top_k, as_of_date=as_of_date
+            str(response["question"]), domain=domain, requested_top_k=requested_top_k, as_of_date=as_of_date,
+            search_strategy=search_strategy, query_rewrite=query_rewrite, reranking=reranking,
         )
         results = aggregate_evidence(raw_results, self.provisions, limit=requested_top_k)
         expanded = self.law_graph.expand(results, limit=max(3, len(results)))
@@ -499,6 +522,9 @@ class LawRagService:
         domain_id: str | None = None,
         top_k: int | None = None,
         as_of_date: date | None = None,
+        search_strategy: str = "hybrid",
+        query_rewrite: bool = True,
+        reranking: bool = True,
     ) -> dict[str, object]:
         started = perf_counter()
         response = self.retrieve(
@@ -506,11 +532,15 @@ class LawRagService:
             domain_id=domain_id,
             top_k=top_k,
             as_of_date=as_of_date,
+            search_strategy=search_strategy,
+            query_rewrite=query_rewrite,
+            reranking=reranking,
         )
         domain = self.registry.get(domain_id)
         requested_top_k = top_k or (domain.retrieval.top_k if domain else 5)
         _, raw_results = self._planned_raw_results(
-            str(response["question"]), domain=domain, requested_top_k=requested_top_k, as_of_date=as_of_date
+            str(response["question"]), domain=domain, requested_top_k=requested_top_k, as_of_date=as_of_date,
+            search_strategy=search_strategy, query_rewrite=query_rewrite, reranking=reranking,
         )
         results = aggregate_evidence(raw_results, self.provisions, limit=requested_top_k)
         expanded = self.law_graph.expand(results, limit=max(3, len(results)))

@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "code_version": "4.16.0",
+  "dataset": {
+    "path": "evaluation/datasets/official_core_cases.json",
+    "version": "2.0",
+    "case_count": 61
+  },
+  "execution": {
+    "provider": "deterministic",
+    "search_strategy": "hybrid",
+    "query_rewrite": true,
+    "reranking": true,
+    "agent_max_retries": 1
+  },
+  "baseline": {
+    "overall_pass_rate": 0.5902,
+    "top1_accuracy": 0.4444,
+    "hit_at_k": 0.7111,
+    "mrr": 0.5348,
+    "expected_abstention_accuracy": 0.5625,
+    "false_abstention_rate": 0.1778,
+    "outcome_accuracy": 0.7541,
+    "average_latency_ms": 323.417
+  },
+  "agent": {
+    "overall_pass_rate": 0.6885,
+    "top1_accuracy": 0.4444,
+    "hit_at_k": 0.7111,
+    "mrr": 0.5348,
+    "expected_abstention_accuracy": 0.9375,
+    "false_abstention_rate": 0.2,
+    "outcome_accuracy": 0.8361,
+    "average_latency_ms": 337.173,
+    "average_retry_count": 0.1967,
+    "retry_improvement_rate": 0.0
+  },
+  "comparison": {
+    "improved_cases": 6,
+    "regressed_cases": 0,
+    "unchanged_pass_cases": 36,
+    "unchanged_failure_cases": 19,
+    "overall_pass_rate_delta": 0.0983,
+    "expected_abstention_accuracy_delta": 0.375,
+    "false_abstention_rate_delta": 0.0222,
+    "average_latency_ms_delta": 13.756,
+    "incorrect_outcome_count_delta": -5
+  },
+  "limitations": [
+    "폐쇄형 결정론 평가 결과이며 외부 생성형 모델의 법률답변 정확도를 뜻하지 않는다.",
+    "Agent의 검색 순위 지표는 기준선과 같았고 개선은 주로 시점·범위·거짓 전제 안전 판정에서 발생했다.",
+    "재시도 12건은 검색 품질을 개선하지 못했으며 제한 준수와 실패 기록의 증거로 해석해야 한다.",
+    "응답시간과 거짓 보류율은 실행 환경에 따라 달라질 수 있다."
+  ]
+}

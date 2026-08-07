@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: law-rag-qa-planner
+Version: 4.17.0
+Summary: Domain-extensible Korean law retrieval and grounded QA planner
+Requires-Python: >=3.10
+Requires-Dist: python-dotenv<2.0,>=1.0

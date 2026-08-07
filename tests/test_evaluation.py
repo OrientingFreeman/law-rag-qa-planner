@@ -146,8 +146,8 @@ def test_official_dataset_metadata_and_corpus_references_are_valid():
 
 def test_extended_metadata_is_loaded_without_breaking_legacy_fields():
     cases = load_dataset("evaluation/datasets/official_core_cases.json")
-    assert len(cases) == 49
-    assert {case.category for case in cases} == {
+    assert len(cases) == 61
+    assert {
         "direct_statute_retrieval",
         "lay_to_legal_mapping",
         "similar_provision_disambiguation",
@@ -156,5 +156,8 @@ def test_extended_metadata_is_loaded_without_breaking_legacy_fields():
         "abstention",
         "temporal_revision",
         "false_premise",
-    }
+    }.issubset({case.category for case in cases})
     assert all(case.expected_answer_points for case in cases)
+    assert {case.dataset_version for case in cases} == {"1.0", "2.0"}
+    assert all(case.required_facts == [] for case in cases[:49])
+    assert all(case.failure_tags == [] for case in cases[:49])

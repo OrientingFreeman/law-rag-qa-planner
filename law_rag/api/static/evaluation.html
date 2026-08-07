@@ -4,26 +4,82 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>법령 AI 내부 평가 콘솔</title>
-  <link rel="stylesheet" href="/static/app.css?v=4.11.3">
+  <title>Enterprise RAG 평가 콘솔</title>
+  <link rel="stylesheet" href="/static/app.css?v=4.17.2">
 </head>
 <body>
 <header class="site-header">
-  <a class="brand" href="/">법령 AI 내부 평가 <span id="brand-version">버전 확인 중</span></a>
-  <nav><a href="/">공개 데모</a><a href="/docs">API 문서</a></nav>
+  <a class="brand" href="/">Enterprise RAG 평가 <span id="brand-version">버전 확인 중</span></a>
+  <nav><a href="/">법령 데모</a><a href="/docs">API 문서</a></nav>
 </header>
 <main>
   <section class="internal-hero">
-    <p class="eyebrow">Internal Quality Console</p>
-    <h1>회귀 평가와 실패 사례 점검</h1>
-    <p>이 화면은 개발·배포 전 품질 검증을 위한 내부 도구입니다. 공개 포트폴리오 화면에는 연결하지 않습니다.</p>
+    <p class="eyebrow">Execution Trace & Reproducible Evaluation</p>
+    <h1>Agent 실행과 실험 결과를 함께 추적합니다.</h1>
+    <p>검색·추론·답변 생성의 단계 상태와 안전한 중단 사유를 확인하고, 같은 데이터에서 Baseline과 Agent Workflow의 차이를 비교합니다.</p>
   </section>
-  <section class="workspace-section">
+
+  <section class="workspace-section console-section">
     <div class="evaluation-toolbar">
-      <div><p class="eyebrow">Regression Evaluation</p><h2>정량 평가와 실패 사례</h2><p>Top-1, Hit@K, MRR, 인용 정확도 등 저장된 회귀 평가 결과를 확인합니다.</p></div>
-      <div class="toolbar-actions"><button id="load-report" class="secondary-button">최근 평가 리포트 불러오기</button><button id="run-evaluation" class="primary-button compact">전체 평가 실행</button></div>
+      <div><p class="eyebrow">Agent Workflow</p><h2>단계별 실행 Trace</h2><p>정상 답변뿐 아니라 재시도·추가 사실 요청·답변 보류도 추적 가능한 결과로 기록합니다.</p></div>
     </div>
-    <p id="evaluation-disabled-note" class="internal-warning" hidden>현재 서버 설정에서는 전체 평가 실행이 비활성화되어 있습니다.</p>
+    <div class="agent-run-form">
+      <label>검증 질문<textarea id="agent-question" rows="3">개정 전 개인정보 수집 동의 요건은 무엇인가?</textarea></label>
+      <div class="agent-form-row">
+        <label>도메인<select id="agent-domain"><option value="all">전체</option><option value="digital_business">디지털 비즈니스</option><option value="electronic_finance">전자금융</option><option value="civil_transactions">민사 거래</option><option value="labor">노동</option></select></label>
+        <label>검색 전략<select id="agent-strategy"><option value="hybrid">Hybrid</option><option value="lexical">Lexical</option><option value="semantic">Semantic</option></select></label>
+        <label>검색 수<input id="agent-top-k" type="number" min="1" max="20" value="5"></label>
+        <button id="run-agent" class="primary-button compact">Agent 실행</button>
+      </div>
+    </div>
+    <div id="agent-empty" class="empty-state">질문을 실행하면 10단계 Trace가 표시됩니다.</div>
+    <div id="agent-content" hidden>
+      <div id="agent-summary" class="run-summary"></div>
+      <div id="trace-list" class="trace-list"></div>
+    </div>
+  </section>
+
+  <section class="workspace-section console-section">
+    <div class="evaluation-toolbar">
+      <div><p class="eyebrow">Baseline vs Agent</p><h2>검증된 실험 비교</h2><p>61개 동일 데이터에서 검색·답변·안전성·응답시간을 분리해 비교합니다.</p></div>
+      <div class="toolbar-actions"><button id="load-verified-comparison" class="secondary-button">검증 결과 불러오기</button></div>
+    </div>
+    <div id="comparison-empty" class="empty-state">저장된 검증 결과를 불러오세요.</div>
+    <div id="comparison-content" hidden>
+      <div id="comparison-grid" class="comparison-grid"></div>
+      <p id="comparison-tradeoff" class="internal-warning"></p>
+      <div id="comparison-counts" class="metric-grid"></div>
+    </div>
+  </section>
+
+  <section class="workspace-section console-section">
+    <div class="evaluation-toolbar">
+      <div><p class="eyebrow">Experiment Records</p><h2>저장된 실험과 실패 Trace</h2><p>두 실험을 선택해 사례별 개선·악화 여부를 비교하고 실패 사례의 Agent Trace를 확인합니다.</p></div>
+      <div class="toolbar-actions experiment-run-actions">
+        <button id="run-baseline-experiment" class="secondary-button experiment-run-button">Baseline 실험 실행</button>
+        <button id="run-agent-experiment" class="primary-button compact experiment-run-button">Agent 실험 실행</button>
+        <button id="load-experiments" class="secondary-button">실험 목록 새로고침</button>
+      </div>
+    </div>
+    <p id="experiment-run-status" class="experiment-run-status" aria-live="polite">실험을 실행하면 61개 문항 결과가 저장되고 아래 선택 목록에 자동 반영됩니다.</p>
+    <div class="experiment-selector">
+      <label>Baseline<select id="baseline-experiment"><option value="">선택</option></select></label>
+      <label>Agent<select id="agent-experiment"><option value="">선택</option></select></label>
+      <button id="compare-experiments" class="primary-button compact">선택 실험 비교</button>
+    </div>
+    <div id="saved-comparison" hidden>
+      <div id="saved-comparison-counts" class="metric-grid"></div>
+      <div class="case-toolbar"><strong>실패·변화 사례</strong><select id="comparison-filter"><option value="improved">개선</option><option value="regressed">악화</option><option value="unchanged_failure">동일 실패</option></select></div>
+      <div id="comparison-case-list" class="case-list"></div>
+    </div>
+  </section>
+
+  <section class="workspace-section console-section">
+    <div class="evaluation-toolbar">
+      <div><p class="eyebrow">Legacy Regression</p><h2>기존 회귀 평가</h2><p>기존 평가 API와 화면은 유지해 과거 보고서와의 하위 호환성을 보존합니다.</p></div>
+      <div class="toolbar-actions"><button id="load-report" class="secondary-button">최근 리포트</button><button id="run-evaluation" class="primary-button compact">전체 평가 실행</button></div>
+    </div>
+    <p id="evaluation-disabled-note" class="internal-warning" hidden>현재 서버 설정에서는 평가·실험 실행이 비활성화되어 있습니다.</p>
     <div id="evaluation-empty" class="empty-state">최근 평가 리포트를 불러오세요.</div>
     <div id="evaluation-content" hidden>
       <div id="metric-grid" class="metric-grid"></div>
@@ -32,7 +88,7 @@
     </div>
   </section>
 </main>
-<footer><strong>법령 AI 내부 품질 콘솔</strong><span>개발·검증 전용</span></footer>
-<script src="/static/evaluation.js?v=4.11.4" defer></script>
+<footer><strong>Enterprise RAG 평가 콘솔</strong><span>개발·검증 전용</span></footer>
+<script src="/static/evaluation.js?v=4.17.2" defer></script>
 </body>
 </html>

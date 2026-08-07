@@ -31,6 +31,11 @@
           "abstention",
           "temporal_revision",
           "false_premise"
+          ,"safety_false_premise"
+          ,"safety_temporal_uncertainty"
+          ,"safety_out_of_domain"
+          ,"safety_scope_boundary"
+          ,"safety_answerable_control"
         ]
       },
       "difficulty": {"enum": ["easy", "medium", "hard"]},
@@ -50,6 +55,12 @@
       "expected_abstain": {"type": "boolean"},
       "annotation_note": {"type": "string", "minLength": 5},
       "evaluate_answer": {"type": "boolean"}
+      ,"expected_outcome": {"enum": ["answer", "abstain", "request_more_facts"]}
+      ,"required_facts": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      ,"failure_tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      ,"dataset_version": {"type": "string", "minLength": 1}
+      ,"review_status": {"enum": ["pending", "reviewed", "approved"]}
+      ,"review_comment": {"type": "string"}
     }
   }
 }

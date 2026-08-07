@@ -9,5 +9,8 @@ __pycache__/
 logs/*.jsonl
 evaluation/reports/*.json
 !.gitkeep
+evaluation/traces/*.json
+evaluation/experiments/*.json
+!evaluation/experiments/.gitkeep
 data/official_cache/*.json
 !data/official_cache/.gitkeep
