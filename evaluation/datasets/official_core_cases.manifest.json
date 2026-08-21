@@ -1,0 +1,16 @@
+{
+  "dataset_id": "official_core_cases",
+  "dataset_version": "2.0.0",
+  "ground_truth_version": "1.0.0",
+  "schema_version": "1.0.0",
+  "case_count": 61,
+  "content_sha256": "a324a71691fe8f5d4fc8ba4253698c45c3c29777b2b574a34a5d863a82da0001",
+  "status": "released",
+  "created_at": "2026-08-07T00:00:00+00:00",
+  "released_at": "2026-08-10T00:00:00+00:00",
+  "review_policy": "legacy_manual_review_bootstrap",
+  "approved_case_count": 61,
+  "source_snapshot_id": "legal_corpus_2026-08-10",
+  "parent_dataset_version": "1.0.0",
+  "change_summary": "49 reviewed core cases plus 12 reviewed safety and boundary cases."
+}

@@ -75,6 +75,7 @@ def test_web_ui_and_static_assets_are_served():
         home = api.get("/")
         script = api.get("/static/app.js")
         internal_evaluation = api.get("/internal/evaluation")
+        training_review = api.get("/internal/training-review")
         evaluation_script = api.get("/static/evaluation.js")
     assert home.status_code == 200
     assert "법무·컴플라이언스를 위한" in home.text
@@ -96,7 +97,7 @@ def test_web_ui_and_static_assets_are_served():
     assert "run-evaluation" not in script.text
     assert internal_evaluation.status_code == 200
     assert "Agent 실행과 실험 결과를 함께 추적합니다" in internal_evaluation.text
-    assert 'href="/static/evaluation.html"' in home.text
+    assert 'href="/internal/evaluation"' in home.text
     assert "Agent 실행·평가 콘솔" in home.text
     assert evaluation_script.status_code == 200
     assert "run-evaluation" in evaluation_script.text
@@ -105,6 +106,9 @@ def test_web_ui_and_static_assets_are_served():
     assert "run-agent-experiment" in internal_evaluation.text
     assert 'fetch("/experiments/run"' in evaluation_script.text
     assert "/experiments/verified-summary" in evaluation_script.text
+    assert training_review.status_code == 200
+    assert "Hard-negative 학습 데이터 검수" in training_review.text
+    assert 'href="/internal/evaluation"' in training_review.text
 
 
 def test_verified_experiment_summary_endpoint():

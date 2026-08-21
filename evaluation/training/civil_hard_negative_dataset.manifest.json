@@ -1,0 +1,33 @@
+{
+  "dataset_id": "legal_retrieval_hard_negatives",
+  "dataset_version": "civil-1.0.0",
+  "schema_version": "1.0.0",
+  "status": "released",
+  "record_count": 35,
+  "content_sha256": "a43f8ca30bcc0bec97628ca72f82160b2b9c11c4ee2aea5fab04783d38bd97c5",
+  "review_policy": "single_reviewer_approval_required",
+  "released_at": "2026-08-21T11:12:53.758661+00:00",
+  "source_candidate_store": "evaluation/training/hard_negative_candidates.jsonl",
+  "selection": {
+    "domains": [
+      "civil_transactions"
+    ],
+    "candidate_pool_versions": [
+      "0.1.0"
+    ],
+    "matched_candidate_count": 39,
+    "approved_record_count": 35
+  },
+  "domains": [
+    "civil_transactions"
+  ],
+  "candidate_pool_versions": [
+    "0.1.0"
+  ],
+  "source_dataset_versions": [
+    "2.0.0"
+  ],
+  "source_corpus_sha256": [
+    "44af084f6a156e363d049b2d7fe5fda45bc1937d0f5212a993c66f9b52e48f43"
+  ]
+}

@@ -1,3 +1,104 @@
+## v4.25.1 - Completed Review Queue UX
+
+- 승인뿐 아니라 수정 요청·거절도 한 번 처리된 후보로 판정해 기본 검수 큐에서 제외합니다.
+- `처리된 후보도 표시`를 선택하면 모든 처리 결과를 다시 조회할 수 있습니다.
+- 처리된 후보는 textarea와 결정 버튼 대신 검수 결과·의견·검수자·처리시각을 읽기 전용 텍스트로 표시합니다.
+- 수정 요청은 경고색, 승인은 성공색, 거절은 오류색으로 구분합니다.
+- 검수 저장 요청이 시작되면 결정 버튼을 잠가 빠른 중복 클릭으로 동일 작업이 여러 번 기록되는 것을 방지합니다.
+- 기존 `include_approved` API query는 승인 결과만 표시하는 하위 호환 동작으로 유지합니다.
+- 기존 append-only 검수 기록과 승인 dataset export 정책은 변경하지 않습니다.
+
+## v4.25.0 - Civil ML Experiment Readiness Gate
+
+- 민법 approved split, 민법 gold-bearing 평가 문항, 선택 ML 의존성, fine-tuned checkpoint를 독립 gate로 검사합니다.
+- pretrained embedding, pretrained + reranker, fine-tuning, fine-tuned embedding, fine-tuned + reranker의 실행 가능 상태를 하나의 matrix로 기록합니다.
+- 준비된 미실행 단계는 `not_run`, 조건이 없는 단계는 `unavailable`로 구분합니다.
+- checkpoint가 없어도 pretrained baseline과 fine-tuning 준비 상태는 별도로 판정합니다.
+- gate는 모델을 다운로드·학습·평가하지 않으며 performance metric을 생성하지 않습니다.
+- 결과를 기존 JSON Experiment Store에 저장하여 이후 실제 ML 실행 조건의 근거로 사용합니다.
+
+## v4.24.0 - Civil Approved Dataset Export & Split Preparation
+
+- 기존 generic export를 유지하면서 `civil_transactions` domain과 `civil-*` candidate pool version을 함께 지정할 수 있습니다.
+- 승인된 후보 중 선택 범위에 일치하는 레코드만 export하고 domain, category, candidate pool version을 보존합니다.
+- export manifest에 선택 조건, 승인 건수, 원본 dataset version과 corpus checksum을 기록합니다.
+- train/validation 준비 단계에서 manifest와 각 레코드의 domain·candidate pool version 일치를 검증합니다.
+- 동일 dataset case/query를 split group으로 묶어 누수를 차단하고 각 split의 group 목록과 hash를 기록합니다.
+- 개인정보보호법 등 기존 승인 데이터와 회귀 baseline은 변경하거나 삭제하지 않습니다.
+- 첨부 패키지에는 로컬 수동 검수 이력이 없으므로 실제 민법 dataset은 승인 기록이 있는 사용자 환경에서만 생성됩니다.
+
+## v4.23.1 - Grouped Hard-negative Review Queue
+
+- 같은 평가 사례와 retrieval method에서 파생된 여러 hard negative를 기본적으로 사례당 한 장으로 묶어 표시합니다.
+- 숨겨진 추가 후보 수를 표시하고 `같은 사례의 추가 후보도 표시`를 선택하면 모든 후보를 독립적으로 검수할 수 있습니다.
+- candidate pool version 필터를 추가해 기존 후보와 신규 민법 배치를 구분합니다.
+- 기존 append-only 후보·검수 기록은 삭제하거나 변경하지 않습니다.
+
+## v4.23.0 - Civil-law ML Review Readiness
+
+- 기존 개인정보보호법 corpus·평가·회귀 baseline을 변경하지 않고 신규 ML 수동 검수의 기본 도메인을 민법으로 분리합니다.
+- 도메인별 corpus 범위, 평가 문항, gold 근거 해소 여부, benchmark 실패와 hard-negative 후보를 감사하는 CLI를 추가합니다.
+- 실제 Hybrid 결과에서 사례당 후보 하나를 우선하는 결정론적 10~20건 검수 배치를 생성할 수 있습니다.
+- hard-negative 생성 CLI에 도메인, 최대 건수, 사례당 하나 필터를 추가합니다.
+- 전용 검수 페이지와 API에서 민법·개인정보·전자금융·노동 후보를 도메인별로 조회합니다.
+- 자동 발견 후보는 계속 `review_required`이며, 수동 승인 전 자동 학습을 허용하지 않습니다.
+- synthetic 민법 사례나 신규 정답 데이터는 이번 패치에서 추가하지 않습니다.
+
+## v4.22.0 - Retrieval Ablation Runner
+
+- BM25부터 fine-tuned embedding + reranker까지 일곱 검색 조합을 하나의 재현 가능한 실행 계획으로 관리합니다.
+- 기본 명령은 모델을 실행하지 않는 plan-only이며, `--execute`로 명시한 사용 가능한 조합만 실제 benchmark를 수행합니다.
+- 조합별 `not_run`, `unavailable`, `completed`, `failed` 상태를 기록하고 미실행 조합에는 metric을 생성하지 않습니다.
+- 동일 dataset·corpus checksum, 사례 선택, Top-K 조건을 검사한 뒤 baseline/treatment의 metric·latency delta와 품질 회귀를 판정합니다.
+- 전체 지표와 법률 분야별 지표를 분리하고 사례 개선·악화 수를 기록합니다.
+- 결과를 기존 Experiment Store에 저장하고 Evaluation UI의 Retrieval Ablation 영역에서 조회합니다.
+- runner는 특정 법률 도메인에 종속되지 않으며 민법 학습·검수 데이터 보강은 다음 별도 패치로 유지합니다.
+
+## v4.21.0 - Optional Cross-Encoder Reranker Infrastructure
+
+- core retriever와 독립된 `ProvisionReranker` interface와 lazy-loaded Sentence Transformers `CrossEncoder` adapter를 추가합니다.
+- retriever Top-N 후보만 rerank하고 최종 Top-K를 반환하며, 동점은 원래 retrieval 순서를 보존합니다.
+- benchmark에서 semantic-lite, hybrid, pretrained embedding, fine-tuned embedding의 reranker 조합을 명시적으로 선택할 수 있습니다.
+- retrieval latency와 reranking latency를 문항별·평균으로 분리하고 reranker score와 original rank를 기록합니다.
+- reranker를 사용하지 않으면 기존 ranking이 변하지 않으며 ML 모델을 다운로드하지 않습니다.
+- injected fake CrossEncoder로 CI를 검증하고, 실제 실행하지 않은 모델 조합의 성능 수치는 기록하지 않습니다.
+
+## v4.20.0 - Reproducible Embedding Training Pipeline
+
+- 승인된 hard-negative dataset의 manifest hash, record count, review 상태와 positive/negative 충돌을 학습 전에 검증합니다.
+- 동일 evaluation case 또는 query가 train과 validation에 동시에 들어가지 않도록 group 단위 deterministic split을 생성합니다.
+- query, positive, hard negative triplet과 각 split의 SHA-256을 기록합니다.
+- Sentence Transformers의 TripletLoss 기반 fine-tuning entry point를 추가하되 기본 동작은 plan-only로 유지합니다.
+- 실제 학습은 `--execute`를 명시해야 하며, checkpoint와 설정·seed·dataset version은 기존 JSON Experiment Store 형식으로 기록합니다.
+- 학습을 실행하지 않은 상태에서는 성능 metric을 생성하거나 주장하지 않습니다.
+
+## v4.19.1 - Hard-negative 검수 전용 페이지
+
+- Agent 실행·평가 콘솔과 학습 후보 검수 화면을 분리했습니다.
+- `/internal/training-review`에서 Positive와 Hard negative의 의미를 확인하며 후보를 검수할 수 있습니다.
+- 기존 후보 파일, append-only 검수 이력, API는 그대로 유지하므로 데이터 마이그레이션이 필요 없습니다.
+- 평가 콘솔에서는 학습 후보 전용 DOM과 이벤트를 제거해 두 화면의 책임을 명확히 했습니다.
+
+## v4.19.0 - Hard-negative Candidate와 Human Review
+
+- Retrieval Benchmark의 `wrong_top1`, `retrieval_miss`, `over_retrieval`에서 후보를 생성합니다.
+- 실제 corpus의 조문·항·호 본문을 positive와 hard-negative에 포함합니다.
+- 내용 기반 candidate ID로 재실행 중복을 차단하고 positive/negative 충돌을 거부합니다.
+- 기존 append-only Human Review에 `training_candidate` 전용 큐를 연결합니다.
+- 승인된 후보만 versioned JSONL training dataset과 checksum manifest로 export합니다.
+- 공개 데모의 검수 쓰기 차단 정책을 그대로 적용합니다.
+- embedding fine-tuning과 자동 재학습은 다음 독립 패치로 유지합니다.
+
+## v4.18.0 - 재현 가능한 Retrieval Benchmark
+
+- 공식 61문항에서 gold-bearing non-abstention retrieval 문항 45개를 자동 분리합니다.
+- BM25, 기존 문자 n-gram `semantic_lite`, production hybrid를 동일 조건에서 비교합니다.
+- 선택 의존성으로 실제 Sentence Transformers pretrained embedding을 실행할 수 있습니다.
+- Top-1 Accuracy, Hit@K, Recall@K, MRR, binary relevance nDCG@K와 latency를 저장합니다.
+- dataset/corpus checksum, seed, code/model version과 문항별 순위를 JSON으로 기록합니다.
+- CI에서 Hit@K와 MRR 기준선 하락을 감지합니다.
+- hard-negative dataset과 embedding fine-tuning은 다음 독립 패치로 유지합니다.
+
 ## v4.17.2 - 콘솔에서 Baseline·Agent 실험 실행
 
 - 저장된 실험 영역에서 61개 전체 데이터의 Baseline 또는 Agent 실험을 직접 실행할 수 있습니다.

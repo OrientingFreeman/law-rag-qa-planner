@@ -1,0 +1,11 @@
+{
+  "corpus_id": "legal_corpus",
+  "corpus_version": "2026-08-10",
+  "content_sha256": "44af084f6a156e363d049b2d7fe5fda45bc1937d0f5212a993c66f9b52e48f43",
+  "document_count": 7516,
+  "source": "Korean official legal information API and reviewed public fixtures",
+  "collected_at": "2026-08-10T00:00:00+00:00",
+  "source_checked_at": "2026-08-10",
+  "ingestion_status": "validated",
+  "license_reference": "Verify each upstream public source policy before redistribution or commercial use"
+}

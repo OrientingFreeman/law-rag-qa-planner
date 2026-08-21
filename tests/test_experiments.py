@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -53,3 +54,25 @@ def test_experiment_store_round_trip(tmp_path: Path):
     assert path.exists()
     assert store.get(report["experiment_id"])["experiment_id"] == report["experiment_id"]
     assert store.list()[0]["experiment_id"] == report["experiment_id"]
+
+
+def test_experiment_store_normalizes_legacy_reports(tmp_path: Path):
+    report = ExperimentRunner(service()).run(ExperimentConfig(mode="baseline"), limit=1)
+    report.pop("corpus")
+    report.pop("model")
+    path = tmp_path / f"{report['experiment_id']}.json"
+    path.write_text(json.dumps(report, ensure_ascii=False), encoding="utf-8")
+
+    store = ExperimentStore(tmp_path)
+    fetched = store.get(report["experiment_id"])
+    listed = store.list()[0]
+
+    assert fetched is not None
+    assert fetched["corpus"]["path"] == "unknown"
+    assert fetched["model"] == {
+        "provider": "unknown",
+        "model": "unknown",
+        "prompt_version": report["config"]["prompt_version"],
+    }
+    assert listed["corpus"]["content_sha256"] == "unavailable"
+    assert listed["model"]["provider"] == "unknown"

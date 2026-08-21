@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: law-rag-qa-planner:1.1.0
+    image: law-rag-qa-planner:4.25.1
     ports:
       - "${LAW_RAG_PORT:-8000}:8000"
     environment:
@@ -16,7 +16,7 @@ services:
       LAW_RAG_LLM_BASE_URL: ${LAW_RAG_LLM_BASE_URL:-https://api.openai.com/v1}
       LAW_RAG_DATA_PATH: data/legal_corpus.json
       LAW_RAG_DOMAINS_PATH: domains
-      LAW_RAG_EVALUATION_DATASET: evaluation/datasets/core_cases.json
+      LAW_RAG_EVALUATION_DATASET: evaluation/datasets/official_core_cases.json
       LAW_RAG_EVALUATION_REPORT: evaluation/reports/latest.json
       LAW_RAG_PROMPT_DIR: prompts
       LAW_RAG_PROMPT_VERSION: ${LAW_RAG_PROMPT_VERSION:-answer_v1}

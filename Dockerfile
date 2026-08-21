@@ -19,7 +19,7 @@ COPY data ./data
 COPY domains ./domains
 COPY evaluation ./evaluation
 COPY prompts ./prompts
-COPY README.md CHANGELOG.md ./
+COPY README.md ./
 
 RUN mkdir -p /app/logs /app/evaluation/reports && chown -R app:app /app
 USER app

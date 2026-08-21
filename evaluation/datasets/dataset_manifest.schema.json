@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Versioned evaluation dataset manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["dataset_id", "dataset_version", "ground_truth_version", "schema_version", "case_count", "content_sha256", "status", "created_at", "released_at", "review_policy", "approved_case_count", "source_snapshot_id", "parent_dataset_version", "change_summary"],
+  "properties": {
+    "dataset_id": {"type": "string", "minLength": 1},
+    "dataset_version": {"type": "string", "minLength": 1},
+    "ground_truth_version": {"type": "string", "minLength": 1},
+    "schema_version": {"type": "string", "minLength": 1},
+    "case_count": {"type": "integer", "minimum": 0},
+    "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"enum": ["draft", "review_required", "released", "deprecated"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "released_at": {"type": ["string", "null"], "format": "date-time"},
+    "review_policy": {"type": "string", "minLength": 1},
+    "approved_case_count": {"type": "integer", "minimum": 0},
+    "source_snapshot_id": {"type": "string", "minLength": 1},
+    "parent_dataset_version": {"type": ["string", "null"]},
+    "change_summary": {"type": "string"}
+  }
+}

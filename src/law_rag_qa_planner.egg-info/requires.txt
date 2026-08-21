@@ -1,1 +1,7 @@
 python-dotenv<2.0,>=1.0
+
+[langchain]
+langchain-core<2.0,>=1.0
+
+[ml]
+sentence-transformers<6.0,>=3.0

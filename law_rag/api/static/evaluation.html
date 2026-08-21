@@ -5,18 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Enterprise RAG 평가 콘솔</title>
-  <link rel="stylesheet" href="/static/app.css?v=4.17.2">
+  <link rel="stylesheet" href="/static/app.css?v=4.25.1">
 </head>
 <body>
 <header class="site-header">
   <a class="brand" href="/">Enterprise RAG 평가 <span id="brand-version">버전 확인 중</span></a>
-  <nav><a href="/">법령 데모</a><a href="/docs">API 문서</a></nav>
+  <nav><a href="/">법령 데모</a><a href="/internal/training-review">학습 데이터 검수</a><a href="/docs">API 문서</a></nav>
 </header>
 <main>
   <section class="internal-hero">
     <p class="eyebrow">Execution Trace & Reproducible Evaluation</p>
     <h1>Agent 실행과 실험 결과를 함께 추적합니다.</h1>
     <p>검색·추론·답변 생성의 단계 상태와 안전한 중단 사유를 확인하고, 같은 데이터에서 Baseline과 Agent Workflow의 차이를 비교합니다.</p>
+  </section>
+
+  <section class="workspace-section console-section">
+    <div class="evaluation-toolbar">
+      <div><p class="eyebrow">Retrieval Ablation</p><h2>검색 조합 비교</h2><p>동일 dataset·corpus·Top-K 조건에서 실행 상태, 품질 변화와 latency trade-off를 확인합니다.</p></div>
+      <div class="toolbar-actions"><button id="load-ablations" class="secondary-button">최근 Ablation 불러오기</button></div>
+    </div>
+    <div id="ablation-empty" class="empty-state">저장된 Retrieval Ablation 결과를 불러오세요.</div>
+    <div id="ablation-content" hidden>
+      <div id="ablation-summary" class="metric-grid"></div>
+      <div id="ablation-methods" class="case-list"></div>
+      <div class="case-toolbar"><strong>Baseline / Treatment 비교</strong></div>
+      <div id="ablation-comparisons" class="case-list"></div>
+    </div>
   </section>
 
   <section class="workspace-section console-section">
@@ -76,6 +90,20 @@
 
   <section class="workspace-section console-section">
     <div class="evaluation-toolbar">
+      <div><p class="eyebrow">Human Review</p><h2>평가 데이터 검수 큐</h2><p>자동 검증 결과를 바로 정답으로 승격하지 않고, 단일 Reviewer가 승인·수정 요청·거절한 이력을 남깁니다.</p></div>
+      <div class="toolbar-actions"><button id="load-review-queue" class="secondary-button">검수 큐 새로고침</button></div>
+    </div>
+    <div class="review-controls">
+      <label>Reviewer ID<input id="reviewer-id" value="local-reviewer" maxlength="100"></label>
+      <label class="review-toggle"><input id="include-approved-reviews" type="checkbox"> 승인된 사례도 표시</label>
+      <span id="review-dataset-summary">데이터셋 확인 중</span>
+    </div>
+    <p id="review-disabled-note" class="internal-warning" hidden>현재 서버 설정에서는 검수 기록 저장이 비활성화되어 있습니다.</p>
+    <div id="review-queue" class="case-list"><div class="empty-state">검수 큐를 불러오세요.</div></div>
+  </section>
+
+  <section class="workspace-section console-section">
+    <div class="evaluation-toolbar">
       <div><p class="eyebrow">Legacy Regression</p><h2>기존 회귀 평가</h2><p>기존 평가 API와 화면은 유지해 과거 보고서와의 하위 호환성을 보존합니다.</p></div>
       <div class="toolbar-actions"><button id="load-report" class="secondary-button">최근 리포트</button><button id="run-evaluation" class="primary-button compact">전체 평가 실행</button></div>
     </div>
@@ -89,6 +117,6 @@
   </section>
 </main>
 <footer><strong>Enterprise RAG 평가 콘솔</strong><span>개발·검증 전용</span></footer>
-<script src="/static/evaluation.js?v=4.17.2" defer></script>
+<script src="/static/evaluation.js?v=4.25.1" defer></script>
 </body>
 </html>

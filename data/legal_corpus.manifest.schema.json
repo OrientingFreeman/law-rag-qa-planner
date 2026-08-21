@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Legal corpus snapshot manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["corpus_id", "corpus_version", "content_sha256", "document_count", "source", "collected_at", "source_checked_at", "ingestion_status", "license_reference"],
+  "properties": {
+    "corpus_id": {"type": "string", "minLength": 1},
+    "corpus_version": {"type": "string", "minLength": 1},
+    "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "document_count": {"type": "integer", "minimum": 0},
+    "source": {"type": "string", "minLength": 1},
+    "collected_at": {"type": "string", "format": "date-time"},
+    "source_checked_at": {"type": "string", "format": "date"},
+    "ingestion_status": {"enum": ["pending", "fetched", "cached", "validated", "invalid"]},
+    "license_reference": {"type": "string", "minLength": 1}
+  }
+}

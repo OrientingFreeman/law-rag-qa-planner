@@ -326,6 +326,16 @@ class EvaluationRunRequest(BaseModel):
     limit: int | None = Field(default=None, ge=1, le=500)
 
 
+class EvaluationReviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    target_type: Literal["evaluation_case", "training_candidate"] = "evaluation_case"
+    target_id: str = Field(min_length=1)
+    decision: Literal["approve", "revise", "reject", "deprecate"]
+    reviewer_id: str = Field(min_length=1, max_length=100)
+    review_comment: str = Field(default="", max_length=2000)
+
+
 class AgentRunRequest(QueryRequest):
     search_strategy: Literal["lexical", "semantic", "hybrid"] = "hybrid"
     query_rewrite: bool = True
@@ -355,12 +365,19 @@ class ExperimentRunRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     mode: Literal["baseline", "agent"]
+    experiment_kind: Literal["rag", "retrieval", "embedding_training", "reranker", "llm_training"] = "rag"
+    seed: int = Field(default=42, ge=0)
+    baseline_experiment_id: str | None = None
+    treatment_name: str | None = None
+    retriever_version: str = "hybrid_v1"
+    embedding_model: str = "current"
+    reranker_model: str | None = None
+    prompt_version: str = "answer_v22"
     search_strategy: Literal["lexical", "semantic", "hybrid"] = "hybrid"
     query_rewrite: bool = True
     reranking: bool = True
     case_ids: list[str] | None = None
     limit: int | None = Field(default=None, ge=1, le=100)
-    dataset_version: str = "2.0"
     max_retries: int = Field(default=1, ge=0, le=2)
     retry_top_k_increment: int = Field(default=3, ge=1, le=20)
     abstention_policy: bool = True
@@ -370,8 +387,10 @@ class ExperimentResponse(BaseModel):
     experiment_id: str
     executed_at: str
     dataset: dict[str, object]
+    corpus: dict[str, object]
     code_version: str
     config: dict[str, object]
+    model: dict[str, object]
     environment: dict[str, object]
     summary: dict[str, object]
     cases: list[dict[str, object]]

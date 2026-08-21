@@ -20,6 +20,7 @@ from law_rag.api.schemas import (
     AnswerResponse,
     DomainResponse,
     EvaluationRunRequest,
+    EvaluationReviewRequest,
     EvaluationRunResponse,
     HealthResponse,
     LawResponse,
@@ -28,6 +29,9 @@ from law_rag.api.schemas import (
     RetrieveResponse,
 )
 from law_rag.evaluation.runner import EvaluationRunner, load_dataset, write_report
+from law_rag.evaluation.datasets import dataset_snapshot
+from law_rag.evaluation.reviews import JsonReviewStore, ReviewRecord
+from law_rag.evaluation.hard_negatives import JsonlCandidateStore
 from law_rag.evaluation.comparison import compare_experiments
 from law_rag.evaluation.experiments import ExperimentConfig, ExperimentRunner, ExperimentStore
 from law_rag.service import LawRagService
@@ -55,13 +59,20 @@ def create_app(
     )
     resolved_dataset_path = Path(
         evaluation_dataset_path
-        or os.getenv("LAW_RAG_EVALUATION_DATASET", "evaluation/datasets/core_cases.json")
+        or os.getenv("LAW_RAG_EVALUATION_DATASET", "evaluation/datasets/official_core_cases.json")
     )
     resolved_report_path = Path(
         evaluation_report_path
         or os.getenv("LAW_RAG_EVALUATION_REPORT", "evaluation/reports/latest.json")
     )
     resolved_experiment_dir = Path(os.getenv("LAW_RAG_EXPERIMENT_DIR", "evaluation/experiments"))
+    resolved_review_path = Path(os.getenv(
+        "LAW_RAG_REVIEW_STORE", "evaluation/reviews/review_records.jsonl"
+    ))
+    resolved_hard_negative_path = Path(os.getenv(
+        "LAW_RAG_HARD_NEGATIVE_CANDIDATES",
+        "evaluation/training/hard_negative_candidates.jsonl",
+    ))
     resolved_verified_summary = Path(os.getenv(
         "LAW_RAG_VERIFIED_EXPERIMENT_SUMMARY",
         "evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json",
@@ -89,6 +100,8 @@ def create_app(
             app.state.law_rag_service, app.state.agent_trace_store
         )
         app.state.experiment_store = ExperimentStore(resolved_experiment_dir)
+        app.state.review_store = JsonReviewStore(resolved_review_path)
+        app.state.hard_negative_store = JsonlCandidateStore(resolved_hard_negative_path)
         app.state.verified_experiment_summary = resolved_verified_summary
         yield
 
@@ -142,6 +155,34 @@ def create_app(
                 },
             )
 
+    def enforce_review_gate(request: Request, cases: list[object]) -> None:
+        snapshot = checked_dataset_snapshot(
+            request.app.state.evaluation_dataset_path,
+            case_count=len(load_dataset(request.app.state.evaluation_dataset_path)),
+        )
+        default_status = "approved" if snapshot.get("status") in {"released", "unmanaged"} else "review_required"
+        latest = request.app.state.review_store.latest(target_type="evaluation_case")
+        blocked = [
+            str(case.case_id) for case in cases
+            if latest.get(str(case.case_id), {}).get("review_status", default_status) != "approved"
+        ]
+        if blocked:
+            raise HTTPException(status_code=409, detail={
+                "code": "evaluation_review_gate_failed",
+                "message": "승인되지 않은 평가 사례가 포함되어 있습니다.",
+                "case_ids": blocked,
+            })
+
+    def checked_dataset_snapshot(dataset_path: Path, *, case_count: int) -> dict[str, object]:
+        try:
+            return dataset_snapshot(dataset_path, case_count=case_count)
+        except (ValueError, json.JSONDecodeError, OSError) as exc:
+            raise HTTPException(status_code=409, detail={
+                "code": "dataset_manifest_invalid",
+                "message": "평가 데이터셋과 manifest가 일치하지 않습니다.",
+                "reason": str(exc),
+            }) from exc
+
     @app.get("/", include_in_schema=False)
     def web_ui() -> FileResponse:
         return FileResponse(
@@ -153,6 +194,13 @@ def create_app(
     def internal_evaluation_ui() -> FileResponse:
         return FileResponse(
             STATIC_DIR / "evaluation.html",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
+
+    @app.get("/internal/training-review", include_in_schema=False)
+    def internal_training_review_ui() -> FileResponse:
+        return FileResponse(
+            STATIC_DIR / "training-review.html",
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
         )
 
@@ -248,7 +296,14 @@ def create_app(
         config = ExperimentConfig(
             mode=payload.mode,
             dataset_path=str(request.app.state.evaluation_dataset_path),
-            dataset_version=payload.dataset_version,
+            experiment_kind=payload.experiment_kind,
+            seed=payload.seed,
+            baseline_experiment_id=payload.baseline_experiment_id,
+            treatment_name=payload.treatment_name,
+            retriever_version=payload.retriever_version,
+            embedding_model=payload.embedding_model,
+            reranker_model=payload.reranker_model,
+            prompt_version=payload.prompt_version,
             search_strategy=payload.search_strategy,
             query_rewrite=payload.query_rewrite,
             reranking=payload.reranking,
@@ -256,6 +311,13 @@ def create_app(
             retry_top_k_increment=payload.retry_top_k_increment,
             abstention_policy=payload.abstention_policy,
         )
+        selected_cases = load_dataset(config.dataset_path)
+        if payload.case_ids:
+            selected = set(payload.case_ids)
+            selected_cases = [case for case in selected_cases if case.case_id in selected]
+        if payload.limit is not None:
+            selected_cases = selected_cases[:payload.limit]
+        enforce_review_gate(request, selected_cases)
         report = ExperimentRunner(service).run(config, case_ids=payload.case_ids, limit=payload.limit)
         request.app.state.experiment_store.save(report)
         return report
@@ -273,6 +335,10 @@ def create_app(
                 "message": "검증된 실험 요약을 찾을 수 없습니다.",
             })
         return json.loads(path.read_text(encoding="utf-8"))
+
+    @app.get("/experiments/ablations", tags=["experiments"])
+    def list_retrieval_ablations(request: Request) -> list[dict[str, object]]:
+        return request.app.state.experiment_store.list_ablation_reports()
 
     @app.get("/experiments/{experiment_id}", response_model=ExperimentResponse, tags=["experiments"])
     def get_experiment(experiment_id: str, request: Request) -> dict[str, object]:
@@ -299,6 +365,156 @@ def create_app(
         if report is None:
             raise HTTPException(status_code=404, detail={"code": "experiment_not_found", "message": "실험 결과를 찾을 수 없습니다."})
         return [row for row in report["cases"] if not row["passed"]]
+
+    @app.get("/evaluation/reviews/queue", tags=["evaluation"])
+    def evaluation_review_queue(request: Request, include_approved: bool = False) -> dict[str, object]:
+        dataset_path: Path = request.app.state.evaluation_dataset_path
+        raw = json.loads(dataset_path.read_text(encoding="utf-8"))
+        rows = raw["cases"] if isinstance(raw, dict) else raw
+        snapshot = checked_dataset_snapshot(dataset_path, case_count=len(rows))
+        latest = request.app.state.review_store.latest(target_type="evaluation_case")
+        default_status = "approved" if snapshot.get("status") == "released" else "review_required"
+        queue: list[dict[str, object]] = []
+        for row in rows:
+            case_id = str(row["case_id"])
+            review = latest.get(case_id)
+            status_value = review["review_status"] if review else str(row.get("review_status") or default_status)
+            if include_approved or status_value in {"draft", "review_required", "rejected"}:
+                queue.append({
+                    "case_id": case_id,
+                    "question": row["question"],
+                    "category": row.get("category"),
+                    "difficulty": row.get("difficulty"),
+                    "review_status": status_value,
+                    "latest_review": review,
+                })
+        return {"dataset": snapshot, "queue_count": len(queue), "cases": queue}
+
+    @app.post("/evaluation/reviews", tags=["evaluation"])
+    def save_evaluation_review(payload: EvaluationReviewRequest, request: Request) -> dict[str, str]:
+        if not evaluation_run_enabled:
+            raise HTTPException(status_code=403, detail={
+                "code": "review_write_disabled", "message": "현재 서버에서는 검수 기록 저장이 비활성화되어 있습니다."
+            })
+        dataset_path: Path = request.app.state.evaluation_dataset_path
+        cases = load_dataset(dataset_path)
+        if payload.target_type == "evaluation_case":
+            if payload.target_id not in {case.case_id for case in cases}:
+                raise HTTPException(status_code=404, detail={
+                    "code": "review_target_not_found", "message": "검수할 평가 사례를 찾을 수 없습니다."
+                })
+            snapshot = checked_dataset_snapshot(dataset_path, case_count=len(cases))
+        else:
+            candidate = request.app.state.hard_negative_store.get(payload.target_id)
+            if candidate is None:
+                raise HTTPException(status_code=404, detail={
+                    "code": "review_target_not_found", "message": "검수할 hard-negative 후보를 찾을 수 없습니다."
+                })
+            source = candidate.get("source", {})
+            snapshot = {
+                "dataset_id": "hard_negative_candidates",
+                "dataset_version": str(candidate.get("candidate_pool_version", "unversioned")),
+                "ground_truth_version": str(source.get("ground_truth_version", "unversioned")),
+            }
+        try:
+            record = ReviewRecord.create(
+                target_type=payload.target_type,
+                target_id=payload.target_id,
+                dataset_id=str(snapshot["dataset_id"]),
+                dataset_version=str(snapshot["dataset_version"]),
+                ground_truth_version=str(snapshot["ground_truth_version"]),
+                decision=payload.decision,
+                reviewer_id=payload.reviewer_id,
+                review_comment=payload.review_comment,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail={"code": "invalid_review", "message": str(exc)}) from exc
+        request.app.state.review_store.append(record)
+        return record.to_dict()
+
+    @app.get("/training/hard-negatives/queue", tags=["training"])
+    def hard_negative_review_queue(
+        request: Request, include_processed: bool = False,
+        include_approved: bool = False, limit: int = 50,
+        domain: str | None = None, candidate_pool_version: str | None = None,
+        one_per_case: bool = True,
+    ) -> dict[str, object]:
+        limit = max(1, min(limit, 200))
+        all_candidates = request.app.state.hard_negative_store.list()
+        domain_candidates = [
+            row for row in all_candidates
+            if domain is None or str(row.get("domain", "all")) == domain
+        ]
+        available_versions = sorted({
+            str(row.get("candidate_pool_version", "unversioned"))
+            for row in domain_candidates
+        })
+        candidates = [
+            row for row in domain_candidates
+            if candidate_pool_version is None
+            or str(row.get("candidate_pool_version", "unversioned")) == candidate_pool_version
+        ]
+        latest = request.app.state.review_store.latest(target_type="training_candidate")
+        queue: list[dict[str, object]] = []
+        for candidate in candidates:
+            candidate_id = str(candidate["candidate_id"])
+            review = latest.get(candidate_id)
+            status_value = review["review_status"] if review else "review_required"
+            processed = review is not None
+            # include_approved remains as a backwards-compatible alias for old clients.
+            if (
+                not processed or include_processed
+                or (include_approved and status_value == "approved")
+            ):
+                queue.append({
+                    **candidate, "review_status": status_value,
+                    "review_processed": processed, "latest_review": review,
+                })
+        ungrouped_count = len(queue)
+        hidden_by_case: dict[str, int] = {}
+        if one_per_case:
+            grouped: list[dict[str, object]] = []
+            seen: set[tuple[str, str]] = set()
+            for row in queue:
+                key = (
+                    str(row.get("source", {}).get("case_id", "")),
+                    str(row.get("source", {}).get("method", "")),
+                )
+                label = ":".join(key)
+                if key in seen:
+                    hidden_by_case[label] = hidden_by_case.get(label, 0) + 1
+                    continue
+                seen.add(key)
+                grouped.append(row)
+            queue = grouped
+            for row in queue:
+                key = ":".join((
+                    str(row.get("source", {}).get("case_id", "")),
+                    str(row.get("source", {}).get("method", "")),
+                ))
+                row["additional_candidate_count"] = hidden_by_case.get(key, 0)
+        return {
+            "candidate_pool": {
+                "dataset_id": "hard_negative_candidates",
+                "versions": available_versions,
+                "selected_version": candidate_pool_version,
+                "candidate_count": len(candidates),
+                "total_candidate_count": len(all_candidates),
+                "domain": domain,
+                "one_per_case": one_per_case,
+            },
+            "queue_count": len(queue),
+            "ungrouped_queue_count": ungrouped_count,
+            "hidden_additional_count": ungrouped_count - len(queue),
+            "returned_count": min(len(queue), limit),
+            "processed_count": sum(
+                str(candidate["candidate_id"]) in latest for candidate in candidates
+            ),
+            "pending_count": sum(
+                str(candidate["candidate_id"]) not in latest for candidate in candidates
+            ),
+            "candidates": queue[:limit],
+        }
 
     @app.get("/evaluation/latest", response_model=EvaluationRunResponse, tags=["evaluation"])
     def latest_evaluation(request: Request) -> dict[str, object]:
@@ -342,6 +558,7 @@ def create_app(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail={"code": "evaluation_cases_empty", "message": "실행할 평가 사례가 없습니다."},
             )
+        enforce_review_gate(request, cases)
         report = EvaluationRunner(service).run(cases)
         report["version"] = APP_VERSION
         write_report(report, report_path)

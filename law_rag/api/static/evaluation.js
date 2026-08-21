@@ -14,6 +14,15 @@ function statusLabel(status) {
   return {completed: "완료", warning: "경고", abstained: "보류", failed: "실패", skipped: "건너뜀", running: "실행 중"}[status] || status;
 }
 
+async function readJsonResponse(response) {
+  const body = await response.text();
+  try {
+    return body ? JSON.parse(body) : {};
+  } catch {
+    throw new Error(`서버가 JSON이 아닌 응답을 반환했습니다. HTTP ${response.status}: ${body.slice(0, 160)}`);
+  }
+}
+
 async function loadEnvironment() {
   try {
     const [healthResponse, configResponse] = await Promise.all([fetch("/health"), fetch("/demo-config")]);
@@ -27,12 +36,54 @@ async function loadEnvironment() {
         $("#run-evaluation").hidden = true;
         document.querySelectorAll(".experiment-run-button").forEach((button) => { button.hidden = true; });
         $("#evaluation-disabled-note").hidden = false;
+        $("#review-disabled-note").hidden = false;
         $("#experiment-run-status").textContent = "현재 서버 설정에서는 신규 실험 실행이 비활성화되어 있습니다.";
       }
     }
   } catch {
     $("#brand-version").textContent = "오프라인";
   }
+}
+
+function renderReviewQueue(payload) {
+  const dataset = payload.dataset || {};
+  $("#review-dataset-summary").textContent = `${dataset.dataset_id || "dataset"} v${dataset.dataset_version || "?"} · ${payload.queue_count || 0}건 표시 · ${String(dataset.content_sha256 || "").slice(0, 12)}`;
+  const rows = payload.cases || [];
+  $("#review-queue").innerHTML = rows.map((row) => `<article class="case-card review-case ${row.review_status === "approved" ? "passed" : "failed"}" data-case-id="${escapeHtml(row.case_id)}" data-target-type="evaluation_case">
+    <div><span class="case-status">${escapeHtml(row.review_status)}</span><strong>${escapeHtml(row.case_id)}</strong><small>${escapeHtml(row.category || "")}</small></div>
+    <h3>${escapeHtml(row.question)}</h3>
+    <textarea class="review-comment" rows="2" placeholder="수정 요청·거절 시 검수 의견을 입력하세요.">${escapeHtml(row.latest_review?.review_comment || "")}</textarea>
+    <div class="review-actions">
+      <button class="secondary-button" data-decision="revise">수정 요청</button>
+      <button class="secondary-button review-reject" data-decision="reject">거절</button>
+      <button class="primary-button compact" data-decision="approve">승인</button>
+    </div>
+  </article>`).join("") || '<div class="empty-state">현재 검수가 필요한 사례가 없습니다.</div>';
+}
+
+async function loadReviewQueue() {
+  try {
+    const includeApproved = $("#include-approved-reviews").checked;
+    const response = await fetch(`/evaluation/reviews/queue?include_approved=${includeApproved}`);
+    const data = await readJsonResponse(response);
+    if (!response.ok) throw new Error(data.detail?.message || "검수 큐를 불러오지 못했습니다.");
+    renderReviewQueue(data);
+  } catch (error) { window.alert(error.message); }
+}
+
+async function saveReview(card, decision) {
+  const reviewerId = $("#reviewer-id").value.trim();
+  const comment = card.querySelector(".review-comment").value.trim();
+  if (!reviewerId) return window.alert("Reviewer ID를 입력하세요.");
+  try {
+    const response = await fetch("/evaluation/reviews", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({target_type: "evaluation_case", target_id: card.dataset.caseId, decision, reviewer_id: reviewerId, review_comment: comment}),
+    });
+    const data = await readJsonResponse(response);
+    if (!response.ok) throw new Error(data.detail?.message || "검수 기록 저장에 실패했습니다.");
+    await loadReviewQueue();
+  } catch (error) { window.alert(error.message); }
 }
 
 function renderAgent(run) {
@@ -77,7 +128,7 @@ async function runAgent(event) {
         max_retries: 1,
       }),
     });
-    const data = await response.json();
+    const data = await readJsonResponse(response);
     if (!response.ok) throw new Error(data.detail?.message || "Agent 실행에 실패했습니다.");
     renderAgent(data);
   } catch (error) { window.alert(error.message); }
@@ -113,17 +164,50 @@ function renderVerifiedComparison(report) {
 async function loadVerifiedComparison() {
   try {
     const response = await fetch("/experiments/verified-summary");
-    const data = await response.json();
+    const data = await readJsonResponse(response);
     if (!response.ok) throw new Error(data.detail?.message || "검증 결과를 불러오지 못했습니다.");
     renderVerifiedComparison(data);
+  } catch (error) { window.alert(error.message); }
+}
+
+function renderAblation(report) {
+  $("#ablation-empty").hidden = true;
+  $("#ablation-content").hidden = false;
+  const counts = report.summary?.status_counts || {};
+  $("#ablation-summary").innerHTML = [
+    ["완료", counts.completed || 0], ["미실행", counts.not_run || 0],
+    ["사용 불가", counts.unavailable || 0], ["실패", counts.failed || 0],
+  ].map(([label, value]) => `<article><span>${label}</span><strong>${value}개</strong></article>`).join("");
+  const methods = report.ablation?.methods || [];
+  $("#ablation-methods").innerHTML = methods.map((row) => {
+    const metrics = row.result?.metrics;
+    const detail = metrics
+      ? `Top-1 ${percent(metrics.top1_accuracy)} · Hit@K ${percent(metrics.hit_at_k)} · MRR ${Number(metrics.mrr).toFixed(3)} · ${Number(metrics.average_latency_ms).toFixed(1)}ms`
+      : escapeHtml(row.availability_reason || row.error || "실행 결과 없음");
+    return `<article class="case-card ${row.status === "failed" ? "failed" : row.status === "completed" ? "passed" : ""}"><div><span class="case-status">${escapeHtml(row.status)}</span><strong>${escapeHtml(row.method)}</strong><small>baseline ${escapeHtml(row.baseline_method || "없음")}</small></div><p>${detail}</p></article>`;
+  }).join("") || '<div class="empty-state">Ablation method가 없습니다.</div>';
+  const comparisons = report.ablation?.comparisons || [];
+  $("#ablation-comparisons").innerHTML = comparisons.map((row) => {
+    const delta = row.metric_deltas || {};
+    return `<article class="case-card ${row.regression_status === "regressed" ? "failed" : "passed"}"><div><span class="case-status">${escapeHtml(row.regression_status)}</span><strong>${escapeHtml(row.baseline_method)} → ${escapeHtml(row.treatment_method)}</strong></div><p>Hit@K ${Number(delta.hit_at_k || 0) >= 0 ? "+" : ""}${Number(delta.hit_at_k || 0).toFixed(4)} · MRR ${Number(delta.mrr || 0) >= 0 ? "+" : ""}${Number(delta.mrr || 0).toFixed(4)} · latency ${Number(delta.average_latency_ms || 0) >= 0 ? "+" : ""}${Number(delta.average_latency_ms || 0).toFixed(1)}ms</p><small>악화 지표: ${escapeHtml((row.quality_regressions || []).join(", ") || "없음")}</small></article>`;
+  }).join("") || '<div class="empty-state">함께 완료된 baseline과 treatment가 없어 비교 수치가 없습니다.</div>';
+}
+
+async function loadAblations() {
+  try {
+    const response = await fetch("/experiments/ablations");
+    const rows = await readJsonResponse(response);
+    if (!response.ok) throw new Error(rows.detail?.message || "Ablation 결과를 불러오지 못했습니다.");
+    if (!rows.length) return;
+    renderAblation(rows[0]);
   } catch (error) { window.alert(error.message); }
 }
 
 async function loadExperiments() {
   try {
     const response = await fetch("/experiments");
-    const rows = await response.json();
-    if (!response.ok) throw new Error("실험 목록을 불러오지 못했습니다.");
+    const rows = await readJsonResponse(response);
+    if (!response.ok) throw new Error(rows.detail?.message || "실험 목록을 불러오지 못했습니다.");
     const baseline = rows.filter((row) => row.config.mode === "baseline");
     const agents = rows.filter((row) => row.config.mode === "agent");
     $("#baseline-experiment").innerHTML = '<option value="">선택</option>' + baseline.map((row) => `<option value="${escapeHtml(row.experiment_id)}">${escapeHtml(row.experiment_id)} · ${row.dataset.case_count}건</option>`).join("");
@@ -145,7 +229,7 @@ async function runSavedExperiment(mode) {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({mode, search_strategy: "hybrid", max_retries: 1, abstention_policy: true}),
     });
-    const data = await response.json();
+    const data = await readJsonResponse(response);
     if (!response.ok) throw new Error(data.detail?.message || `${label} 실험 실행에 실패했습니다.`);
     await loadExperiments();
     const select = mode === "baseline" ? $("#baseline-experiment") : $("#agent-experiment");
@@ -176,7 +260,7 @@ async function compareExperiments() {
   if (!baselineId || !agentId) return window.alert("비교할 두 실험을 선택하세요.");
   try {
     const response = await fetch("/experiments/compare", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({baseline_experiment_id: baselineId, candidate_experiment_id: agentId})});
-    const data = await response.json();
+    const data = await readJsonResponse(response);
     if (!response.ok) throw new Error(data.detail?.message || "실험 비교에 실패했습니다.");
     savedComparison = data;
     $("#saved-comparison").hidden = false;
@@ -201,19 +285,26 @@ function renderCases(filter) {
 }
 
 async function loadLegacyReport() {
-  try { const response = await fetch("/evaluation/latest"); const data = await response.json(); if (!response.ok) throw new Error(data.detail?.message || "저장된 평가 리포트가 없습니다."); renderEvaluation(data); }
+  try { const response = await fetch("/evaluation/latest"); const data = await readJsonResponse(response); if (!response.ok) throw new Error(data.detail?.message || "저장된 평가 리포트가 없습니다."); renderEvaluation(data); }
   catch (error) { window.alert(error.message); }
 }
 
 async function runLegacyEvaluation(event) {
   const button = event.currentTarget; button.disabled = true; button.textContent = "실행 중…";
-  try { const response = await fetch("/evaluation/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"}); const data = await response.json(); if (!response.ok) throw new Error(data.detail?.message || "평가 실행 실패"); renderEvaluation(data); }
+  try { const response = await fetch("/evaluation/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"}); const data = await readJsonResponse(response); if (!response.ok) throw new Error(data.detail?.message || "평가 실행 실패"); renderEvaluation(data); }
   catch (error) { window.alert(error.message); }
   finally { button.disabled = false; button.textContent = "전체 평가 실행"; }
 }
 
 $("#run-agent").addEventListener("click", runAgent);
+$("#load-review-queue").addEventListener("click", loadReviewQueue);
+$("#include-approved-reviews").addEventListener("change", loadReviewQueue);
+$("#review-queue").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-decision]");
+  if (button) saveReview(button.closest(".review-case"), button.dataset.decision);
+});
 $("#load-verified-comparison").addEventListener("click", loadVerifiedComparison);
+$("#load-ablations").addEventListener("click", loadAblations);
 $("#load-experiments").addEventListener("click", loadExperiments);
 $("#run-baseline-experiment").addEventListener("click", () => runSavedExperiment("baseline"));
 $("#run-agent-experiment").addEventListener("click", () => runSavedExperiment("agent"));
@@ -224,5 +315,7 @@ $("#load-report").addEventListener("click", loadLegacyReport);
 $("#run-evaluation").addEventListener("click", runLegacyEvaluation);
 
 loadEnvironment();
+loadReviewQueue();
 loadVerifiedComparison();
+loadAblations();
 loadExperiments();

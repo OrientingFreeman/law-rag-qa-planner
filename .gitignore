@@ -12,5 +12,13 @@ evaluation/reports/*.json
 evaluation/traces/*.json
 evaluation/experiments/*.json
 !evaluation/experiments/.gitkeep
+evaluation/benchmarks/*.json
+!evaluation/benchmarks/.gitkeep
+evaluation/training/hard_negative_candidates.jsonl
+evaluation/training/hard_negative_dataset*.jsonl
+evaluation/training/hard_negative_dataset*.manifest.json
+evaluation/training/embedding_dataset/
+evaluation/training/checkpoints/
+evaluation/training/readiness_*.json
 data/official_cache/*.json
 !data/official_cache/.gitkeep

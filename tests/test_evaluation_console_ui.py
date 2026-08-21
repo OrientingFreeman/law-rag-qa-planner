@@ -15,6 +15,9 @@ def test_console_contains_agent_trace_and_experiment_comparison_sections():
     assert 'id="run-agent-experiment"' in html
     assert 'id="experiment-run-status"' in html
     assert 'id="comparison-case-list"' in html
+    assert 'id="load-ablations"' in html
+    assert 'id="ablation-methods"' in html
+    assert 'id="ablation-comparisons"' in html
 
 
 def test_console_script_renders_required_trace_evidence():
@@ -29,6 +32,8 @@ def test_console_script_renders_required_trace_evidence():
     assert 'fetch("/experiments/run"' in script
     assert 'runSavedExperiment("baseline")' in script
     assert 'runSavedExperiment("agent")' in script
+    assert 'fetch("/experiments/ablations")' in script
+    assert "renderAblation" in script
 
 
 def test_console_styles_are_responsive_without_chart_dependency():

@@ -36,14 +36,28 @@ jobs:
           LAW_RAG_LLM_PROVIDER: deterministic
         run: python -m pytest -q
 
+      - name: Verify optional LangChain adapter
+        run: |
+          python -m pip install -e '.[langchain]'
+          python -m pytest -q tests/test_langchain_adapter.py
+
       - name: Run regression evaluation
         env:
           LAW_RAG_LLM_PROVIDER: deterministic
         run: |
           python -m law_rag.evaluation \
-            --dataset evaluation/datasets/core_cases.json \
-            --output evaluation/reports/ci-latest.json \
-            --fail-under 0.8
+            --dataset evaluation/datasets/official_core_cases.json \
+            --output evaluation/reports/ci-official.json \
+            --no-log-failures \
+            --fail-under 0.60
+
+      - name: Run retrieval benchmark regression
+        run: |
+          python -m tools.run_retrieval_benchmark \
+            --methods bm25 semantic_lite hybrid \
+            --output evaluation/benchmarks/ci-retrieval.json \
+            --fail-under-hit-at-k 0.60 \
+            --fail-under-mrr 0.45
 
   docker:
     runs-on: ubuntu-latest

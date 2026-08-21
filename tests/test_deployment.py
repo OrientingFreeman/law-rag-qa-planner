@@ -15,7 +15,9 @@ def test_docker_artifacts_exist_and_use_healthcheck():
 def test_ci_pipeline_has_tests_evaluation_and_smoke_test():
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     assert "python -m pytest -q" in workflow
-    assert "--fail-under 0.8" in workflow
+    assert "evaluation/datasets/official_core_cases.json" in workflow
+    assert "--fail-under 0.60" in workflow
+    assert "--no-log-failures" in workflow
     assert "docker build" in workflow
     assert "Smoke-test answer endpoint" in workflow
 

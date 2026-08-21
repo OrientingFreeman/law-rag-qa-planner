@@ -2,7 +2,7 @@
 
 > 법률처럼 정확성과 추적 가능성이 중요한 전문 도메인에서 RAG와 AI Agent의 실행 과정, 평가 결과 및 실패 원인을 재현 가능하게 관리하는 프로젝트입니다.
 
-현재 서비스 버전: **v4.17.0**
+현재 서비스 버전: **v4.25.1**
 
 법령 수집·조문 구조화·시점 검색·하이브리드 검색·근거 기반 답변·인용 검증·법적 추론 기능 위에 다음 운영 계층을 추가했습니다.
 
@@ -58,6 +58,75 @@
 - [Agent Workflow와 Execution Trace](docs/AGENT_WORKFLOW.md)
 - [Baseline·Agent 실험 비교](docs/EXPERIMENT_COMPARISON.md)
 - [LLM·데이터 품질 프로젝트 요약](docs/APPLICATION_PROJECT_SUMMARY.md)
+- [평가 데이터 거버넌스와 Human Review](docs/EVALUATION_GOVERNANCE.md)
+- [Retrieval Benchmark](docs/RETRIEVAL_BENCHMARK.md)
+- [Hard-negative Candidate와 Human Review](docs/HARD_NEGATIVE_PIPELINE.md)
+- [Optional Cross-Encoder Reranker](docs/RERANKER_BENCHMARK.md)
+- [Retrieval Ablation Runner](docs/RETRIEVAL_ABLATION.md)
+- [민법 ML 학습·검수 준비도](docs/CIVIL_ML_READINESS.md)
+- [민법 ML 실험 실행 Gate](docs/CIVIL_ML_EXPERIMENT_GATE.md)
+
+### 버전 평가·Human Review
+
+61개 공식 평가 데이터는 sidecar manifest로 dataset version, ground-truth version, 사례 수와 SHA-256을 관리합니다. 실험 결과에는 corpus checksum, seed, 검색기·embedding·reranker·prompt version 및 provider/model을 함께 기록하여 조건이 다른 결과를 같은 기준선으로 오인하지 않도록 했습니다.
+
+내부 Evaluation UI에서는 단일 Reviewer가 평가 사례를 승인·수정 요청·거절하고 append-only 검수 이력을 남길 수 있습니다. 공개 데모에서는 검수 저장과 신규 평가 실행을 비활성화합니다. LangChain은 기존 검색기를 교체하지 않고 선택적 retriever adapter로만 연결하며, native 검색 결과와 문서 순서·metadata가 동일한지 회귀 테스트합니다.
+
+### Retrieval Benchmark
+
+공식 61문항 가운데 정답 근거가 지정된 비유보 retrieval 문항 45개를 분리해
+BM25, 기존 문자 n-gram `semantic_lite`, production hybrid를 동일한 Top-K 5
+조건에서 비교합니다. 2026-08-19 로컬 실행에서 Hit@5는 각각 66.67%,
+73.33%, 75.56%였고 nDCG@5는 0.5172, 0.6148, 0.6184였습니다.
+실제 pretrained embedding은 선택 의존성으로 실행할 수 있지만, 아직 실행하지
+않은 모델 성능 수치는 문서화하지 않습니다. 상세 조건과 latency 범위는
+[Retrieval Benchmark 문서](docs/RETRIEVAL_BENCHMARK.md)를 참고하십시오.
+
+### Failure-driven Training Data
+
+Hybrid retrieval의 `wrong_top1`, `retrieval_miss`, `over_retrieval`에서 positive와
+hard-negative 본문을 포함한 1-negative 단위 후보를 생성합니다. 후보는 내용 기반 ID로 중복과
+positive/negative 충돌을 방지하고, 전용 `/internal/training-review` 화면에서 단일 Reviewer가
+승인한 레코드만 versioned JSONL training dataset으로 export합니다. 자동 후보를
+검수 없이 학습 데이터로 사용하거나 자동 학습을 실행하지 않습니다.
+
+승인 dataset은 content hash를 검증한 뒤 query/case 단위로 train/validation을
+분리하여 triplet 학습 입력으로 변환할 수 있습니다. 기본 학습 명령은 계획과
+실험 metadata만 저장하며, `--execute`를 명시한 경우에만 Sentence Transformers
+모델을 실제로 불러와 fine-tuning합니다. 실행하지 않은 모델 성능 수치는 기록하지
+않으며, checkpoint 평가는 기존 retrieval benchmark의 동일 evaluation set에서
+별도로 수행합니다.
+
+선택적 Cross-Encoder reranker는 retriever의 Top-N 후보만 재정렬하며 core
+retrieval과 독립된 adapter로 유지합니다. benchmark는 retrieval과 reranking
+latency를 분리하고, reranker를 실행하지 않은 기존 결과에는 reranker 성능을
+기록하지 않습니다.
+
+Retrieval Ablation Runner는 일곱 검색 조합의 실행 가능 여부와 실행 상태를 먼저
+기록하고, 명시적으로 실행된 동일 조건 결과만 baseline/treatment로 비교합니다.
+전체 및 법률 분야별 metric delta, 사례 개선·악화 수, latency trade-off와 품질
+회귀 판정을 기존 Experiment Store와 Evaluation UI에서 확인할 수 있습니다.
+checkpoint가 없거나 실행하지 않은 조합에는 성능 수치를 만들지 않습니다.
+
+### 민법 ML 학습·검수 준비도
+
+기존 개인정보보호법 corpus와 공통 회귀평가는 유지하면서 신규 ML 수동 검수의
+우선 도메인을 민법으로 분리했습니다. 현재 corpus에는 `civil_transactions`
+대상 문서 2,043개와 고유 조문 1,194개가 있고, 공식 평가셋에는 민법 도메인
+14건 중 retrieval 대상 13건이 있으며 gold 근거 누락은 없습니다. 실제 Hybrid
+benchmark 실패에서 39개 후보를 확인했고 사례당 하나로 제한한 13건을 첫 수동
+검수 배치로 선정할 수 있습니다. 이 수치는 2026-08-20 로컬 감사 결과이며 후보는
+사람이 승인하기 전까지 학습 데이터가 아닙니다.
+
+승인 완료 후에는 domain과 candidate pool version을 함께 지정하여 민법 후보만
+versioned dataset으로 export합니다. export manifest의 범위·원본 dataset version·
+corpus checksum을 검증한 뒤 동일 사례가 양쪽에 섞이지 않는 재현 가능한
+train/validation triplet으로 준비합니다.
+
+민법 ML Experiment Gate는 prepared split hash와 domain 격리, 평가 gold 사례,
+선택 ML 의존성, fine-tuned checkpoint를 독립적으로 검사합니다. 실행 가능한 단계는
+`not_run`, 준비되지 않은 단계는 `unavailable`로 기록하며 모델 실행이나 성능 수치
+생성은 하지 않습니다.
 
 ## 법령 정보 지식베이스 구축·관리 결과
 

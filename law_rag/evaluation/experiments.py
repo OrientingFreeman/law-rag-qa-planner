@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import platform
+import random
 import sys
 from collections import Counter
 from dataclasses import asdict, dataclass
@@ -13,6 +14,8 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from law_rag import __version__
+from law_rag.evaluation.datasets import dataset_snapshot, sha256_file
+from law_rag.evaluation.failures import diagnose_failure
 from law_rag.evaluation.runner import EvaluationCase, load_dataset
 from law_rag.service import LawRagService
 from law_rag.workflow import AgentWorkflowRunner, WorkflowConfig
@@ -25,7 +28,14 @@ Mode = Literal["baseline", "agent"]
 class ExperimentConfig:
     mode: Mode
     dataset_path: str = "evaluation/datasets/official_core_cases.json"
-    dataset_version: str = "2.0"
+    experiment_kind: str = "rag"
+    seed: int = 42
+    baseline_experiment_id: str | None = None
+    treatment_name: str | None = None
+    retriever_version: str = "hybrid_v1"
+    embedding_model: str = "current"
+    reranker_model: str | None = None
+    prompt_version: str = "answer_v22"
     search_strategy: str = "hybrid"
     query_rewrite: bool = True
     reranking: bool = True
@@ -115,17 +125,17 @@ class ExperimentRunner:
             or ((citation_valid is not False) and (grounding_coverage is None or grounding_coverage >= 0.75))
         )
         safety_pass = outcome_correct and retry_count <= config.max_retries and bool(stop_reason or actual_outcome == "answer")
-        failure_types: list[str] = []
-        if expected and not matched:
-            failure_types.append("retrieval_miss")
-        elif expected and actual and actual[0] not in expected:
-            failure_types.append("wrong_top1")
-        if expected and matched and len(actual) > len(expected):
-            failure_types.append("over_retrieval")
-        if not outcome_correct:
-            failure_types.append("incorrect_outcome")
-        if citation_valid is False:
-            failure_types.append("unsupported_citation")
+        failure_types = diagnose_failure({
+            "expected_abstain": expected_outcome != "answer",
+            "abstention_correct": outcome_correct,
+            "outcome_correct": outcome_correct,
+            "hit_at_k": bool(matched),
+            "top1_hit": bool(expected and actual and actual[0] in expected),
+            "recall_at_k": round(len(matched) / len(expected), 4) if expected else None,
+            "expected_articles": sorted(expected),
+            "retrieved_articles": actual_articles,
+            "citation_valid": citation_valid,
+        })
         if retry_count > config.max_retries:
             failure_types.append("retry_limit_exceeded")
         return {
@@ -196,19 +206,34 @@ class ExperimentRunner:
 
     def run(self, config: ExperimentConfig, *, case_ids: list[str] | None = None,
             limit: int | None = None) -> dict[str, Any]:
+        random.seed(config.seed)
         cases = load_dataset(config.dataset_path)
+        source_case_count = len(cases)
         if case_ids:
             selected = set(case_ids)
             cases = [case for case in cases if case.case_id in selected]
         if limit is not None:
             cases = cases[:limit]
         rows = [self._run_case(case, config) for case in cases]
+        dataset = dataset_snapshot(config.dataset_path, case_count=source_case_count)
+        dataset.update({"path": config.dataset_path, "case_count": len(cases)})
+        provider = self.service.llm_provider
         return {
             "experiment_id": f"exp_{uuid4().hex}",
             "executed_at": datetime.now(timezone.utc).isoformat(),
-            "dataset": {"path": config.dataset_path, "version": config.dataset_version, "case_count": len(cases)},
+            "dataset": dataset,
+            "corpus": {
+                "path": str(self.service.data_path),
+                "content_sha256": sha256_file(self.service.data_path),
+                "provision_count": len(self.service.provisions),
+            },
             "code_version": __version__,
             "config": asdict(config),
+            "model": {
+                "provider": str(getattr(provider, "name", provider.__class__.__name__)),
+                "model": str(getattr(provider, "model", "deterministic")),
+                "prompt_version": config.prompt_version,
+            },
             "environment": {"python": sys.version.split()[0], "platform": platform.platform()},
             "summary": self._summary(rows, config),
             "cases": rows,
@@ -227,11 +252,44 @@ class ExperimentStore:
 
     def get(self, experiment_id: str) -> dict[str, Any] | None:
         path = self.directory / f"{experiment_id}.json"
-        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+        if not path.exists():
+            return None
+        return self._normalize(json.loads(path.read_text(encoding="utf-8")))
+
+    @staticmethod
+    def _normalize(report: dict[str, Any]) -> dict[str, Any]:
+        """Add metadata introduced after legacy experiment reports were saved."""
+        normalized = dict(report)
+        config = normalized.get("config")
+        config = config if isinstance(config, dict) else {}
+        normalized.setdefault("corpus", {
+            "path": "unknown",
+            "content_sha256": "unavailable",
+            "provision_count": 0,
+        })
+        normalized.setdefault("model", {
+            "provider": "unknown",
+            "model": "unknown",
+            "prompt_version": str(config.get("prompt_version") or "unknown"),
+        })
+        return normalized
 
     def list(self) -> list[dict[str, Any]]:
         if not self.directory.exists():
             return []
-        reports = [json.loads(path.read_text(encoding="utf-8")) for path in self.directory.glob("exp_*.json")]
-        reports.sort(key=lambda row: row["executed_at"], reverse=True)
-        return [{key: row[key] for key in ("experiment_id", "executed_at", "dataset", "code_version", "config", "summary")} for row in reports]
+        reports = [self._normalize(json.loads(path.read_text(encoding="utf-8"))) for path in self.directory.glob("exp_*.json")]
+        reports.sort(key=lambda row: str(row.get("executed_at", "")), reverse=True)
+        return [{key: row[key] for key in (
+            "experiment_id", "executed_at", "dataset", "corpus", "code_version", "config", "model", "summary"
+        )} for row in reports]
+
+    def list_ablation_reports(self) -> list[dict[str, Any]]:
+        if not self.directory.exists():
+            return []
+        reports = []
+        for path in self.directory.glob("exp_ablation_*.json"):
+            report = self._normalize(json.loads(path.read_text(encoding="utf-8")))
+            if report.get("experiment_kind") == "retrieval_ablation":
+                reports.append(report)
+        reports.sort(key=lambda row: str(row.get("executed_at", "")), reverse=True)
+        return reports

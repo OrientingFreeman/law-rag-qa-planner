@@ -32,6 +32,7 @@ def compare_experiments(baseline: dict[str, Any], candidate: dict[str, Any]) -> 
         return round(float(right) - float(left), 4)
 
     all_failure_types = set(baseline["summary"]["failure_type_counts"]) | set(candidate["summary"]["failure_type_counts"])
+    regression_status = "regressed" if groups["regressed"] else "passed"
     return {
         "baseline_experiment_id": baseline["experiment_id"],
         "candidate_experiment_id": candidate["experiment_id"],
@@ -53,4 +54,5 @@ def compare_experiments(baseline: dict[str, Any], candidate: dict[str, Any]) -> 
         },
         "case_groups": groups,
         "counts": {key: len(value) for key, value in groups.items()},
+        "regression_status": regression_status,
     }

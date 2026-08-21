@@ -35,6 +35,8 @@ def diagnose_failure(case: dict[str, Any]) -> list[str]:
     reasons: list[str] = []
     if not case.get("abstention_correct", True):
         reasons.append("incorrect_abstention")
+    if not case.get("outcome_correct", True):
+        reasons.append("incorrect_outcome")
     if not case.get("temporal_valid", True):
         reasons.append("temporal_mismatch")
     if case.get("citation_valid") is False:
@@ -52,7 +54,11 @@ def diagnose_failure(case: dict[str, Any]) -> list[str]:
         if 0.0 < recall < 1.0:
             reasons.append("under_retrieval")
 
-        expected_count = len(case.get("expected_article_nos", []) or case.get("expected_document_ids", []))
+        expected_count = len(
+            case.get("expected_articles", [])
+            or case.get("expected_article_nos", [])
+            or case.get("expected_document_ids", [])
+        )
         actual_count = len(case.get("retrieved_articles", []) or case.get("retrieved_document_ids", []))
         if expected_count and recall >= 1.0 and actual_count > expected_count:
             reasons.append("over_retrieval")
