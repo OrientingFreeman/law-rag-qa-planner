@@ -1,0 +1,33 @@
+{
+  "manifest": {
+    "document_id": "fixture.loan_pilot",
+    "title": "직접 작성 OCR 감사 예시",
+    "edition": "test-1",
+    "source_type": "authored_fixture",
+    "rights_status": "authored",
+    "page_start": 1,
+    "page_end": 2,
+    "private_source_ref": "private://fixture/not-a-real-path",
+    "expected_chapters": ["대여금"],
+    "metadata": {
+      "public_purpose": "deterministic test",
+      "operator_note": "must not appear in public report"
+    }
+  },
+  "pages": [
+    {
+      "page_number": 1,
+      "printed_page_label": "1",
+      "chapter": "대여금",
+      "section": "청구원인",
+      "text": "당사자는 금전을 빌려주고 반환하기로 합의하였다.\n\n송금 내역은 금전 교부 여부를 확인하는 자료가 될 수 있다."
+    },
+    {
+      "page_number": 2,
+      "printed_page_label": "2",
+      "chapter": "대여금",
+      "section": "반환기",
+      "text": "반환하기로 정한 날짜가 있는지 확인한다.\n\n불명확한 사실은 충족된 것으로 단정하지 아니 한다."
+    }
+  ]
+}

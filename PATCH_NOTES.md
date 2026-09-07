@@ -1,3 +1,74 @@
+## v4.27.6 - Approved Printed-page Mapping
+
+- 고신뢰도 인쇄면수 추론값을 별도 private decision JSON으로 내보냅니다.
+- 원본 확인으로 인쇄면수가 없다고 판정한 페이지를 `verified_label_absent`로 기록합니다.
+- 승인된 결정만 감사 실행 시 적용하고 결정 해시·전후 표지·검토자 이력을 private 큐에 보존합니다.
+- 결정 파일을 원본 OCR content SHA-256에 묶어 오래된 매핑 적용을 거부합니다.
+- 기존 탐지값과 충돌하는 배정 또는 표지 부재 결정은 즉시 거부합니다.
+
+## v4.27.5 - Printed-page Inference and Correction Overlay
+
+- 최소 20개·80% 이상 지지를 요구하는 물리면-인쇄면 최빈 오프셋 추론을 추가합니다.
+- 누락 인쇄면수에 제안값, high/medium 신뢰도, 근거를 기록하되 자동 승인하지 않습니다.
+- 최대 3쪽 거리의 이웃 페이지 연속성으로 신뢰도를 보강합니다.
+- 원본 private import를 변경하지 않는 승인형 text correction overlay를 지원합니다.
+- 교정 문자열은 해당 페이지에서 정확히 한 번 일치해야 하며 전후 SHA-256과 검토 이력을 private 큐에 보존합니다.
+
+## v4.27.4 - Private OCR Warning Review Queue
+
+- 인쇄면수 누락을 front matter 후보, 비본문, 실제 탐지 공백으로 분류합니다.
+- 호환 한자와 부정어 띄어쓰기에는 제한된 문맥만 담은 private 검토 큐를 생성합니다.
+- 검토 큐의 원문 문맥은 Git worktree 내부 저장을 거부하고 파일 권한을 `0600`으로 제한합니다.
+- 승인된 경고는 삭제하지 않고 동일 warning ID를 유지한 `info` 감사 이력으로 낮춥니다.
+- 현재 감사 결과와 일치하지 않는 오래된 warning decision은 적용을 거부합니다.
+
+## v4.27.3 - Negation Audit False-positive Fix
+
+- 정상적인 법률 문구 `아니 된다`를 `suspect_negation` 오류에서 제외합니다.
+- `아니 뇐다`, `아니 됀다`, `아니 되ㄴ다`처럼 명백한 OCR 오인식만 차단합니다.
+- `아니 된 다`는 차단 대신 `suspect_negation_spacing` 검토 경고로 기록합니다.
+- 인쇄면수 누락 건수를 감사 요약에 명시합니다.
+
+## v4.27.2 - OCR Re-audit and Footnote-aware Layout Hints
+
+- 검토자가 승인한 blank/divider 등 비본문 페이지는 오류 대신 정보로 기록합니다.
+- 기존 private import JSON에서 결합형 머리말의 인쇄면수를 재탐지할 수 있습니다.
+- 고정 50% 분할 없이 각주 표지 군집을 이용해 본문/각주 후보 provenance만 남깁니다.
+- 원문과 private 경로는 계속 public audit report에 포함하지 않습니다.
+
+## v4.27.1 - Searchable OCR PDF Import Adapter
+
+- 텍스트 레이어가 있는 OCR PDF를 페이지별 private import envelope로 변환합니다.
+- PDF의 1-based 물리 페이지 번호와 인쇄 페이지 표지 후보를 분리해 보존합니다.
+- 명시적인 장·편·절 표제만 보수적으로 구조 후보로 식별합니다.
+- 텍스트 레이어가 비어 있는 페이지를 탐지하고 별도 OCR이나 내용 추정을 수행하지 않습니다.
+- 변환된 OCR 전문 JSON은 Git worktree 안에 저장할 수 없으며 파일 권한을 owner-only로 설정합니다.
+- 원본 PDF와 OCR 전문은 private storage에 두고 공개 audit report에는 포함하지 않습니다.
+- v4.27.0 import loader 및 quality audit와 직접 호환됩니다.
+- searchable minimal PDF fixture를 실행 중 생성해 실제 page extraction과 공개/비공개 경계를 검증합니다.
+- 법률지식 추출·승인, 완성형 PDF layout reconstruction 및 GPU/ML 작업은 포함하지 않습니다.
+
+## v4.27.0 - OCR Source Provenance & Quality Audit
+
+- private OCR import용 source manifest와 page envelope를 추가합니다.
+- 문서·판·장·절·페이지·문단·문자 span 및 원문 SHA-256을 안정적인 segment provenance로 기록합니다.
+- 누락·중복·범위 밖 페이지, 페이지 순서, 구조 식별자, 대체 문자, 제어 문자, 호환 한자, 조문 번호 및 부정 표현 OCR 위험을 검사합니다.
+- 감사 결과는 `passed`, `review_required`, `blocked`로 구분하되 법률지식 승인과 혼동하지 않습니다.
+- 공개 감사 보고서에서 OCR 원문, private source reference 및 private metadata를 제거합니다.
+- 모든 segment는 `draft` 상태로 생성하며 OCR 결과를 자동 승인하지 않습니다.
+- 공개 fixture는 직접 작성한 최소 텍스트만 사용하며 실제 저작권 OCR 자료를 포함하지 않습니다.
+- 기존 Q&A, retrieval, evaluation, training review 및 GPU 보류 상태를 변경하지 않습니다.
+
+## v4.26.0 - Legal Reasoning Schema v0
+
+- 검색용 `LegalOntology` 및 요청별 evidence/argument graph와 분리된 정적 Legal Reasoning Schema를 추가합니다.
+- Claim, Cause of Action, Element, Defense, Counter-defense, 주장·증명책임, 필요 사실, 증거 유형, 후속 질문 및 법적 근거를 안정적인 ID로 표현합니다.
+- 내부 node reference, 중복 node/relation ID, 허용되지 않은 relation endpoint, 승인 node provenance를 결정론적으로 검증합니다.
+- statute/case, 기존 ontology concept 및 RAG evidence ID는 외부 reference로 연결하고 기존 객체를 복제하지 않습니다.
+- JSON 직렬화와 결정론적 round-trip을 지원합니다.
+- 공개 법령과 직접 작성한 최소 구조만 사용하는 대여금반환청구 파일럿 fixture를 `review_required` 상태로 제공합니다.
+- OCR 원문, 자동 OCR 추출, review UI, matching/reasoning engine, graph DB 및 ML 실행은 포함하지 않습니다.
+
 ## v4.25.1 - Completed Review Queue UX
 
 - 승인뿐 아니라 수정 요청·거절도 한 번 처리된 후보로 판정해 기본 검수 큐에서 제외합니다.

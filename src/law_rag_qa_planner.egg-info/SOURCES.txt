@@ -61,3 +61,16 @@ tests/test_safety_dataset.py
 tests/test_strategy_summary.py
 tests/test_training_readiness.py
 tests/test_verified_experiment_summary.py
+docs/LEGAL_REASONING_SCHEMA.md
+examples/legal_reasoning/loan_repayment_claim.v0.json
+law_rag/reasoning/legal_schema.py
+tests/test_legal_reasoning_schema.py
+docs/OCR_PROVENANCE_AUDIT.md
+law_rag/reasoning/ocr_audit.py
+tests/fixtures/ocr_import.authored.json
+tests/test_ocr_audit.py
+tools/audit_ocr_source.py
+docs/SEARCHABLE_OCR_PDF_IMPORT.md
+law_rag/reasoning/pdf_import.py
+tests/test_pdf_import.py
+tools/import_ocr_pdf.py

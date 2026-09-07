@@ -1,0 +1,92 @@
+{
+  "content_sha256": "17fdb9e46a6b5194c8568496d45faefb14fedfa5336d1b3d320c09accf379ffd",
+  "document": {
+    "document_id": "fixture.loan_pilot",
+    "edition": "test-1",
+    "expected_chapters": [
+      "대여금"
+    ],
+    "metadata": {
+      "public_purpose": "deterministic test"
+    },
+    "page_end": 2,
+    "page_start": 1,
+    "rights_status": "authored",
+    "schema_version": "0.1.0",
+    "source_type": "authored_fixture",
+    "title": "직접 작성 OCR 감사 예시"
+  },
+  "page_count": 2,
+  "page_numbers": [
+    1,
+    2
+  ],
+  "quality_gate": "passed",
+  "schema_version": "0.1.0",
+  "segment_count": 4,
+  "segments": [
+    {
+      "chapter": "대여금",
+      "char_end": 26,
+      "char_start": 0,
+      "document_id": "fixture.loan_pilot",
+      "edition": "test-1",
+      "page_number": 1,
+      "paragraph_number": 1,
+      "printed_page_label": "1",
+      "review_status": "draft",
+      "section": "청구원인",
+      "segment_id": "segment.fixture.loan_pilot.p1.para1",
+      "text_sha256": "97ec0ec19465c093adbcf2c3053515e13b4452fbeed27f40c9f460910eadcb99"
+    },
+    {
+      "chapter": "대여금",
+      "char_end": 61,
+      "char_start": 28,
+      "document_id": "fixture.loan_pilot",
+      "edition": "test-1",
+      "page_number": 1,
+      "paragraph_number": 2,
+      "printed_page_label": "1",
+      "review_status": "draft",
+      "section": "청구원인",
+      "segment_id": "segment.fixture.loan_pilot.p1.para2",
+      "text_sha256": "1ceb5910065764edf8bb7f9faaf927469cd34259e73ecaf6e3174d65dab7701b"
+    },
+    {
+      "chapter": "대여금",
+      "char_end": 22,
+      "char_start": 0,
+      "document_id": "fixture.loan_pilot",
+      "edition": "test-1",
+      "page_number": 2,
+      "paragraph_number": 1,
+      "printed_page_label": "2",
+      "review_status": "draft",
+      "section": "반환기",
+      "segment_id": "segment.fixture.loan_pilot.p2.para1",
+      "text_sha256": "5d7ad1a1140edcc9b034bf0576be63c332483cb5226a31cef88ec1e41c4c8eed"
+    },
+    {
+      "chapter": "대여금",
+      "char_end": 52,
+      "char_start": 24,
+      "document_id": "fixture.loan_pilot",
+      "edition": "test-1",
+      "page_number": 2,
+      "paragraph_number": 2,
+      "printed_page_label": "2",
+      "review_status": "draft",
+      "section": "반환기",
+      "segment_id": "segment.fixture.loan_pilot.p2.para2",
+      "text_sha256": "c25aa3dd08cb98569df39353f1652263c10f0cfd8220cf461d044bd0cbd8fe18"
+    }
+  ],
+  "summary": {
+    "error": 0,
+    "info": 0,
+    "missing_page_count": 0,
+    "warning": 0
+  },
+  "warnings": []
+}

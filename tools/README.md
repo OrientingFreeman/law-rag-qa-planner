@@ -1,5 +1,36 @@
 # 도구 안내
 
+## Searchable OCR PDF import
+
+텍스트 레이어가 있는 OCR PDF를 v4.27.0 private envelope로 변환하고 선택적으로
+감사 보고서를 함께 생성합니다. full text JSON은 Git 저장소 밖에 출력해야 합니다.
+
+```bash
+pip install -e '.[pdf]'
+
+python -m tools.import_ocr_pdf \
+  /private/path/searchable-ocr.pdf \
+  --document-id private.requirements_facts \
+  --title "비공개 OCR 자료" \
+  --edition "판 정보" \
+  --output /private/path/ocr_import.json \
+  --audit-output /private/path/ocr_audit.json
+```
+
+## Private OCR provenance 감사
+
+실제 OCR 원문을 공개 저장소에 복사하지 않고 private import envelope의 페이지
+구조와 위험 패턴을 감사합니다. 출력 보고서에는 원문과 private source path가
+포함되지 않습니다.
+
+```bash
+python -m tools.audit_ocr_source /private/path/ocr_import.json \
+  --output /private/path/ocr_audit_report.json
+```
+
+`blocked`이면 명령은 exit code 2를 반환합니다. `passed`도 법률지식 승인을
+의미하지 않으며 후속 추출 결과에는 별도의 사람 검수가 필요합니다.
+
 ## Agent 실험과 비교
 
 동일한 평가 데이터로 기존 Baseline과 Agent Workflow를 실행하고 비교합니다.
@@ -279,3 +310,59 @@ python3 tools/summarize_multi_path.py < answer-response.json > output2.txt
 요약 결과에는 `confidence`와 `recommendation_score`뿐 아니라
 `recommendation_reasons`와 `strategy_profile`도 의도적으로 포함됩니다.
 따라서 간략한 회귀검증 출력에서도 전략 계층의 필드가 누락되지 않습니다.
+# 인쇄면수 승인 결정 (v4.27.6)
+
+```bash
+python -m tools.export_printed_page_decisions PRIVATE_REVIEW_QUEUE.json \
+  --output PRIVATE_PRINTED_PAGE_DECISIONS.json \
+  --reviewer reviewer-id --reviewed-at YYYY-MM-DD \
+  --verified-label-absent 1,9 --approve-high-confidence
+```
+
+감사 시 `--printed-page-decisions PRIVATE_PRINTED_PAGE_DECISIONS.json`을 추가한다.
+
+# OCR 인쇄면수 추론·교정 overlay (v4.27.5)
+
+승인된 private correction overlay를 메모리에서 적용하고 인쇄면수 누락에 검토용 제안값을 만든다.
+
+```bash
+python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
+  --page-decisions PRIVATE_PAGE_DECISIONS.json \
+  --text-corrections PRIVATE_CORRECTIONS.json \
+  --repair-printed-labels --infer-footnotes \
+  --review-queue-output PRIVATE_REVIEW_QUEUE.json \
+  --output PRIVATE_AUDIT.json
+```
+
+자세한 형식은 `docs/OCR_CORRECTION_OVERLAY.md`를 따른다.
+
+# OCR 경고 검토 큐 (v4.27.4)
+
+감사 경고를 유형별 private 검토 큐로 분류한다. 문맥 snippet이 포함되므로 출력은 Git 저장소
+밖에 두어야 한다.
+
+```bash
+python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
+  --page-decisions PRIVATE_PAGE_DECISIONS.json \
+  --repair-printed-labels --infer-footnotes \
+  --review-queue-output PRIVATE_REVIEW_QUEUE.json \
+  --output PRIVATE_AUDIT.json
+```
+
+검토 완료 후 `--warning-decisions PRIVATE_WARNING_DECISIONS.json`을 추가한다. 자세한 형식은
+`docs/OCR_WARNING_REVIEW.md`를 따른다.
+
+# OCR 재감사 (v4.27.2)
+
+승인된 비본문 페이지, 결합형 머리말의 인쇄면수, 가변적인 각주 후보를 기존 private import에서
+재감사할 수 있다. 원문을 다시 PDF에서 추출하지 않는다.
+
+```bash
+python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
+  --page-decisions PRIVATE_PAGE_DECISIONS.json \
+  --repair-printed-labels --infer-footnotes \
+  --output PRIVATE_AUDIT.json
+```
+
+페이지 결정 파일과 출력은 Git 저장소 밖의 private storage에 둔다. 자세한 형식은
+`docs/OCR_REAUDIT_AND_LAYOUT.md`를 따른다.

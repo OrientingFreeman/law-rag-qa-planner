@@ -15,7 +15,7 @@ def test_conditional_review_panel_is_part_of_existing_answer_card():
     assert 'id="review-status-badge"' in html
     assert 'id="review-conclusion"' in html
     assert 'id="review-issue-list"' in html
-    assert "v=4.25.1" in html
+    assert "v=4.27.6" in html
 
 
 def test_conditional_review_renderer_uses_v9_api_fields_and_safe_dom_text():

@@ -2,7 +2,32 @@
 
 > 법률처럼 정확성과 추적 가능성이 중요한 전문 도메인에서 RAG와 AI Agent의 실행 과정, 평가 결과 및 실패 원인을 재현 가능하게 관리하는 프로젝트입니다.
 
-현재 서비스 버전: **v4.25.1**
+현재 서비스 버전: **v4.27.6**
+
+v4.27.6은 고신뢰도 인쇄면수와 인쇄면수 부재 결정을 승인 파일로 적용합니다.
+
+v4.27.5는 인쇄면수 오프셋 추론과 비파괴 OCR correction overlay를 지원합니다.
+
+v4.27.4는 OCR 경고를 유형별 private 검토 큐로 분류하고 승인 이력을 보존합니다.
+
+v4.27.3은 정상적인 `아니 된다`를 OCR 오류로 차단하던 감사 규칙의 오탐을 수정합니다.
+
+v4.27.2는 승인된 비본문 페이지, 결합형 인쇄면수 재탐지, 가변적인 본문/각주 후보 힌트를 지원합니다.
+
+v4.27.1은 텍스트 레이어가 있는 searchable OCR PDF를 페이지별 private import
+envelope로 변환합니다. 물리 페이지와 인쇄 페이지 표지를 분리하고, 텍스트
+레이어 누락을 탐지하며, OCR 전문의 Git worktree 저장을 거부합니다. 사용법은
+[`docs/SEARCHABLE_OCR_PDF_IMPORT.md`](docs/SEARCHABLE_OCR_PDF_IMPORT.md)를 참고하세요.
+
+v4.27.0은 private OCR 자료를 지식 추출 전에 등록·식별·감사하는 provenance 및
+quality gate를 추가합니다. 공개 보고서는 OCR 원문과 private source reference를
+포함하지 않으며, 모든 segment는 자동 승인되지 않는 `draft` 상태입니다. 자세한
+내용은 [`docs/OCR_PROVENANCE_AUDIT.md`](docs/OCR_PROVENANCE_AUDIT.md)를 참고하세요.
+
+v4.26.0은 기존 검색용 ontology 및 evidence/argument graph를 변경하지 않고,
+청구권·요건·항변·책임·필요 사실과 증거를 표현하는 독립적인 Legal Reasoning
+Schema v0를 추가합니다. 자세한 경계와 공개/비공개 데이터 원칙은
+[`docs/LEGAL_REASONING_SCHEMA.md`](docs/LEGAL_REASONING_SCHEMA.md)를 참고하세요.
 
 법령 수집·조문 구조화·시점 검색·하이브리드 검색·근거 기반 답변·인용 검증·법적 추론 기능 위에 다음 운영 계층을 추가했습니다.
 

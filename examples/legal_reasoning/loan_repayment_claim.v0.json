@@ -1,0 +1,166 @@
+{
+  "domain": "civil_transactions",
+  "knowledge_id": "civil.loan_repayment.v0",
+  "metadata": {
+    "language": "ko",
+    "pilot": true,
+    "public_fixture": true,
+    "source_policy": "No copyrighted OCR text is included. This is a minimal authored structure linked to public statutes."
+  },
+  "nodes": [
+    {
+      "description": "소비대차에 따라 교부한 금전의 반환을 구하는 청구 후보",
+      "label": "대여금반환청구",
+      "node_id": "claim.loan_repayment",
+      "node_type": "claim",
+      "ontology_concept_ids": ["civil.loan"],
+      "provenance": [{"note": "공개 법령을 바탕으로 직접 작성한 최소 파일럿", "source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "description": "금전 소비대차의 성립, 금전 교부 및 반환의무 도래를 구조화",
+      "label": "소비대차에 기한 반환청구권",
+      "node_id": "cause.loan_contract_return",
+      "node_type": "cause_of_action",
+      "provenance": [{"source_id": "statute.civil_act.598", "source_type": "public_statute", "title": "민법 제598조"}],
+      "review_status": "review_required",
+      "statute_references": [{"label": "민법 제598조", "reference_id": "civil_act:598", "reference_type": "statute"}]
+    },
+    {
+      "label": "소비대차 합의",
+      "node_id": "element.loan_agreement",
+      "node_type": "element",
+      "provenance": [{"source_id": "statute.civil_act.598", "source_type": "public_statute", "title": "민법 제598조"}],
+      "review_status": "review_required"
+    },
+    {
+      "label": "금전 교부",
+      "node_id": "element.money_delivery",
+      "node_type": "element",
+      "provenance": [{"source_id": "statute.civil_act.598", "source_type": "public_statute", "title": "민법 제598조"}],
+      "review_status": "review_required"
+    },
+    {
+      "label": "반환기 도래",
+      "node_id": "element.due_date_arrived",
+      "node_type": "element",
+      "provenance": [{"source_id": "statute.civil_act.603", "source_type": "public_statute", "title": "민법 제603조"}],
+      "review_status": "review_required",
+      "statute_references": [{"label": "민법 제603조", "reference_id": "civil_act:603", "reference_type": "statute"}]
+    },
+    {
+      "description": "변제로 채무가 소멸했다는 항변 후보",
+      "label": "변제 항변",
+      "node_id": "defense.payment",
+      "node_type": "defense",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "description": "소멸시효 완성을 원용하는 항변 후보",
+      "label": "소멸시효 항변",
+      "node_id": "defense.limitation",
+      "node_type": "defense",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "description": "채무 승인 등 시효 완성 판단에 영향을 주는 재항변 후보",
+      "label": "채무 승인 재항변",
+      "node_id": "counter_defense.acknowledgment",
+      "node_type": "counter_defense",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "fact_status": "not_assessed",
+      "label": "당사자 사이 반환 약정의 내용",
+      "node_id": "fact.loan_terms",
+      "node_type": "fact_requirement",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "fact_status": "not_assessed",
+      "label": "금전이 실제 교부된 일시와 금액",
+      "node_id": "fact.delivery_details",
+      "node_type": "fact_requirement",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "fact_status": "uncertain",
+      "label": "약정 반환기 또는 반환 최고 여부",
+      "node_id": "fact.due_date",
+      "node_type": "fact_requirement",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "label": "계약서·차용증",
+      "node_id": "evidence.loan_document",
+      "node_type": "evidence_type",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "label": "계좌이체·금융거래 내역",
+      "node_id": "evidence.transfer_record",
+      "node_type": "evidence_type",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "label": "반환기 확인 질문",
+      "node_id": "question.due_date",
+      "node_type": "follow_up_question",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "question_template": "반환하기로 정한 날짜가 있습니까? 없다면 반환을 요구한 날짜와 방법은 무엇입니까?",
+      "review_status": "review_required"
+    },
+    {
+      "burden_holder": "claimant",
+      "label": "청구원인 주장책임",
+      "node_id": "burden.pleading.claimant",
+      "node_type": "burden_of_pleading",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "burden_holder": "claimant",
+      "label": "청구원인 증명책임",
+      "node_id": "burden.proof.claimant",
+      "node_type": "burden_of_proof",
+      "provenance": [{"source_id": "source.authored_pilot", "source_type": "authored_fixture", "title": "대여금반환청구 schema pilot"}],
+      "review_status": "review_required"
+    },
+    {
+      "label": "민법 제598조",
+      "node_id": "basis.civil_act.598",
+      "node_type": "legal_basis",
+      "provenance": [{"source_id": "statute.civil_act.598", "source_type": "public_statute", "title": "민법 제598조"}],
+      "review_status": "review_required",
+      "statute_references": [{"label": "민법 제598조", "reference_id": "civil_act:598", "reference_type": "statute"}]
+    }
+  ],
+  "relations": [
+    {"relation_id": "rel.claim.cause", "relation_type": "has_cause_of_action", "source_id": "claim.loan_repayment", "target_id": "cause.loan_contract_return"},
+    {"relation_id": "rel.cause.agreement", "relation_type": "requires_element", "source_id": "cause.loan_contract_return", "target_id": "element.loan_agreement"},
+    {"relation_id": "rel.cause.delivery", "relation_type": "requires_element", "source_id": "cause.loan_contract_return", "target_id": "element.money_delivery"},
+    {"relation_id": "rel.cause.due", "relation_type": "requires_element", "source_id": "cause.loan_contract_return", "target_id": "element.due_date_arrived"},
+    {"relation_id": "rel.payment.defeats", "relation_type": "defeats", "source_id": "defense.payment", "target_id": "claim.loan_repayment"},
+    {"relation_id": "rel.limitation.defeats", "relation_type": "defeats", "source_id": "defense.limitation", "target_id": "claim.loan_repayment"},
+    {"relation_id": "rel.acknowledgment.defeats", "relation_type": "defeats", "source_id": "counter_defense.acknowledgment", "target_id": "defense.limitation"},
+    {"relation_id": "rel.agreement.fact", "relation_type": "requires_fact", "source_id": "element.loan_agreement", "target_id": "fact.loan_terms"},
+    {"relation_id": "rel.delivery.fact", "relation_type": "requires_fact", "source_id": "element.money_delivery", "target_id": "fact.delivery_details"},
+    {"relation_id": "rel.due.fact", "relation_type": "requires_fact", "source_id": "element.due_date_arrived", "target_id": "fact.due_date"},
+    {"relation_id": "rel.terms.evidence", "relation_type": "supported_by_type", "source_id": "fact.loan_terms", "target_id": "evidence.loan_document"},
+    {"relation_id": "rel.delivery.evidence", "relation_type": "supported_by_type", "source_id": "fact.delivery_details", "target_id": "evidence.transfer_record"},
+    {"relation_id": "rel.due.question", "relation_type": "clarified_by", "source_id": "fact.due_date", "target_id": "question.due_date"},
+    {"relation_id": "rel.cause.basis", "relation_type": "governed_by", "source_id": "cause.loan_contract_return", "target_id": "basis.civil_act.598"},
+    {"relation_id": "rel.pleading.cause", "relation_type": "pleading_burden_for", "source_id": "burden.pleading.claimant", "target_id": "cause.loan_contract_return"},
+    {"relation_id": "rel.proof.cause", "relation_type": "proof_burden_for", "source_id": "burden.proof.claimant", "target_id": "cause.loan_contract_return"}
+  ],
+  "schema_version": "0.1.0",
+  "title": "대여금반환청구 최소 파일럿"
+}
