@@ -21,7 +21,7 @@
 review queue, correction text와 source path는 공개 저장소에 포함하지 않는다.
 
 v4.27.6의 구현 범위, 평가 버전 경계, 공개/비공개 경계와 미구현 범위는
-[`PROJECT_CHECKPOINT_V4276.md`](PROJECT_CHECKPOINT_V4276.md)를 참고한다.
+[`PROJECT_CHECKPOINT_V4276.md`](../PROJECT_CHECKPOINT_V4276.md)를 참고한다.
 
 ## 역사적 기록: v4.17.0 Agent 검증
 

@@ -92,7 +92,7 @@ accuracy.
 
 ### Retrieval comparison: v4.18.0
 
-Source: [`RETRIEVAL_BENCHMARK.md`](RETRIEVAL_BENCHMARK.md). The benchmark uses
+Source: [`docs/RETRIEVAL_BENCHMARK.md`](docs/RETRIEVAL_BENCHMARK.md). The benchmark uses
 the 45 gold-bearing, non-abstention cases selected from official dataset
 v2.0.0, Top-K 5, query rewrite on, and a local execution environment.
 
@@ -108,7 +108,7 @@ from quality metrics.
 
 ### Workflow safety comparison: v4.16.0
 
-Source: [`evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json`](../evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json).
+Source: [`evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json`](evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json).
 This is a 61-case closed deterministic evaluation with hybrid retrieval,
 query rewrite, ontology reranking, and at most one retry.
 
@@ -181,9 +181,9 @@ Planned work, not current capability:
 
 ## Related documentation
 
-- [`README.md`](../README.md): system overview and public entry points
-- [`LEGAL_REASONING_SCHEMA.md`](LEGAL_REASONING_SCHEMA.md): schema boundary
-- [`OCR_PROVENANCE_AUDIT.md`](OCR_PROVENANCE_AUDIT.md): private OCR policy
-- [`PRINTED_PAGE_DECISIONS.md`](PRINTED_PAGE_DECISIONS.md): approved page-label policy
-- [`EVALUATION_REPORT.md`](EVALUATION_REPORT.md): workflow evaluation details
-- [`HARD_NEGATIVE_PIPELINE.md`](HARD_NEGATIVE_PIPELINE.md): review-gated data path
+- [`README.md`](README.md): system overview and public entry points
+- [`LEGAL_REASONING_SCHEMA.md`](docs/LEGAL_REASONING_SCHEMA.md): schema boundary
+- [`OCR_PROVENANCE_AUDIT.md`](docs/OCR_PROVENANCE_AUDIT.md): private OCR policy
+- [`PRINTED_PAGE_DECISIONS.md`](docs/PRINTED_PAGE_DECISIONS.md): approved page-label policy
+- [`EVALUATION_REPORT.md`](docs/EVALUATION_REPORT.md): workflow evaluation details
+- [`HARD_NEGATIVE_PIPELINE.md`](docs/HARD_NEGATIVE_PIPELINE.md): review-gated data path

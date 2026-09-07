@@ -1,563 +1,180 @@
 # Evidence-Grounded Legal RAG & Agent Evaluation
 
-> 법률처럼 정확성과 추적 가능성이 중요한 전문 도메인에서 RAG와 AI Agent의 실행 과정, 평가 결과 및 실패 원인을 재현 가능하게 관리하는 프로젝트입니다.
+[![CI](https://github.com/OrientingFreeman/law-rag-qa-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/OrientingFreeman/law-rag-qa-planner/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
 
-현재 서비스 버전: **v4.27.6**
+한국 법령의 조·항·호 구조와 시행 시점을 보존하고, 검색부터 근거 연결·인용 검증·안전한 답변 유보·실패 분석까지 추적하는 Legal RAG 프로젝트입니다.
 
-v4.27.6은 고신뢰도 인쇄면수와 인쇄면수 부재 결정을 승인 파일로 적용합니다.
+단순한 법률 챗봇보다 **검증 가능하고 재현 가능한 전문 도메인 AI 시스템**을 만드는 데 초점을 둡니다. 법률 질문의 정답률을 과장하지 않고 검색, 답변 근거, 안전성 지표를 분리해 평가합니다.
 
-v4.27.5는 인쇄면수 오프셋 추론과 비파괴 OCR correction overlay를 지원합니다.
+[공개 데모](http://161.33.177.192:8080/) · [API 문서](http://161.33.177.192:8080/docs) · [v4.27.6 체크포인트](PROJECT_CHECKPOINT_V4276.md) · [상세 문서](#문서-안내)
 
-v4.27.4는 OCR 경고를 유형별 private 검토 큐로 분류하고 승인 이력을 보존합니다.
+> 공개 데모는 현재 `v4.17.2` 배포 스냅샷입니다. 저장소의 최신 검증 체크포인트는 `v4.27.6`이며, 최신 기능은 로컬 실행과 CI에서 검증합니다.
 
-v4.27.3은 정상적인 `아니 된다`를 OCR 오류로 차단하던 감사 규칙의 오탐을 수정합니다.
+## 한눈에 보기
 
-v4.27.2는 승인된 비본문 페이지, 결합형 인쇄면수 재탐지, 가변적인 본문/각주 후보 힌트를 지원합니다.
-
-v4.27.1은 텍스트 레이어가 있는 searchable OCR PDF를 페이지별 private import
-envelope로 변환합니다. 물리 페이지와 인쇄 페이지 표지를 분리하고, 텍스트
-레이어 누락을 탐지하며, OCR 전문의 Git worktree 저장을 거부합니다. 사용법은
-[`docs/SEARCHABLE_OCR_PDF_IMPORT.md`](docs/SEARCHABLE_OCR_PDF_IMPORT.md)를 참고하세요.
-
-v4.27.0은 private OCR 자료를 지식 추출 전에 등록·식별·감사하는 provenance 및
-quality gate를 추가합니다. 공개 보고서는 OCR 원문과 private source reference를
-포함하지 않으며, 모든 segment는 자동 승인되지 않는 `draft` 상태입니다. 자세한
-내용은 [`docs/OCR_PROVENANCE_AUDIT.md`](docs/OCR_PROVENANCE_AUDIT.md)를 참고하세요.
-
-v4.26.0은 기존 검색용 ontology 및 evidence/argument graph를 변경하지 않고,
-청구권·요건·항변·책임·필요 사실과 증거를 표현하는 독립적인 Legal Reasoning
-Schema v0를 추가합니다. 자세한 경계와 공개/비공개 데이터 원칙은
-[`docs/LEGAL_REASONING_SCHEMA.md`](docs/LEGAL_REASONING_SCHEMA.md)를 참고하세요.
-
-법령 수집·조문 구조화·시점 검색·하이브리드 검색·근거 기반 답변·인용 검증·법적 추론 기능 위에 다음 운영 계층을 추가했습니다.
-
-- 질의 분석부터 최종 답변 또는 안전한 보류까지 이어지는 10단계 Agent Workflow
-- 단계 상태·소요시간·검색 전략·선택 근거·경고·중단 사유를 기록하는 Execution Trace
-- 최대 1회의 제한된 재시도와 품질 개선 여부 기록
-- 같은 데이터와 설정으로 Baseline과 Agent를 비교하는 재현 가능한 실험
-- 검색·답변·안전성 지표의 분리
-- 법률 외에도 금융·컴플라이언스·내부 규정으로 확장 가능한 실행·평가 구조
-
-## 핵심 검증 결과
-
-| 항목 | 실제 구현·검증 결과 |
+| 항목 | 현재 상태 |
 | --- | --- |
-| 공식 평가 데이터 | 61개 문항: 기존 49개 + 안전성·경계 사례 12개 |
-| 경계 사례 | 가짜 조문, 기준일 누락, 도메인 밖 질문, 과도한 범위, 정상 답변 대조군 |
-| 검색 전략 | lexical, semantic, hybrid 실제 선택; query rewrite와 ontology reranking on/off |
-| Baseline | 통과율 59.02%, Top-1 44.44%, Hit@K 71.11%, MRR 0.5348 |
-| Agent Workflow | 통과율 68.85%, Top-1 44.44%, Hit@K 71.11%, MRR 0.5348 |
-| 안전성 변화 | 보류 대상 정확도 56.25% → 93.75%, 전체 outcome 정확도 75.41% → 83.61% |
-| 트레이드오프 | 불필요한 보류율 17.78% → 20.00%, 평균 응답시간 323.4ms → 337.2ms |
-| 사례 비교 | 개선 6개, 악화 0개, 동일 통과 36개, 동일 실패 19개 |
-| 재시도 | 12건, 최대 횟수 준수 100%, 품질 개선률 0% |
+| 최신 체크포인트 | `v4.27.6` |
+| 법령 코퍼스 | 조·항·호 단위 문서 7,516개 |
+| 공식 평가 데이터 | 61개 사례, dataset/schema/corpus 참조 검증 |
+| 검색 | BM25, 문자 n-gram `semantic_lite`, hybrid 비교 |
+| Agent Workflow | 10단계 실행 trace, 안전한 유보, 최대 1회 제한 재시도 |
+| 데이터 품질 | 실패 유형화, human review, versioned dataset, checksum |
+| Legal Reasoning | schema·참조 무결성 기반 구현, E2E 추론 엔진은 미구현 |
+| 검증 | Python 3.10·3.12 CI, Docker smoke test, 324개 회귀 테스트 |
 
-측정 조건은 61개 동일 데이터, 로컬 deterministic provider, hybrid 검색, query rewrite·ontology reranking 적용입니다. Agent의 개선은 검색 순위가 아니라 시점 불명·범위 과다·거짓 전제의 안전 판정에서 발생했습니다. 재시도는 이번 평가에서 품질을 개선하지 못했으므로 성능 향상 기능으로 주장하지 않습니다.
+## 핵심 결과
 
-위 수치는 폐쇄형 결정론 평가 결과입니다. 외부 생성형 모델의 자유로운 법률 답변 정확도나 실제 법률 판단의 정확도 100%를 뜻하지 않습니다. 자세한 조건과 한계는 [Agent Workflow 문서](docs/AGENT_WORKFLOW.md)와 [실험 비교 문서](docs/EXPERIMENT_COMPARISON.md)를 참고하십시오.
+### Retrieval benchmark
 
-### 핵심 평가·근거 용어
+공식 61개 사례 중 gold 근거가 있는 비유보 문항 45개를 동일한 Top-K 5 조건에서 비교했습니다.
 
-| 용어 | 이 프로젝트에서의 의미 |
+| Method | Top-1 | Hit@5 | MRR | nDCG@5 |
+| --- | ---: | ---: | ---: | ---: |
+| BM25 | 37.78% | 66.67% | 0.4689 | 0.5172 |
+| semantic-lite | 46.67% | 73.33% | 0.5748 | 0.6148 |
+| hybrid | 46.67% | 75.56% | 0.5730 | 0.6184 |
+
+`semantic_lite`는 pretrained embedding이 아니라 의존성 없는 문자 n-gram 기준선입니다. 실제 embedding·reranker·fine-tuning 실험은 실행하지 않았으며, 미실행 모델의 성능 수치는 기록하지 않습니다.
+
+### Workflow safety evaluation
+
+61개 동일 사례를 deterministic provider와 hybrid 검색 조건으로 실행한 폐쇄형 평가입니다.
+
+| Metric | Baseline | Agent Workflow |
+| --- | ---: | ---: |
+| 전체 통과율 | 59.02% | 68.85% |
+| Top-1 | 44.44% | 44.44% |
+| Hit@K | 71.11% | 71.11% |
+| 보류 대상 정확도 | 56.25% | 93.75% |
+| 전체 outcome 정확도 | 75.41% | 83.61% |
+| 불필요한 보류율 | 17.78% | 20.00% |
+
+개선은 검색 순위가 아니라 시점 불명·범위 과다·거짓 전제에 대한 안전 판정에서 발생했습니다. 12건의 재시도에서는 품질 개선이 관측되지 않아 성능 향상으로 주장하지 않습니다.
+
+위 결과는 저장된 법령 코퍼스와 사전 정의된 정답을 사용하는 폐쇄형·결정론적 평가입니다. 외부 생성형 모델의 자유로운 법률 답변 정확도나 실제 법률 판단 정확도를 의미하지 않습니다.
+
+### 법령 지식베이스 검증
+
+법령 지식베이스는 49개 개념과 42문항의 폐쇄형 평가로 참조 무결성과 등록 어휘 연결을 검사합니다. 개인정보 보호법 제15조의 실제 개정 1건을 대상으로 시행일 경계 평가 2/2를 통과했고, 개정 검수의 9개 필수 항목과 통합 검증 역시 9개 단계를 통과했습니다. 이 결과는 등록된 개념과 단일 개정 사례의 검증이며 자유 질의 또는 일반적인 법률 판단 성능을 의미하지 않습니다.
+
+## 설계의 핵심
+
+- **법령 구조 보존**: 조·항·호, 시행일, 개정일과 공식 출처를 검색 단위에 유지합니다.
+- **근거 우선 생성**: 검색된 근거만 답변 계약에 포함하고 미지원 인용을 탐지합니다.
+- **안전한 유보**: 근거·시점·질문 범위가 불충분하면 확정 답변 대신 한계와 추가 확인 필요성을 반환합니다.
+- **실패 주도 개선**: `retrieval_miss`, `wrong_top1`, `over_retrieval`, `incorrect_abstention`을 분리합니다.
+- **검수 기반 데이터**: 자동 생성한 hard negative는 human review를 통과해야 학습 데이터로 export할 수 있습니다.
+- **재현성**: dataset·corpus·split checksum과 검색기·prompt·provider 설정을 실험 결과에 기록합니다.
+
+## 아키텍처
+
+```mermaid
+flowchart TD
+    A["공식 법령 원천"] --> B["수집·정규화 코퍼스"]
+    B --> C["BM25 / semantic-lite / hybrid 검색"]
+    C --> D["근거 할당·인용 검증"]
+    D --> E["답변 또는 안전한 유보"]
+    E --> F["평가·실패 분석·Human Review"]
+```
+
+Agent Workflow는 질의 분석부터 품질 판정까지 각 단계의 상태, 소요시간, 검색 전략, 선택 근거 ID, 경고와 중단 사유를 `execution_trace`에 기록합니다.
+
+## 구현 범위와 경계
+
+| 영역 | 상태 |
 | --- | --- |
-| 법령 코퍼스(corpus) | 검색 대상으로 수집·정규화하여 저장한 법령 조문 집합 |
-| 정답 근거(gold) | 평가 문항별로 사전에 지정하고 공식 원문과 대조한 정답 법률·조문 |
-| `retrieval_miss` | 정답 근거가 평가 대상 상위 K개 검색 결과에 포함되지 않은 경우 |
-| `wrong_top1` | 정답 근거가 상위 K개 안에는 있지만 첫 번째 검색 결과가 아닌 경우 |
-| `over_retrieval` | 모든 정답 근거를 찾았지만 정답으로 지정되지 않은 후보까지 함께 반환한 경우로, 기존 통과 여부와 별도로 기록하는 진단 항목 |
-| `incorrect_abstention` | 답변해야 할 문항을 유보하거나 유보해야 할 문항에 답하여, 기대한 유보 여부와 실제 동작이 일치하지 않은 경우 |
-| 답변 유보(Abstention) | 검색 범위나 근거가 부족할 때 확정적인 답변을 생성하지 않고 한계와 추가 확인 필요성을 표시하는 동작 |
-| 근거 연결(Grounding) | 답변의 각 주장과 이를 뒷받침하는 검색 근거를 연결하는 과정 |
-| 인용 검증(Citation Validation) | 인용한 법령명·조문 번호·본문·현행성 정보가 실제 검색 근거와 일치하는지 확인하는 과정. 법적 해석 전체의 정확성을 보장한다는 의미는 아님 |
-| `precedent_linked` | 일반 검색 점수가 아니라 검증된 판례에 기록된 관련 조문 정보를 바탕으로 보강한 법령 후보 |
-| 출처 경로(provenance) | 근거가 일반 검색에서 도출되었는지, 판례 연결 정보로 보강되었는지를 구분하는 출처 및 처리 경로 정보 |
+| 법령 수집·정규화·시점 검색 | 구현 |
+| 하이브리드 검색·근거 할당·인용 검증 | 구현 |
+| Agent 실행 trace·안전한 유보·평가 | 구현 |
+| 실패 기반 hard-negative 후보·human review | 구현 |
+| Legal Reasoning Schema·참조 무결성 | 구현 |
+| OCR provenance·품질 gate | private 자료에서 검증, 원문 비공개 |
+| 실제 pretrained embedding·reranker·fine-tuning | 데이터 준비, 실행 보류 |
+| 사실→요건 매칭·항변 분석·E2E Legal Reasoning MVP | 미구현 |
 
-실패 유형은 서로 배타적이지 않습니다. 예를 들어 정답 조문이 2위에 있고 관련성이 낮은 후보도 함께 반환되면 `wrong_top1`과 `over_retrieval`이 동시에 기록될 수 있습니다. 자세한 판정 기준과 실제 사례는 [평가 보고서](docs/EVALUATION_REPORT.md)에서 확인할 수 있습니다.
+Legal Reasoning 영역은 Claim, Cause of Action, Element, Defense, Counter-defense, 주장·증명책임, 필요 사실, 증거 유형, 후속 질문과 법적 근거를 독립 노드로 표현합니다. 현재 구현은 schema와 무결성 기반이며, 자동 법률 결론 엔진이 아닙니다.
 
-- [공식 평가 데이터셋](evaluation/datasets/official_core_cases.json)
-- [평가 데이터 JSON Schema](evaluation/datasets/official_core_cases.schema.json)
-- [데이터 작성·정제·검수 가이드](docs/DATA_ANNOTATION_GUIDE.md)
-- [실제 평가 보고서](docs/EVALUATION_REPORT.md)
-- [v4.27.6 프로젝트 체크포인트](docs/PROJECT_CHECKPOINT_V4276.md)
-- [대법원 판례 근거·라우팅 PoC](docs/PRECEDENT_POC.md)
-- [최종 검증 보고서](docs/FINAL_VERIFICATION.md)
-- [Agent Workflow와 Execution Trace](docs/AGENT_WORKFLOW.md)
-- [Baseline·Agent 실험 비교](docs/EXPERIMENT_COMPARISON.md)
-- [LLM·데이터 품질 프로젝트 요약](docs/APPLICATION_PROJECT_SUMMARY.md)
-- [평가 데이터 거버넌스와 Human Review](docs/EVALUATION_GOVERNANCE.md)
-- [Retrieval Benchmark](docs/RETRIEVAL_BENCHMARK.md)
-- [Hard-negative Candidate와 Human Review](docs/HARD_NEGATIVE_PIPELINE.md)
-- [Optional Cross-Encoder Reranker](docs/RERANKER_BENCHMARK.md)
-- [Retrieval Ablation Runner](docs/RETRIEVAL_ABLATION.md)
-- [민법 ML 학습·검수 준비도](docs/CIVIL_ML_READINESS.md)
-- [민법 ML 실험 실행 Gate](docs/CIVIL_ML_EXPERIMENT_GATE.md)
+## 빠른 실행
 
-### 버전 평가·Human Review
-
-61개 공식 평가 데이터는 sidecar manifest로 dataset version, ground-truth version, 사례 수와 SHA-256을 관리합니다. 실험 결과에는 corpus checksum, seed, 검색기·embedding·reranker·prompt version 및 provider/model을 함께 기록하여 조건이 다른 결과를 같은 기준선으로 오인하지 않도록 했습니다.
-
-내부 Evaluation UI에서는 단일 Reviewer가 평가 사례를 승인·수정 요청·거절하고 append-only 검수 이력을 남길 수 있습니다. 공개 데모에서는 검수 저장과 신규 평가 실행을 비활성화합니다. LangChain은 기존 검색기를 교체하지 않고 선택적 retriever adapter로만 연결하며, native 검색 결과와 문서 순서·metadata가 동일한지 회귀 테스트합니다.
-
-### Retrieval Benchmark
-
-공식 61문항 가운데 정답 근거가 지정된 비유보 retrieval 문항 45개를 분리해
-BM25, 기존 문자 n-gram `semantic_lite`, production hybrid를 동일한 Top-K 5
-조건에서 비교합니다. 2026-08-19 로컬 실행에서 Hit@5는 각각 66.67%,
-73.33%, 75.56%였고 nDCG@5는 0.5172, 0.6148, 0.6184였습니다.
-실제 pretrained embedding은 선택 의존성으로 실행할 수 있지만, 아직 실행하지
-않은 모델 성능 수치는 문서화하지 않습니다. 상세 조건과 latency 범위는
-[Retrieval Benchmark 문서](docs/RETRIEVAL_BENCHMARK.md)를 참고하십시오.
-
-### Failure-driven Training Data
-
-Hybrid retrieval의 `wrong_top1`, `retrieval_miss`, `over_retrieval`에서 positive와
-hard-negative 본문을 포함한 1-negative 단위 후보를 생성합니다. 후보는 내용 기반 ID로 중복과
-positive/negative 충돌을 방지하고, 전용 `/internal/training-review` 화면에서 단일 Reviewer가
-승인한 레코드만 versioned JSONL training dataset으로 export합니다. 자동 후보를
-검수 없이 학습 데이터로 사용하거나 자동 학습을 실행하지 않습니다.
-
-승인 dataset은 content hash를 검증한 뒤 query/case 단위로 train/validation을
-분리하여 triplet 학습 입력으로 변환할 수 있습니다. 기본 학습 명령은 계획과
-실험 metadata만 저장하며, `--execute`를 명시한 경우에만 Sentence Transformers
-모델을 실제로 불러와 fine-tuning합니다. 실행하지 않은 모델 성능 수치는 기록하지
-않으며, checkpoint 평가는 기존 retrieval benchmark의 동일 evaluation set에서
-별도로 수행합니다.
-
-선택적 Cross-Encoder reranker는 retriever의 Top-N 후보만 재정렬하며 core
-retrieval과 독립된 adapter로 유지합니다. benchmark는 retrieval과 reranking
-latency를 분리하고, reranker를 실행하지 않은 기존 결과에는 reranker 성능을
-기록하지 않습니다.
-
-Retrieval Ablation Runner는 일곱 검색 조합의 실행 가능 여부와 실행 상태를 먼저
-기록하고, 명시적으로 실행된 동일 조건 결과만 baseline/treatment로 비교합니다.
-전체 및 법률 분야별 metric delta, 사례 개선·악화 수, latency trade-off와 품질
-회귀 판정을 기존 Experiment Store와 Evaluation UI에서 확인할 수 있습니다.
-checkpoint가 없거나 실행하지 않은 조합에는 성능 수치를 만들지 않습니다.
-
-### 민법 ML 학습·검수 준비도
-
-기존 개인정보보호법 corpus와 공통 회귀평가는 유지하면서 신규 ML 수동 검수의
-우선 도메인을 민법으로 분리했습니다. 현재 corpus에는 `civil_transactions`
-대상 문서 2,043개와 고유 조문 1,194개가 있고, 공식 평가셋에는 민법 도메인
-14건 중 retrieval 대상 13건이 있으며 gold 근거 누락은 없습니다. 실제 Hybrid
-benchmark 실패에서 39개 후보를 확인했고 사례당 하나로 제한한 13건을 첫 수동
-검수 배치로 선정할 수 있습니다. 이 수치는 2026-08-20 로컬 감사 결과이며 후보는
-사람이 승인하기 전까지 학습 데이터가 아닙니다.
-
-승인 완료 후에는 domain과 candidate pool version을 함께 지정하여 민법 후보만
-versioned dataset으로 export합니다. export manifest의 범위·원본 dataset version·
-corpus checksum을 검증한 뒤 동일 사례가 양쪽에 섞이지 않는 재현 가능한
-train/validation triplet으로 준비합니다.
-
-민법 ML Experiment Gate는 prepared split hash와 domain 격리, 평가 gold 사례,
-선택 ML 의존성, fine-tuned checkpoint를 독립적으로 검사합니다. 실행 가능한 단계는
-`not_run`, 준비되지 않은 단계는 `unavailable`로 기록하며 모델 실행이나 성능 수치
-생성은 하지 않습니다.
-
-## 법령 정보 지식베이스 구축·관리 결과
-
-RAG 검색 오류를 분석하면서 법률용어, 일상용어, 근거 조문 및 시행일을 독립적으로 등록·검수·갱신할 수 있는 소규모 법령 정보 지식베이스로 프로젝트를 확장했습니다.
-
-| 항목 | 실제 구현·검증 결과 |
-|---|---|
-| 법령 구조 데이터 | 7,516개 조·항·호 문서 |
-| 법령 지식 개념 | 49개, 법률용어·일상용어·관계 유형·적용 범위·유효 기간 구조화 |
-| 참조 무결성 | 모든 개념의 법령 ID·조문·원문 문서 ID 존재 여부 자동 검증 |
-| 제·개정 영향 분석 | 개인정보 보호법 제15조의 실제 개정 1건 처리, 신설 조문·영향 개념·평가 문항 추적 |
-| 실제 개정 시점 평가 | 시행일 전날·당일 2/2 통과(이 사례에 한정된 경계 평가) |
-| 검수·승인 게이트 | 공식 출처·시행일·영향 검수·테스트 증거를 확인하여 `pass/revise/reject` 자동 판정 |
-| KB 전용 평가 | 42문항, 6개 유형, 3개 난이도 |
-| 폐쇄형 평가 결과 | 개념 Top-1 100%, 조문 Precision/Recall 100%, 유보 100%, 제한적 시점 100% |
-| 기업 법무 질문을 활용한 실제 RAG 평가 | 12문항, Top-1·Hit@5·Recall@5 100%, MRR 1.0000 |
-| 질의 표현 견고성 평가 | 12개 쟁점·24문항, 기준선 13/24 → 보강 후 24/24, Top-1 95.83%, Hit@5 100% |
-| 복수 쟁점 검색 평가 | 8문항, 기준선 0/8·평균 쟁점 Recall@10 47.92% → 보강 후 8/8·100% |
-| 복수 쟁점 답변·인용 평가 | 오프라인 결정론적 생성 8문항, 기준선 0/8 → 보강 후 8/8, 쟁점 탐지·답변 계획·최종 답변 인용 Recall 100% |
-| 인용 추적성 평가 | 복수 쟁점 8문항, 기준선 0/8 → 보강 후 8/8, 인용-근거 연결률·쟁점 귀속률·한국어 쟁점 제목률 100% |
-| 핵심 사실 확인 평가 | 복수 쟁점 8문항, 기준선 0/8·평균 사실 Recall 12.50% → 보강 후 8/8·사실 Recall/쟁점 커버리지/답변 계획 반영/조건부 조언 100% |
-| 쟁점별 실무 조치 평가 | 복수 쟁점 8문항, 기준선 0/8·평균 조치 Recall 12.50% → 보강 후 8/8·조치 Recall/쟁점 커버리지/근거 연결/답변 계획 반영 100% |
-| 조건부 검토·우선순위 평가 | 복수 쟁점 8문항, 기준선 0/8 → 보강 후 8/8·조건부 결론/우선순위 사실 Recall/핵심 우선순위/사실–쟁점–조치 연결/근거 일치율 100% |
-
-실제 개정 사례에 대한 검수는 9개 필수 항목을 모두 통과했으며, 통합 검증 역시 9개 단계를 모두 통과했습니다. 법령 지식베이스 구축, 개정 영향 분석, 평가 및 검수 결과와 README·프로젝트 요약에 기재된 주요 수치는 `python tools/run_legal_kb_verification.py` 명령으로 다시 계산하고 대조할 수 있습니다.
-
-위 100% 수치는 명시적으로 등록된 법률용어와 일상용어의 연결 및 참조 무결성을 확인한 폐쇄형·결정론적 평가 결과입니다. 따라서 자유로운 한국어 질의에 대한 의미 검색 성능이나 생성형 LLM 답변의 정확도를 의미하지 않습니다. 전체 법령 코퍼스의 `kb_update_manifest.json`은 동일한 7,516개 문서를 비교하여 변경 사항이 없음을 확인한 기준선 점검 결과입니다. 이와 별도로 개인정보 보호법 제15조제1항제7호 신설 사례의 개정 전후 데이터를 비교하여 실제 법령 변경을 탐지하고, 관련 법률 개념과 평가 문항에 미치는 영향 범위를 검증했습니다.
-
-### 기업 법무 질문 적용 사례
-
-기존 Q&A 구조를 유지하면서 전자금융·개인정보·기술·지식재산 질문 12건을 KB 평가에 추가했습니다. 별도의 계약 관리 기능을 추가한 것이 아니라, 실제 사업 질의를 법률 개념과 근거 조문으로 연결하고 유사 쟁점의 오적용을 피할 수 있는지를 같은 평가 방식으로 검증한 확장입니다.
-
-| 질문 영역 | 대표 검토 내용 | 연결 근거 예시 |
-|---|---|---|
-| 결제·전자금융 | 거래 내용 확인, 오류 정정, 약관 설명·변경, 분쟁 처리, 사고 책임, 거래 기록 | 전자금융거래법 제7조·제8조·제9조·제22조·제24조·제27조 |
-| 개인정보 | 고객 정보 처리 위탁, 유출 통지·신고 | 개인정보 보호법 제26조·제34조 |
-| 기술·지식재산 | 공개와 신규성, 공지 예외, 직무발명, 업무상 프로그램 저작자 | 특허법 제29조·제30조, 발명진흥법 제2조, 저작권법 제9조 |
-
-지식재산 질문은 구체적인 출원 가능성이나 권리 귀속을 자동으로 확정하지 않습니다. 공개 시점·공개 내용, 사용자의 업무 범위와 종업원의 직무, 계약·근무 규칙 등 추가 사실을 확인해야 한다는 주석을 함께 관리합니다.
-
-IP 법령 원문은 다음 명령으로 공식 API에서 다시 병합할 수 있습니다.
+### 로컬
 
 ```bash
-python -m law_rag.ingest_cli \
-  --manifest data/intellectual_property_laws.json \
-  --merge-output \
-  --oc "$LAW_API_OC"
-```
+git clone https://github.com/OrientingFreeman/law-rag-qa-planner.git
+cd law-rag-qa-planner
 
-폐쇄형 KB 평가와 별도로 동일 영역의 12개 질문을 실제 하이브리드 검색 파이프라인에서 실행했습니다. 초기 기준선은 8/12 통과, Top-1 58.33%, Hit@5 83.33%였으며, 처리 위탁·유출 통지·전자금융 사고 책임·업무상 프로그램 저작자 질문에서 검색 누락과 과도한 유보를 확인했습니다. 도메인 동의어와 질의 확장 규칙을 보강하고, 특허 공개 질문의 정답 근거를 제29조·제30조로 법적으로 보정한 뒤 12/12 통과, Top-1·Hit@5·Recall@5 100%, MRR 1.0000을 확인했습니다.
-
-이 결과는 설계된 12문항의 검색 평가이며, 생성형 답변의 정확도나 실제 기업 법무 수행 능력을 의미하지 않습니다. Top-K에 정답 외 후보도 함께 포함되어 `over_retrieval` 12건을 진단 항목으로 유지했습니다.
-
-추가로 한 질문에 전자금융·개인정보·특허·직무발명·저작권 쟁점이 둘 이상 포함된 8문항을 평가했습니다. 기존 전체 검색은 평균 쟁점 Recall@10 47.92%, 전체 쟁점 회수 1/8에 그쳤습니다. 질문에 명시된 도메인별 검색 경로를 분리한 뒤 결합하고, 한 도메인의 온톨로지가 다른 도메인의 근거를 제거하지 않도록 개선한 결과 8/8 문항에서 필요한 조문을 모두 회수했습니다. 이는 Top-10 검색 결과에서의 쟁점 회수 성능을 의미하며, 생성형 답변의 정확도를 뜻하지 않습니다.
-
-검색 이후 단계도 분리하여 검증하기 위해 같은 8문항을 오프라인 결정론적 생성기로 실행했습니다. 쟁점 탐지 Recall은 18.75%에서 100%, 답변 계획의 필수 인용 Recall은 87.50%에서 100%로 개선되었고, 최종 답변의 필수 인용 Recall과 인용 유효성은 모두 100%를 유지했습니다. 문장 근거 연결률은 93.95%에서 93.52%로 소폭 낮아져 개선 수치로 제시하지 않으며, 설정한 80% 기준은 충족했습니다. 이 평가는 내부 8문항과 결정론적 생성기에 한정되며, 외부 생성형 LLM의 법률 답변 정확도를 의미하지 않습니다.
-
-마지막으로, 필요한 인용을 모두 포함했는지와 각 인용의 근거를 설명할 수 있는지를 구분하여 평가했습니다. 추론 경로가 쟁점 귀속을 설명하지 못하거나 실제 근거 노드와 연결할 수 없는 후보는 최종 답변 계약에서 제외했습니다. 그 결과 8문항의 인용-근거 연결률은 85.83%에서 100%, 인용 문장의 쟁점 귀속률은 42.14%에서 100%로 개선되었고 내부 영문 쟁점명도 모두 한국어로 표시했습니다. 이는 구조적 추적성 평가이며, 인용의 법률적 충분성이나 답변 정확도를 자동으로 확정한다는 뜻은 아닙니다.
-
-구체적인 사실이 부족한 상태에서 결론을 확정하지 않는지도 별도로 평가했습니다. 개인정보 유출·전자금융 사고·기록 보존·약관·분쟁 및 기술·지식재산 쟁점과 관련해 확인할 사실을 구조화하고, 특히 공개일·공개 범위·비밀 유지 여부·종업원의 직무 범위·발명 경위·계약 및 근무 규칙을 확인하도록 보강했습니다. 내부 8문항의 평균 핵심 사실 Recall과 쟁점별 사실 커버리지는 12.50%에서 100%로 개선되었고, 모든 확인 질문이 답변 계획에 반영되었으며 최종 조언은 조건부 상태를 유지했습니다. 이는 사전에 정의한 사실 항목의 회수 결과이며, 실제 사건에 필요한 모든 사실이나 법률적 결론의 정확성을 보증하지 않습니다.
-
-실무상 조치 섹션도 모든 쟁점에 동일한 계약서·고지 문구를 적용하지 않도록 개선했습니다. 특허 공개 통제와 증빙 보존, 직무발명 경위 및 사내 규정 검토, 프로그램 작성·귀속 문서화, 전자금융 사고 증거 보존, 거래 기록 보존표, 개인정보 분리·파기, 약관 버전과 분쟁 회신 이력을 쟁점별 조치로 생성합니다. 내부 8문항의 평균 실무 조치 Recall과 쟁점별 조치 커버리지, 검색 규칙 및 원문 문서와의 연결률, 답변 계획 반영률은 12.50%에서 100%로 개선되었습니다. 이는 사전에 정의한 조치의 생성 및 근거 연결 결과이며, 실제 조직의 절차 적합성이나 법률적 충분성을 보증하지 않습니다.
-
-미확인 사실과 실무 조치를 별도 목록으로 끝내지 않고 쟁점 단위로 연결하는 조건부 검토 구조도 추가했습니다. 각 쟁점에 `핵심·중요·추가` 확인 순서를 부여하고, 확인할 사실·후속 조치·검색 근거를 하나의 연결 레코드로 제공합니다. 중요 사실이 남아 있으면 답변 첫머리에 조건부 검토임을 표시하고 최종 판단으로 표현하지 않습니다. 내부 8문항에서 조건부 결론 표시, 우선순위 사실 Recall, 쟁점별 핵심 우선순위, 사실–쟁점–조치 간 연결 및 연결 근거의 일치율을 모두 100%로 확인했습니다. 이는 사전에 정의한 구조를 대상으로 한 결정론적 평가이며, 실제 사건의 사실 우선순위나 최종 법률 판단을 자동으로 보증하지 않습니다.
-
-공개 웹 Q&A의 답변 카드에서도 같은 구조를 확인할 수 있습니다. 검토 상태와 조건부 결론을 먼저 표시하고, 각 쟁점의 우선 확인 사실·근거와 연결된 조치·관련 조문을 하나의 카드에 배치합니다. 구조화 데이터가 없는 검색·판례 전용 응답은 기존 화면을 유지하며, 모바일에서는 한 열로 표시됩니다.
-
-- [기업 법무 질문 RAG 평가 데이터](evaluation/datasets/business_legal_cases.json)
-- [기업 법무 질문 RAG 검색 평가 보고서](docs/BUSINESS_LEGAL_RAG_EVALUATION.md)
-- [기업 법무 질의 표현 견고성 평가 데이터](evaluation/datasets/business_legal_robustness_cases.json)
-- [기업 법무 질의 표현 견고성 평가 보고서](docs/BUSINESS_LEGAL_QUERY_ROBUSTNESS.md)
-- [기업 법무 복수 쟁점 평가 데이터](evaluation/datasets/business_legal_multi_issue_cases.json)
-- [기업 법무 복수 쟁점 검색 평가 보고서](docs/BUSINESS_LEGAL_MULTI_ISSUE_EVALUATION.md)
-- [기업 법무 복수 쟁점 답변·인용 평가 보고서](docs/BUSINESS_LEGAL_MULTI_ISSUE_ANSWER_EVALUATION.md)
-- [기업 법무 답변 인용 추적성 평가 보고서](docs/BUSINESS_LEGAL_CITATION_TRACEABILITY.md)
-- [기업 법무 핵심 사실 확인 평가 보고서](docs/BUSINESS_LEGAL_MISSING_FACT_EVALUATION.md)
-- [기업 법무 실무 조치 평가 보고서](docs/BUSINESS_LEGAL_PRACTICAL_ACTION_EVALUATION.md)
-- [기업 법무 조건부 검토·우선순위 평가 보고서](docs/BUSINESS_LEGAL_CONDITIONAL_REVIEW_EVALUATION.md)
-
-- [법률용어 지식베이스](data/legal_knowledge_base.json)
-- [법령 지식베이스 평가 데이터셋](evaluation/datasets/legal_kb_cases.json)
-- [법령 제·개정 업데이트 가이드](docs/LEGAL_KB_UPDATE_GUIDE.md)
-- [실제 법령 개정 영향 분석 보고서](docs/AMENDMENT_IMPACT_REPORT.md)
-- [법령 개정 검수·승인 보고서](docs/AMENDMENT_REVIEW_REPORT.md)
-- [법령 지식베이스 통합 검증](docs/LEGAL_KB_VERIFICATION.md)
-- [법령 지식베이스 품질 평가 보고서](docs/LEGAL_KB_QUALITY_REPORT.md)
-- [법률 데이터 품질 프로젝트 요약](docs/LEGAL_DATA_QUALITY_PROJECT_SUMMARY.md)
-
-## 1. 프로젝트 소개
-
-이 프로젝트는 한국 법령 문서를 대상으로 질문과 관련된 조문을 검색하고, 검색된 근거 범위 안에서 답변을 생성하는 법령 RAG(Retrieval-Augmented Generation) 시스템입니다.
-
-법령 QA에서는 일반 문서 검색과 달리 다음 요소가 중요합니다.
-
-- 정확한 법령명과 조문 식별
-- 조·항·호 단위의 구조 보존
-- 개정일과 시행일을 고려한 기준일 검색
-- 근거가 부족할 때 답변을 유보하는 기능
-- 생성 답변의 인용과 실제 검색 근거가 일치하는지 검증
-- 검색 및 생성 품질을 반복적으로 확인하는 회귀 평가
-
-이 프로젝트는 단순한 챗봇 구현보다 **검증 가능하고 추적 가능한 법령 AI 시스템 설계**에 초점을 둡니다.
-
-## 2. 프로젝트가 검증하는 핵심 역량
-
-이 프로젝트는 법률 업무 구조화와 AI 품질 관리 역량을 함께 검증합니다.
-
-### 법률 실무 및 고객 업무
-
-- 비정형 법률 질문을 법적 행위, 주체, 요건 및 예외로 구조화
-- 관련 조문과 공식 출처를 함께 제시하여 확인 시간 단축
-- 근거가 부족한 경우 답변을 유보하도록 설계
-- 반복적인 법률 확인 업무를 표준화할 수 있는 업무 흐름 설계
-
-### LLM 및 데이터 품질 업무
-
-- 조·항·호 단위의 법령 데이터 모델과 메타데이터 설계
-- 키워드 검색과 의미 검색을 결합한 하이브리드 검색 구현
-- 문장별 근거 연결(Grounding)과 인용 검증(Citation Validation) 수행
-- 회귀 평가와 실패 사례를 활용한 품질 관리 체계 구축
-
-공개 데모는 특정 조직의 내부 문서나 비공개 데이터를 사용하지 않으며, 공개 법령 데이터만 사용하는 비공식 기술 데모입니다.
-
-## 3. 주요 기능
-
-### 3.1 법령 구조 기반 데이터 모델
-
-법령 데이터를 단순한 길이 기준으로 분할하지 않고 조문 구조에 맞춰 정규화합니다.
-
-주요 메타데이터는 다음과 같습니다.
-
-- 문서 유형
-- 법령명과 법령 식별자
-- 조·항·호 번호
-- 시행일과 개정일
-- 소관 기관
-- 주제와 핵심어
-- 원문 및 공식 출처 주소
-- 법령 버전 식별자
-
-### 3.2 하이브리드 검색
-
-키워드 검색과 의미 기반 검색을 결합하여 검색 결과를 산출합니다.
-
-- BM25 기반 키워드 검색
-- 문자 단위 유사도 및 의미 검색
-- 법령 도메인 필터
-- 기준일에 따른 시행 법령 필터
-- 직접 근거와 관련 근거 구분
-- 관련 조문 확장과 그래프 기반 재정렬
-
-### 3.3 법적 질의 의도 분석
-
-사용자 질문에서 다음 요소를 구조화합니다.
-
-- 법적 행위
-- 주체와 대상
-- 요구되는 답변 유형
-- 조건과 예외
-- 복합 질문 여부
-- 검색용 하위 질의
-- 법률 온톨로지 연결 정보
-
-### 3.4 근거 기반 답변 생성
-
-검색된 법령 근거만 사용하도록 생성 프롬프트를 구성합니다.
-
-- 근거에 없는 내용 추측 금지
-- 법령명과 조문 번호 표시
-- 결론, 핵심 요건, 법적 근거 및 주의사항 구분
-- 근거 부족 시 답변 유보
-- 규칙 우선순위와 충돌 해결 결과 반영
-- 실무상 추가 확인이 필요한 사실 제시
-
-### 3.5 인용 및 문장 근거 검증
-
-생성 답변이 검색되지 않은 조문을 인용하는지 검사하고, 답변 문장별 근거 연결 상태를 검증합니다.
-
-- 인용 조문과 검색 조문 비교
-- 미지원 인용 탐지
-- 문장별 근거 연결
-- 근거 범위와 역할 기록
-- 다중 근거 사용 여부 확인
-- 근거 추적 가능성 계산
-
-### 3.6 법적 추론 구조
-
-법률 답변이 만들어지는 과정을 구조화된 데이터로 보존합니다.
-
-- 증거 그래프
-- 법적 추론 경로
-- 법률 논증 그래프
-- 법률 논리 트리
-- 규칙 우선순위
-- 반대 논거와 충돌 해결
-- 답변 골격
-- 문장 계획과 인용 연결표
-
-### 3.7 평가와 회귀 테스트
-
-검색 결과에 정답 조문이 포함되는지만 확인하는 것이 아니라, 실제 답변 품질에 영향을 주는 지표를 함께 측정합니다.
-
-- Top-1 정확도
-- Hit@K
-- Recall@K
-- 평균 역순위(MRR)
-- 답변 유보 정확도
-- 시행일 정확도
-- 인용 정확도
-- 평균 처리 지연 시간
-- 평가 사례별 통과·실패 기록
-
-## 4. Top-1 정확도를 중요하게 보는 이유
-
-법령 QA에서는 정답 조문이 여러 검색 결과 중 하나로 포함되는 것만으로 충분하지 않습니다. 실제 답변 생성에서는 상위 조문이 핵심 근거로 사용될 가능성이 높기 때문입니다.
-
-예를 들어 “손해배상 청구 규정은?”이라는 질문에 민법 제750조와 제390조가 모두 검색되더라도, 질문의 맥락이 채무불이행 손해배상이라면 제390조가 가장 먼저 선택되어야 합니다.
-
-따라서 이 프로젝트는 Hit@K뿐 아니라 **Top-1 정확도와 검색 순위 품질**을 핵심 지표로 관리합니다.
-
-## 5. 전체 처리 흐름
-
-```text
-사용자 질문
-  ↓
-법적 질의 의도 분석
-  ↓
-도메인·시행일 필터
-  ↓
-키워드 검색 + 의미 검색
-  ↓
-근거 그래프와 관련 조문 확장
-  ↓
-법적 추론 경로 및 논리 구조 생성
-  ↓
-근거 기반 답변 생성
-  ↓
-인용 검증 및 문장 근거 검증
-  ↓
-사용자 답변 + 전문가용 검증 정보 반환
-```
-
-## 6. 프로젝트 구조
-
-```text
-law_rag/
-├── api/                 # FastAPI 서버, 요청·응답 스키마, 웹 데모
-├── domain/              # 공통 법령 스키마와 도메인 설정
-├── ingestion/           # 공식 법령 데이터 수집·정규화
-├── retrieval/           # 키워드·의미·하이브리드 검색
-├── generation/          # 프롬프트, 답변 생성, 인용 검증
-├── evaluation/          # 평가 데이터셋, 실행기, 리포트
-├── ontology/            # 법률 개념 및 관계 구조
-└── reasoning/           # 증거 그래프와 법적 추론 구성
-
-data/                    # 법령 말뭉치 및 예시 데이터
-domains/                 # 도메인별 법령·동의어·가중치 설정
-evaluation/              # 평가셋과 평가 결과
-prompts/                 # 답변 생성 프롬프트 버전
-tests/                   # 단위·통합·회귀 테스트
-```
-
-## 7. 설치 방법
-
-### 7.1 가상환경 생성
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 7.2 의존성 설치
-
-```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-### 7.3 환경변수 설정
-
-```bash
 cp .env.example .env
+
+python -m law_rag.api
 ```
 
-`.env`에는 API 키와 배포 환경 설정이 포함될 수 있으므로 Git 저장소에 커밋하지 마십시오.
+실행 후 다음 주소를 확인할 수 있습니다.
 
-## 8. 실행 방법
+- 웹 UI: `http://127.0.0.1:8000/`
+- OpenAPI: `http://127.0.0.1:8000/docs`
+- Health check: `http://127.0.0.1:8000/health`
 
-### 8.1 API와 웹 데모 실행
+### Docker
 
 ```bash
-python3 -m law_rag.api
+docker compose up --build
 ```
 
-또는 다음과 같이 Uvicorn을 직접 실행할 수 있습니다.
+### API 예시
 
 ```bash
-uvicorn law_rag.api.app:app --host 0.0.0.0 --port 8000
-```
-
-실행 후 접속 주소:
-
-- 웹 데모: `http://127.0.0.1:8000/`
-- API 문서: `http://127.0.0.1:8000/docs`
-- 상태 확인: `http://127.0.0.1:8000/health`
-
-### 8.2 명령행 질의
-
-```bash
-python3 -m law_rag.cli \
-  --question "개인정보 수집 동의 요건은 무엇인가요?" \
-  --domain digital_business \
-  --top-k 3
-```
-
-## 9. 웹 데모
-
-웹 화면에서는 다음 기능을 확인할 수 있습니다.
-
-- 법률 질문 입력
-- 도메인 및 기준일 선택
-- 답변·검색·프롬프트 결과 유형 선택
-- 생성 답변과 근거 상태 확인
-- 인용 검증 결과 확인
-- 관련 법령, 검색 점수, 시행일 및 공식 출처 확인
-- 저장된 회귀 평가 리포트 확인
-
-공개 배포 시에는 평가 실행을 차단하고 저장된 평가 결과만 표시할 수 있습니다.
-
-## 10. 공개 기술 데모 설정
-
-공개 서버에서는 다음 환경변수 사용을 권장합니다.
-
-```bash
-LAW_RAG_PUBLIC_DEMO=true
-LAW_RAG_ENABLE_EVALUATION_RUN=false
-LAW_RAG_DEMO_MAX_REQUESTS=20
-LAW_RAG_DEMO_WINDOW_SECONDS=3600
-```
-
-각 설정의 의미는 다음과 같습니다.
-
-- `LAW_RAG_PUBLIC_DEMO`: 공개 데모 보호 기능 활성화
-- `LAW_RAG_ENABLE_EVALUATION_RUN`: 브라우저에서 전체 평가 실행 허용 여부
-- `LAW_RAG_DEMO_MAX_REQUESTS`: 제한 시간 동안 접속자별 최대 질의 횟수
-- `LAW_RAG_DEMO_WINDOW_SECONDS`: 요청 횟수를 계산하는 시간 범위
-
-현재 요청 제한은 단일 프로세스의 메모리를 기준으로 동작합니다. 여러 서버 프로세스나 인스턴스를 운영할 경우 Redis 등 외부 저장소 기반 제한기로 교체하는 것이 적절합니다.
-
-## 11. API 사용 예시
-
-### 11.1 근거 기반 답변
-
-```bash
-curl -X POST 'http://127.0.0.1:8000/answer' \
+curl -X POST http://127.0.0.1:8000/answer \
   -H 'Content-Type: application/json' \
   -d '{
     "question": "개인정보 수집 동의 요건은 무엇인가요?",
-    "domain": "electronic_finance",
+    "domain": "digital_business",
     "top_k": 3
   }'
 ```
 
-### 11.2 검색 결과만 조회
-
-```bash
-curl -X POST 'http://127.0.0.1:8000/retrieve' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "question": "전자금융거래 기록 보존 의무는 무엇인가요?",
-    "domain": "digital_business",
-    "top_k": 5
-  }'
-```
-
-### 11.3 기준일 검색
-
-```bash
-curl -X POST 'http://127.0.0.1:8000/query' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "question": "개인정보 처리위탁 시 필요한 조치는 무엇인가요?",
-    "domain": "digital_business",
-    "top_k": 3,
-    "as_of_date": "2026-07-30"
-  }'
-```
-
-## 12. 평가 실행
-
-### 12.1 Agent Workflow 실행
+Agent trace를 포함한 실행:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/agent/runs \
-  -H "Content-Type: application/json" \
+  -H 'Content-Type: application/json' \
   -d '{
-    "question": "개정 전 개인정보 수집 동의 요건은 무엇인가?",
+    "question": "개정 전 개인정보 수집 동의 요건은 무엇인가요?",
     "domain": "digital_business",
     "search_strategy": "hybrid",
     "max_retries": 1
   }'
 ```
 
-응답의 `execution_trace`에는 10단계 상태, 소요시간, 검색 전략, 선택 근거 ID, 경고, 재시도와 중단 사유가 포함됩니다. `reasoning_trace`가 법적 추론 내용을 설명한다면 `execution_trace`는 시스템이 어떤 순서로 무엇을 실행하고 중단했는지를 설명합니다.
+## 평가와 재현
 
-### 12.2 재현 가능한 실험
+전체 회귀 테스트:
+
+```bash
+LAW_RAG_LLM_PROVIDER=deterministic python -m pytest -q
+```
+
+공식 평가 데이터 검증:
+
+```bash
+python tools/validate_evaluation_dataset.py
+```
+
+동일 조건 retrieval benchmark:
+
+```bash
+python -m tools.run_retrieval_benchmark \
+  --methods bm25 semantic_lite hybrid \
+  --top-k 5 \
+  --fail-under-hit-at-k 0.60 \
+  --fail-under-mrr 0.45
+```
+
+Baseline과 Agent 비교:
 
 ```bash
 LAW_RAG_LLM_PROVIDER=deterministic python -m tools.run_rag_experiment \
@@ -567,146 +184,72 @@ LAW_RAG_LLM_PROVIDER=deterministic python -m tools.run_rag_experiment \
   --mode agent --dataset-version 2.0
 ```
 
-두 결과를 비교합니다.
+GitHub Actions는 Python 3.10·3.12 전체 테스트, 결정론적 회귀평가, retrieval 기준선과 Docker API smoke test를 실행합니다.
 
-```bash
-python -m tools.compare_rag_experiments \
-  evaluation/experiments/{baseline-id}.json \
-  evaluation/experiments/{agent-id}.json \
-  --output evaluation/experiments/comparison.json
-```
+## 대표 실패 유형
 
-실험 원문은 `evaluation/experiments/`에 저장되며 Git에는 포함되지 않습니다. 검증된 소형 요약은 `evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json`에 보존합니다.
+| 유형 | 의미 | 처리 방향 |
+| --- | --- | --- |
+| `retrieval_miss` | gold 근거가 Top-K에 없음 | query·corpus·동의어·검색기 점검 |
+| `wrong_top1` | gold가 후보에는 있으나 1위가 아님 | hard negative·reranking 검토 |
+| `over_retrieval` | 정답 외 후보까지 함께 반환 | 진단 플래그로 별도 기록 |
+| `incorrect_abstention` | 답변/유보 기대와 실제 결과 불일치 | 안전 임계값과 질문 범위 점검 |
+| unsupported citation | 검색되지 않은 조문 인용 | 최종 답변 계약에서 차단 |
 
-### 12.3 테스트 전체 실행
-
-```bash
-pytest
-```
-
-### 12.4 평가 리포트 조회
-
-```bash
-curl 'http://127.0.0.1:8000/evaluation/latest'
-```
-
-### 12.5 전체 평가 실행
-
-공개 데모가 아닌 개발 환경에서만 사용하십시오.
-
-```bash
-curl -X POST 'http://127.0.0.1:8000/evaluation/run' \
-  -H 'Content-Type: application/json' \
-  -d '{}'
-```
-
-## 13. 대표 실패 사례
-
-### 13.1 법령명이 생략된 질문
-
-질문에 법령명이나 법적 관계가 명확히 포함되지 않으면 동일한 표현을 사용하는 여러 조문이 검색될 수 있습니다.
-
-예시:
+## 프로젝트 구조
 
 ```text
-손해배상 책임 요건은 무엇인가요?
+law_rag/
+├── api/           # FastAPI, 웹 데모, 요청·응답 schema
+├── domain/        # 법령 및 도메인 모델
+├── ingestion/     # 공식 법령 수집·정규화
+├── retrieval/     # BM25·semantic-lite·hybrid 검색
+├── generation/    # 답변 생성·근거 연결·인용 검증
+├── reasoning/     # evidence/argument graph와 Legal Reasoning Schema
+├── evaluation/    # 평가 데이터·실험·human review
+└── workflow/      # Agent 단계와 execution trace
+
+data/              # 공개 법령 코퍼스와 지식베이스
+domains/           # 도메인별 설정
+evaluation/        # 평가셋·검증된 baseline·fixture
+tests/             # 단위·통합·회귀 테스트
+tools/             # 데이터·평가·검수 CLI
 ```
 
-이 질문은 불법행위 책임과 채무불이행 책임을 모두 가리킬 수 있습니다. 따라서 질의 의도 분석, 의미 검색, 추가 확인 질문 또는 답변 유보가 필요합니다.
+## 문서 안내
 
-### 13.2 유사 핵심어 충돌
+| 문서 | 내용 |
+| --- | --- |
+| [현재 체크포인트](PROJECT_CHECKPOINT_V4276.md) | v4.27.6 구현·검증 범위와 명시적 한계 |
+| [프로젝트 요약](docs/PROJECT_SUMMARY.md) | 문제, 기술적 기여, 평가와 활용 범위 |
+| [최종 검증](docs/FINAL_VERIFICATION.md) | 최신 회귀 테스트와 API 검증 |
+| [Retrieval Benchmark](docs/RETRIEVAL_BENCHMARK.md) | 검색기 비교 조건·수치·latency |
+| [Agent Workflow](docs/AGENT_WORKFLOW.md) | 10단계 실행과 trace 계약 |
+| [실험 비교](docs/EXPERIMENT_COMPARISON.md) | Baseline–Agent 비교와 trade-off |
+| [평가 보고서](docs/EVALUATION_REPORT.md) | 지표 정의와 사례별 실패 분석 |
+| [데이터 검수 가이드](docs/DATA_ANNOTATION_GUIDE.md) | gold·유보·검수 기준 |
+| [Hard-negative Pipeline](docs/HARD_NEGATIVE_PIPELINE.md) | 실패→후보→검수→export 흐름 |
+| [Legal Reasoning Schema](docs/LEGAL_REASONING_SCHEMA.md) | schema 범위와 E2E 미구현 경계 |
+| [OCR Provenance Audit](docs/OCR_PROVENANCE_AUDIT.md) | private OCR의 공개/비공개 경계 |
 
-민법 제390조와 제750조처럼 동일한 “손해배상” 표현을 포함하는 조문은 단순 핵심어 검색만으로 구분하기 어렵습니다.
+버전별 상세 변경사항은 [PATCH_NOTES.md](PATCH_NOTES.md)를 참고하세요.
 
-이를 개선하기 위해 다음 요소를 사용합니다.
+## 공개·비공개 데이터 경계
 
-- 법적 행위와 관계 분석
-- 질의 확장
-- 의미 유사도
-- 도메인 및 온톨로지 제약
-- 재정렬
-- 근거 부족 판정
+공개 저장소에는 공개 법령·판례, 직접 작성한 최소 fixture, 범용 schema와 평가 코드만 포함합니다. 별도 보관 중인 저작권 OCR 원문, 페이지 snippet, source path, private review queue와 파생 지식베이스는 공개하지 않습니다.
 
-### 13.3 검색 결과에 없는 조문 인용
+비밀키는 환경변수로 주입하며 `.env`를 Git에 포함하지 않습니다. 공개 데모에서는 평가 실행과 검수 저장을 비활성화할 수 있습니다.
 
-생성 모델이 학습 데이터에 기반하여 검색되지 않은 조문을 추가할 수 있습니다. 이 프로젝트는 생성 답변의 인용 조문과 검색 결과의 조문을 비교하여 미지원 인용을 탐지합니다.
+## 다음 단계
 
-## 14. 설계 원칙
+1. 대여금 청구의 수동 기준 지식 구축
+2. OCR→구조화 지식 후보 추출과 review/approval
+3. 사건 사실→요건 매칭
+4. 항변·부족 사실·후속 질문 처리
+5. 판단과 법적 근거 연결 및 reasoning 정량평가
+6. E2E Legal Reasoning MVP
+7. 이후 retrieval 모델 실험과 민사 청구 확장
 
-### 근거 우선
+## 주의사항
 
-답변의 자연스러움보다 법령 근거의 존재와 적합성을 우선합니다.
-
-### 답변 유보
-
-근거가 부족하거나 질문이 지나치게 모호하면 억지로 답하지 않고 근거 부족 상태를 반환합니다.
-
-### 추적 가능성
-
-답변, 인용, 검색 결과, 법적 추론 경로 및 검증 결과를 구조화된 형태로 남깁니다.
-
-### 평가 가능성
-
-정량 지표와 실패 사례를 저장하여 기능 추가 후 품질이 저하되었는지 확인할 수 있도록 합니다.
-
-### 도메인 확장성
-
-새로운 법률 도메인을 추가할 때 검색 핵심 모듈을 다시 개발하지 않고 설정과 법령 데이터 팩을 확장하는 구조를 지향합니다.
-
-## 15. 기술 스택
-
-- Python
-- FastAPI
-- Pydantic
-- Uvicorn
-- BM25
-- 의미 기반 검색
-- 법률 온톨로지
-- 그래프 기반 근거 확장
-- Pytest
-- Docker 및 Docker Compose
-- HTML, CSS, JavaScript 기반 웹 데모
-
-## 16. 배포 시 보안 점검
-
-공개 서버에 배포하기 전에 다음 사항을 확인하십시오.
-
-- `.env`와 API 키를 저장소 및 배포 압축 파일에서 제외
-- 이미 Git 이력에 포함된 키가 있다면 폐기한 뒤 재발급
-- `LAW_RAG_PUBLIC_DEMO=true` 설정
-- `LAW_RAG_ENABLE_EVALUATION_RUN=false` 설정
-- 요청 제한 또는 역방향 프록시 수준의 제한 적용
-- HTTPS 적용
-- 운영 로그에서 개인정보와 민감한 질문 제거 또는 마스킹
-- API 문서를 공개할 필요가 없다면 `/docs` 접근 제한
-- 오류 응답에 내부 경로나 비밀 정보가 포함되지 않는지 확인
-
-## 17. 프로젝트의 의미
-
-이 프로젝트를 통해 확인한 핵심은 RAG 시스템에서 중요한 것이 단순한 답변 생성만은 아니라는 점입니다.
-
-특히 법령 영역에서는 다음 역량이 실제 서비스 품질을 좌우합니다.
-
-- 법령 구조와 시행 시점의 정확한 처리
-- 검색 실패 원인 분석
-- 근거 부족 판정
-- 인용과 문장 근거 검증
-- 법적 추론 과정의 구조화
-- 회귀 평가를 통한 지속적인 품질 관리
-
-따라서 이 프로젝트는 법령 검색 데모를 넘어 **기업 법무·컴플라이언스 업무를 지원하는 검증 가능한 Legal AI 시스템의 기반**을 제시합니다.
-
-## 18. 향후 개선 방향
-
-- 사내 규정과 법령을 함께 검색하는 Enterprise RAG
-- 법령 개정 전후 비교와 업무 영향 분석
-- 개인정보 처리방침 및 약관 점검
-- 계약서 조항과 관련 법령 연결
-- 사용자 권한별 법무 업무 화면
-- 외부 저장소 기반 분산 요청 제한
-- 운영 환경 모니터링 및 검색 품질 대시보드
-- 실제 법무 담당자 피드백을 반영한 평가셋 확장
-
-## 19. 주의사항
-
-이 프로젝트의 답변은 기술 검증을 위한 결과입니다. 실제 사건이나 조직의 의사결정에 적용하려면 사실관계, 최신 법령, 판례 및 행정해석을 추가로 확인하고 전문가의 검토를 받아야 합니다.
+이 프로젝트는 공개 법령을 이용한 비공식 기술 검증입니다. 실제 사건이나 조직의 의사결정에 적용하려면 최신 법령, 판례, 행정해석, 구체적 사실관계와 전문가 검토가 추가로 필요합니다.
