@@ -78,6 +78,7 @@ Schema v0를 추가합니다. 자세한 경계와 공개/비공개 데이터 원
 - [평가 데이터 JSON Schema](evaluation/datasets/official_core_cases.schema.json)
 - [데이터 작성·정제·검수 가이드](docs/DATA_ANNOTATION_GUIDE.md)
 - [실제 평가 보고서](docs/EVALUATION_REPORT.md)
+- [v4.27.6 프로젝트 체크포인트](docs/PROJECT_CHECKPOINT_V4276.md)
 - [대법원 판례 근거·라우팅 PoC](docs/PRECEDENT_POC.md)
 - [최종 검증 보고서](docs/FINAL_VERIFICATION.md)
 - [Agent Workflow와 Execution Trace](docs/AGENT_WORKFLOW.md)
