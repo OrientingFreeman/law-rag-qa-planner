@@ -1,4 +1,4 @@
-# OCR Source Provenance & Quality Audit
+# OCR 원천 출처·품질 감사
 
 v4.27.0은 private OCR 자료를 Legal Reasoning 지식으로 추출하기 전에 출처와
 구조를 검증하는 로컬 import boundary다. OCR 내용을 지식으로 확정하거나 자동

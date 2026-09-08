@@ -1,4 +1,4 @@
-# Evidence-Grounded Legal AI 프로젝트 요약
+# 근거 기반 법률 AI 프로젝트 요약
 
 ## 한 줄 정의
 
@@ -42,7 +42,7 @@
 | semantic-lite | 46.67% | 73.33% | 0.5748 | 0.6148 |
 | hybrid | 46.67% | 75.56% | 0.5730 | 0.6184 |
 
-### Agent 안전성 비교
+### Agent 워크플로 안전성 비교
 
 동일한 61개 사례, deterministic provider, hybrid 검색 조건에서 비교했습니다.
 
@@ -66,7 +66,7 @@ Agent의 개선은 검색 순위가 아니라 시점 불명, 지원 범위 밖 �
 - dataset, corpus, review와 train/validation split에 checksum을 기록합니다.
 - 실행하지 않은 embedding·reranker·fine-tuning 성능은 문서화하지 않습니다.
 
-## Legal Reasoning과 OCR의 현재 경계
+## 법률 추론과 OCR의 현재 경계
 
 Legal Reasoning Schema는 청구권, 청구원인, 요건, 항변, 재항변, 주장·증명책임, 필요 사실, 증거 유형, 후속 질문, 법적 근거와 provenance를 독립 노드 및 관계로 표현합니다. 내부 참조와 JSON round-trip을 검증하지만, 사실→요건 자동 매칭이나 최종 법률 결론을 생성하는 E2E 엔진은 아직 구현하지 않았습니다.
 

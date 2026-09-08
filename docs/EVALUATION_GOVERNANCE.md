@@ -1,4 +1,4 @@
-# 평가 데이터 거버넌스와 Human Review
+# 평가 데이터 거버넌스와 사람 검수
 
 ## 목적
 
@@ -27,7 +27,7 @@
 
 Retrieval Benchmark의 `wrong_top1`, `retrieval_miss`, `over_retrieval`은 hard-negative 후보로 변환할 수 있습니다. 후보는 내용 기반 ID로 중복을 방지하고 `review_required` 상태로 저장합니다. 기존 Human Review에서 승인된 후보만 versioned training dataset으로 export하며, 미검수·수정 요청·거절 후보는 포함하지 않습니다. 이 단계는 학습 데이터를 준비할 뿐 embedding fine-tuning을 자동 실행하지 않습니다.
 
-## LangChain 경계
+## LangChain 적용 경계
 
 `LawRagLangChainRetriever`는 기존 검색 결과를 LangChain `Document`로 변환하는 선택적 adapter입니다. Hybrid ranking, ontology reranking, evidence graph, reasoning, citation 검증 및 evaluation은 기존 core가 계속 담당합니다.
 

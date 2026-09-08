@@ -79,7 +79,7 @@ python -m tools.build_hard_negative_candidates \
 데이터가 충분해진 뒤에만 train/validation 분리와 pretrained baseline, embedding
 fine-tuning, reranker 비교를 다음 단계에서 수행합니다.
 
-## 승인 데이터 export와 split 준비
+## 승인 데이터 내보내기와 분할 준비
 
 검수한 민법 후보만 별도 dataset version으로 고정합니다. domain과 candidate pool
 version을 모두 지정하므로 기존 개인정보보호법 후보나 과거 민법 후보가 섞이지

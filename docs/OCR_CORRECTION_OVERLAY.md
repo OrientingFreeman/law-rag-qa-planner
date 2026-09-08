@@ -1,4 +1,4 @@
-# OCR correction overlay와 인쇄면수 추론
+# OCR 교정 오버레이와 인쇄면수 추론
 
 v4.27.5의 교정 overlay는 원본 private import JSON을 수정하지 않는다. 승인된 교정만 감사 실행 중
 메모리에서 적용하며, 원문 문자열이 해당 페이지에서 정확히 한 번 일치하지 않으면 중단한다.

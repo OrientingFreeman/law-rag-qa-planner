@@ -1,4 +1,4 @@
-# Retrieval Benchmark
+# 검색 벤치마크
 
 ## 목적과 평가 범위
 
@@ -43,7 +43,7 @@ index build time을 별도 기록합니다. 현재 production hybrid는 문항�
 구성을 포함한 end-to-end latency이므로 수치를 직접적인 모델 추론 속도 차이로
 해석하지 않습니다.
 
-## 재현 및 regression
+## 재현과 회귀 판정
 
 ```bash
 python -m tools.run_retrieval_benchmark \

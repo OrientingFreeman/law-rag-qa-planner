@@ -1,4 +1,4 @@
-# Evidence-Grounded Legal RAG & Agent Evaluation
+# 근거 기반 법률 RAG·Agent 평가
 
 [![CI](https://github.com/OrientingFreeman/law-rag-qa-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/OrientingFreeman/law-rag-qa-planner/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.12-3776AB?logo=python&logoColor=white)
@@ -27,7 +27,7 @@
 
 ## 핵심 결과
 
-### Retrieval benchmark
+### 검색 벤치마크
 
 공식 61개 사례 중 gold 근거가 있는 비유보 문항 45개를 동일한 Top-K 5 조건에서 비교했습니다.
 
@@ -39,7 +39,7 @@
 
 `semantic_lite`는 pretrained embedding이 아니라 의존성 없는 문자 n-gram 기준선입니다. 실제 embedding·reranker·fine-tuning 실험은 실행하지 않았으며, 미실행 모델의 성능 수치는 기록하지 않습니다.
 
-### Workflow safety evaluation
+### 워크플로 안전성 평가
 
 61개 동일 사례를 deterministic provider와 hybrid 검색 조건으로 실행한 폐쇄형 평가입니다.
 
@@ -116,10 +116,10 @@ python -m law_rag.api
 실행 후 다음 주소를 확인할 수 있습니다.
 
 - 웹 UI: `http://127.0.0.1:8000/`
-- OpenAPI: `http://127.0.0.1:8000/docs`
-- Health check: `http://127.0.0.1:8000/health`
+- OpenAPI 문서: `http://127.0.0.1:8000/docs`
+- 상태 확인: `http://127.0.0.1:8000/health`
 
-### Docker
+### Docker 실행
 
 ```bash
 docker compose up --build
@@ -223,14 +223,14 @@ tools/             # 데이터·평가·검수 CLI
 | [현재 체크포인트](PROJECT_CHECKPOINT_V4276.md) | v4.27.6 구현·검증 범위와 명시적 한계 |
 | [프로젝트 요약](docs/PROJECT_SUMMARY.md) | 문제, 기술적 기여, 평가와 활용 범위 |
 | [최종 검증](docs/FINAL_VERIFICATION.md) | 최신 회귀 테스트와 API 검증 |
-| [Retrieval Benchmark](docs/RETRIEVAL_BENCHMARK.md) | 검색기 비교 조건·수치·latency |
-| [Agent Workflow](docs/AGENT_WORKFLOW.md) | 10단계 실행과 trace 계약 |
+| [검색 벤치마크](docs/RETRIEVAL_BENCHMARK.md) | 검색기 비교 조건·수치·지연시간 |
+| [Agent 워크플로](docs/AGENT_WORKFLOW.md) | 10단계 실행과 추적 계약 |
 | [실험 비교](docs/EXPERIMENT_COMPARISON.md) | Baseline–Agent 비교와 trade-off |
 | [평가 보고서](docs/EVALUATION_REPORT.md) | 지표 정의와 사례별 실패 분석 |
 | [데이터 검수 가이드](docs/DATA_ANNOTATION_GUIDE.md) | gold·유보·검수 기준 |
-| [Hard-negative Pipeline](docs/HARD_NEGATIVE_PIPELINE.md) | 실패→후보→검수→export 흐름 |
-| [Legal Reasoning Schema](docs/LEGAL_REASONING_SCHEMA.md) | schema 범위와 E2E 미구현 경계 |
-| [OCR Provenance Audit](docs/OCR_PROVENANCE_AUDIT.md) | private OCR의 공개/비공개 경계 |
+| [Hard-negative 파이프라인](docs/HARD_NEGATIVE_PIPELINE.md) | 실패→후보→검수→내보내기 흐름 |
+| [법률 추론 스키마](docs/LEGAL_REASONING_SCHEMA.md) | 스키마 범위와 E2E 미구현 경계 |
+| [OCR 출처 감사](docs/OCR_PROVENANCE_AUDIT.md) | 비공개 OCR의 공개/비공개 경계 |
 
 버전별 상세 변경사항은 [PATCH_NOTES.md](PATCH_NOTES.md)를 참고하세요.
 

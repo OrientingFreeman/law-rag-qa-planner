@@ -1,4 +1,4 @@
-# Optional Cross-Encoder Reranker
+# 선택형 Cross-Encoder 재순위화
 
 ## 설계 경계
 
@@ -11,7 +11,7 @@ CrossEncoder를 import하거나 모델을 다운로드하지 않습니다.
 Query -> Retriever -> Top-N -> Optional CrossEncoder -> Top-K -> RAG
 ```
 
-## Benchmark method
+## 벤치마크 방법
 
 - `semantic_lite_reranker`
 - `hybrid_reranker`
@@ -22,7 +22,7 @@ Query -> Retriever -> Top-N -> Optional CrossEncoder -> Top-K -> RAG
 Top-K에서 비교해야 합니다. fine-tuned method는 명시적인 checkpoint 경로가 없으면
 실행을 거부합니다.
 
-## Latency와 결과 기록
+## 지연시간과 결과 기록
 
 문항별로 retrieval latency, reranking latency와 두 값의 합을 저장합니다.
 Reranked document에는 CrossEncoder score와 original retrieval rank가 함께 남습니다.

@@ -1,15 +1,15 @@
 
 
 ```markdown
-# Sample Query Result
+# 질의 결과 예시
 
 ## 사용자 질문
 
 민법상 불법행위 손해배상 요건은 무엇인가요?
 
-## Retrieval 결과
+## 검색 결과
 
-### Top 1
+### 1위 결과
 
 - 법령명: 민법
 - 조문: 제750조
@@ -30,9 +30,9 @@ LLM은 제공된 근거 문서만 사용해야 하며, 근거에 없는 내용�
 
 ## 평가
 
-- retrieval accuracy: 성공
-- answer grounding: 성공
-- source completeness: 성공
-- hallucination risk: 낮음
+- 검색 정확도: 성공
+- 답변 근거 충실성: 성공
+- 출처 완전성: 성공
+- 환각 위험: 낮음
 
 ```

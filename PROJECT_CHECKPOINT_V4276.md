@@ -1,151 +1,138 @@
-# Project Checkpoint: v4.27.6
+# 프로젝트 체크포인트: v4.27.6
 
-## Purpose
+## 목적
 
-This checkpoint records the implemented and verified state of the project at
-v4.27.6. The project treats legal AI quality as a chain of concerns: corpus
-structure, retrieval, evidence assignment, citation validation, safe
-abstention, human review, provenance, and regression evaluation.
+이 문서는 v4.27.6에서 구현하고 검증한 프로젝트 상태를 기록합니다. 이 프로젝트는
+법률 AI 품질을 코퍼스 구조, 검색, 근거 할당, 인용 검증, 안전한 답변 유보,
+사람 검수, 출처 추적과 회귀평가가 이어지는 하나의 과정으로 다룹니다.
 
-It does not treat a retrieved document, a generated answer, and a legal
-conclusion as interchangeable claims.
+검색된 문서, 생성된 답변과 법적 결론을 서로 같은 것으로 간주하지 않습니다.
 
-## Implemented scope
+## 구현 범위
 
-### Public legal RAG pipeline
+### 공개 법률 RAG 파이프라인
 
-- Official-law ingestion preserves provision structure and effective-date
-  metadata.
-- BM25, character n-gram `semantic_lite`, and hybrid retrieval are available
-  under a common benchmark interface.
-- Semantic evidence assignment and citation validation connect answer claims
-  to retrieved legal grounds.
-- The workflow records execution trace, retrieval strategy, warnings,
-  abstention reasons, and at most one bounded retry.
-- Evaluation separates retrieval, grounding/citation, and safety/abstention
-  outcomes; failures are recorded instead of being hidden by a single score.
+- 공식 법령 수집 과정에서 조문 구조와 시행일 메타데이터를 보존합니다.
+- BM25, 문자 n-gram `semantic_lite`와 하이브리드 검색을 공통 벤치마크
+  인터페이스로 제공합니다.
+- 의미 기반 근거 할당과 인용 검증으로 답변의 주장과 검색된 법적 근거를 연결합니다.
+- 워크플로는 실행 추적, 검색 전략, 경고, 답변 유보 사유와 최대 1회의 제한된
+  재시도를 기록합니다.
+- 평가 결과를 검색, 근거·인용과 안전성·답변 유보로 나누며, 실패를 하나의 점수
+  뒤에 숨기지 않고 기록합니다.
 
-### Reviewable data improvement path
+### 검수 가능한 데이터 개선 경로
 
-- `wrong_top1`, `retrieval_miss`, and `over_retrieval` results can create
-  hard-negative candidates.
-- Candidates require human review before versioned training-data export.
-- Dataset, corpus, split, and review metadata are checksummed to retain
-  provenance and prevent train/validation leakage.
+- `wrong_top1`, `retrieval_miss`, `over_retrieval` 결과로 hard-negative 후보를
+  만들 수 있습니다.
+- 후보는 버전이 지정된 학습 데이터로 내보내기 전에 사람의 검수를 통과해야 합니다.
+- 데이터셋, 코퍼스, 분할과 검수 메타데이터의 체크섬을 기록하여 출처를 추적하고
+  학습·검증 데이터 누수를 방지합니다.
 
-### Legal Reasoning foundation
+### 법률 추론 기반
 
-The implemented `LegalReasoningSchema` represents claim, cause of action,
-element, defense, counter-defense, burden, required fact, evidence type,
-follow-up question, legal basis, and provenance as separate nodes and
-relations. It validates internal references and supports deterministic JSON
-round-trip.
+구현된 `LegalReasoningSchema`는 청구권, 청구원인, 요건, 항변, 재항변,
+주장·증명책임, 필요 사실, 증거 유형, 후속 질문, 법적 근거와 출처를 각각의 노드와
+관계로 표현합니다. 내부 참조를 검증하며 결정론적인 JSON 왕복 변환을 지원합니다.
 
-This is a schema and integrity foundation, not an end-to-end legal conclusion
-engine. Automated extraction, fact-to-element matching, defense analysis, and
-end-to-end Legal Reasoning evaluation are outside the implemented scope.
+이는 스키마와 무결성 기반이지, 법적 결론을 처음부터 끝까지 자동 생성하는 엔진은
+아닙니다. 자동 추출, 사실→요건 매칭, 항변 분석과 전체 Legal Reasoning 평가는
+현재 구현 범위에 포함되지 않습니다.
 
-### Private OCR provenance and quality gate
+### 비공개 OCR 출처 추적과 품질 게이트
 
-The OCR import tooling keeps copyrighted source text and private source
-references outside the Git worktree. Public fixtures are authored minimal
-examples only.
+OCR 가져오기 도구는 저작권이 있는 원문과 비공개 출처 참조를 Git 작업 트리 밖에
+보관합니다. 공개 fixture는 최소한의 예시를 직접 작성한 것뿐입니다.
 
-For one separately held private source, the v4.27.6 final audit recorded:
+별도로 보관한 비공개 원천 1건에 대한 v4.27.6 최종 감사 결과는 다음과 같습니다.
 
-| Check | Result |
-| --- | --- |
-| Physical pages | 1,371 |
-| Final segments | 9,793 |
-| Approved text-correction overlays | 2 |
-| Applied printed-page decisions | 124 |
-| Missing printed-page labels | 0 |
-| Review queue | 0 |
-| Quality gate | `passed` |
+| 검사 항목 | 결과 |
+| --- | ---: |
+| 물리 페이지 | 1,371 |
+| 최종 세그먼트 | 9,793 |
+| 승인된 텍스트 교정 오버레이 | 2 |
+| 반영된 인쇄면수 결정 | 124 |
+| 누락된 인쇄면수 표지 | 0 |
+| 검수 대기열 | 0 |
+| 품질 게이트 | `passed` |
 
-The public repository contains neither the source text nor page snippets,
-private review queues, correction text, source paths, or derived knowledge
-base.
+공개 저장소에는 원문, 페이지 일부, 비공개 검수 대기열, 교정문, 원천 경로나 파생
+지식베이스를 포함하지 않습니다.
 
-## Current architecture
+## 현재 아키텍처
 
 ```mermaid
 flowchart TD
-    A["Official law sources"] --> B["Ingestion and normalized corpus"]
-    B --> C["BM25 / semantic-lite / hybrid retrieval"]
-    C --> D["Evidence assignment and citation validation"]
-    D --> E["Answer or safe abstention"]
-    E --> F["Evaluation and failure analysis"]
-    F --> G["Human review and versioned datasets"]
-    H["Private OCR source"] --> I["Provenance and quality audit"]
+    A["공식 법령 원천"] --> B["수집·정규화 코퍼스"]
+    B --> C["BM25 / semantic-lite / 하이브리드 검색"]
+    C --> D["근거 할당·인용 검증"]
+    D --> E["답변 또는 안전한 유보"]
+    E --> F["평가·실패 분석"]
+    F --> G["사람 검수·버전이 지정된 데이터셋"]
+    H["비공개 OCR 원천"] --> I["출처·품질 감사"]
     I --> G
 ```
 
-The private OCR path is an audit and provenance boundary. It does not expose
-source text to the public corpus or automatically approve legal knowledge.
+비공개 OCR 경로는 감사와 출처 추적을 위한 경계입니다. 원문을 공개 코퍼스에
+노출하거나 법률지식으로 자동 승인하지 않습니다.
 
-## Verified evaluation results
+## 검증된 평가 결과
 
-Metrics below remain tied to their own dataset, code version, and execution
-conditions. They are not interchangeable measures of a general legal-answer
-accuracy.
+아래 지표는 각 데이터셋, 코드 버전과 실행 조건에 연결되어 있습니다. 서로 바꾸어
+쓸 수 있는 일반적인 법률 답변 정확도 지표가 아닙니다.
 
-### Retrieval comparison: v4.18.0
+### 검색 비교: v4.18.0
 
-Source: [`docs/RETRIEVAL_BENCHMARK.md`](docs/RETRIEVAL_BENCHMARK.md). The benchmark uses
-the 45 gold-bearing, non-abstention cases selected from official dataset
-v2.0.0, Top-K 5, query rewrite on, and a local execution environment.
+출처: [`docs/RETRIEVAL_BENCHMARK.md`](docs/RETRIEVAL_BENCHMARK.md). 공식 데이터셋
+v2.0.0에서 정답 근거가 있고 답변 유보 대상이 아닌 45개 사례를 Top-K 5,
+질의 재작성 사용, 로컬 실행 환경에서 평가했습니다.
 
-| Method | Top-1 | Hit@5 | Recall@5 | MRR | nDCG@5 |
+| 검색 방법 | Top-1 | Hit@5 | Recall@5 | MRR | nDCG@5 |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | BM25 | 37.78% | 66.67% | 66.67% | 0.4689 | 0.5172 |
 | semantic-lite | 46.67% | 73.33% | 73.33% | 0.5748 | 0.6148 |
 | hybrid | 46.67% | 75.56% | 75.56% | 0.5730 | 0.6184 |
 
-`semantic_lite` is a dependency-free character n-gram baseline, not a dense
-embedding model. Latency is environment-sensitive and is documented separately
-from quality metrics.
+`semantic_lite`는 dense embedding 모델이 아니라 의존성 없는 문자 n-gram
+기준선입니다. 실행 환경에 민감한 지연시간은 품질 지표와 분리해 기록합니다.
 
-### Workflow safety comparison: v4.16.0
+### 워크플로 안전성 비교: v4.16.0
 
-Source: [`evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json`](evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json).
-This is a 61-case closed deterministic evaluation with hybrid retrieval,
-query rewrite, ontology reranking, and at most one retry.
+출처: [`evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json`](evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json).
+하이브리드 검색, 질의 재작성, ontology reranking과 최대 1회 재시도를 적용한
+61개 사례의 폐쇄형·결정론적 평가입니다.
 
-| Metric | Baseline | Agent workflow |
+| 지표 | 기준선 | Agent 워크플로 |
 | --- | ---: | ---: |
-| Overall pass rate | 59.02% | 68.85% |
-| Top-1 accuracy | 44.44% | 44.44% |
+| 전체 통과율 | 59.02% | 68.85% |
+| Top-1 정확도 | 44.44% | 44.44% |
 | Hit@K | 71.11% | 71.11% |
-| MRR | 0.5348 | 0.5348 |
-| Expected-abstention accuracy | 56.25% | 93.75% |
-| Outcome accuracy | 75.41% | 83.61% |
-| False-abstention rate | 17.78% | 20.00% |
+| 답변 유보 대상 정확도 | 56.25% | 93.75% |
+| 결과 정확도 | 75.41% | 83.61% |
+| 불필요한 답변 유보율 | 17.78% | 20.00% |
 
-The observed improvement came from safer handling of time ambiguity,
-unsupported scope, and false premises, not from a retrieval-ranking gain. The
-same run recorded 12 retries and a retry quality-improvement rate of 0%; retry
-therefore is not presented as a performance gain.
+관측된 개선은 검색 순위 향상이 아니라 시점 불명, 지원 범위 밖 질문과 거짓 전제를
+더 안전하게 처리한 결과입니다. 같은 실행에서 재시도는 12건, 재시도로 품질이
+개선된 비율은 0%였으므로 재시도를 성능 향상으로 제시하지 않습니다.
 
-### Current ML status
+### 현재 ML 상태
 
-The approved civil hard-negative dataset and deterministic train/validation
-split are prepared. Pretrained embedding benchmarks, reranker experiments,
-fine-tuning, and checkpoint evaluation have not been executed in this
-checkpoint; no unexecuted-model metrics are claimed.
+승인된 민법 hard-negative 데이터셋과 결정론적 학습·검증 분할을 준비했습니다.
+이 체크포인트에서는 사전 학습 embedding 벤치마크, reranker 실험, fine-tuning과
+체크포인트 평가를 실행하지 않았으며, 미실행 모델의 성능 수치를 주장하지 않습니다.
 
-## Verification and reproducibility
+## 검증과 재현
 
-The v4.27.6 local regression run used:
+v4.27.6 로컬 회귀 테스트는 다음 명령으로 실행했습니다.
 
 ```bash
 LAW_RAG_LLM_PROVIDER=deterministic python -m pytest -q
 ```
 
-Result: `324 passed, 1 warning in 174.25s`. The remaining warning is a
-Starlette TestClient/httpx deprecation warning and did not fail a test.
+결과는 `324 passed, 1 warning in 174.25s`입니다. 남은 경고 1건은 Starlette
+TestClient/httpx의 deprecation warning이며 테스트 실패가 아닙니다.
 
-Useful public checks include:
+공개 환경에서 실행할 수 있는 주요 검증 명령은 다음과 같습니다.
 
 ```bash
 python tools/validate_evaluation_dataset.py
@@ -157,33 +144,33 @@ python -m tools.run_retrieval_benchmark \
   --fail-under-mrr 0.45
 ```
 
-OCR provenance and decision artifacts must remain outside the repository and
-are intentionally not part of the public reproduction path.
+OCR 출처와 결정 산출물은 저장소 밖에 보관해야 하며, 의도적으로 공개 재현 경로에
+포함하지 않습니다.
 
-## Current limits and next work
+## 현재 한계와 다음 작업
 
-| Area | Current state |
+| 영역 | 현재 상태 |
 | --- | --- |
-| Legal RAG retrieval, grounding, citation checks, evaluation | Implemented and evaluable |
-| Legal Reasoning Schema and integrity validation | Implemented |
-| End-to-end Legal Reasoning MVP | Not implemented |
-| GPU retrieval enhancement | Data prepared; execution deferred |
-| Private OCR source audit | Completed in private storage; source not published |
+| 법률 RAG 검색·근거 연결·인용 검증·평가 | 구현 및 평가 가능 |
+| 법률 추론 스키마·무결성 검증 | 구현 |
+| E2E 법률 추론 MVP | 미구현 |
+| GPU 검색 고도화 | 데이터 준비, 실행 보류 |
+| 비공개 OCR 원천 감사 | 비공개 저장소에서 완료, 원문 미공개 |
 
-Planned work, not current capability:
+현재 기능이 아니라 계획된 작업은 다음과 같습니다.
 
-1. Manual legal knowledge curation
-2. Source extraction and review/approval
-3. Fact-to-element matching
-4. Defense and follow-up-question handling
-5. Evidence integration and Legal Reasoning evaluation
-6. End-to-end MVP, then retrieval-model experiments and civil-claim expansion
+1. 수동 법률지식 정제
+2. 원천 추출과 검수·승인
+3. 사실→요건 매칭
+4. 항변과 후속 질문 처리
+5. 증거 통합과 법률 추론 평가
+6. E2E MVP 완성 후 검색 모델 실험과 민사 청구 확장
 
-## Related documentation
+## 관련 문서
 
-- [`README.md`](README.md): system overview and public entry points
-- [`LEGAL_REASONING_SCHEMA.md`](docs/LEGAL_REASONING_SCHEMA.md): schema boundary
-- [`OCR_PROVENANCE_AUDIT.md`](docs/OCR_PROVENANCE_AUDIT.md): private OCR policy
-- [`PRINTED_PAGE_DECISIONS.md`](docs/PRINTED_PAGE_DECISIONS.md): approved page-label policy
-- [`EVALUATION_REPORT.md`](docs/EVALUATION_REPORT.md): workflow evaluation details
-- [`HARD_NEGATIVE_PIPELINE.md`](docs/HARD_NEGATIVE_PIPELINE.md): review-gated data path
+- [`README.md`](README.md): 시스템 개요와 공개 진입점
+- [`LEGAL_REASONING_SCHEMA.md`](docs/LEGAL_REASONING_SCHEMA.md): 스키마 경계
+- [`OCR_PROVENANCE_AUDIT.md`](docs/OCR_PROVENANCE_AUDIT.md): 비공개 OCR 정책
+- [`PRINTED_PAGE_DECISIONS.md`](docs/PRINTED_PAGE_DECISIONS.md): 승인된 페이지 표지 정책
+- [`EVALUATION_REPORT.md`](docs/EVALUATION_REPORT.md): 워크플로 평가 상세
+- [`HARD_NEGATIVE_PIPELINE.md`](docs/HARD_NEGATIVE_PIPELINE.md): 검수 기반 데이터 경로

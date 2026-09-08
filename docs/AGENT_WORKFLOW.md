@@ -1,4 +1,4 @@
-# Agent Workflow와 Execution Trace
+# Agent 워크플로와 실행 추적
 
 ## 1. 목적
 

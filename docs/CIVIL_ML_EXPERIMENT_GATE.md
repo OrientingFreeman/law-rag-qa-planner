@@ -1,4 +1,4 @@
-# 민법 ML Experiment Readiness Gate
+# 민법 ML 실험 준비도 게이트
 
 v4.25는 실제 모델 실행 전에 민법 ML 실험의 입력 조건을 고정합니다. 이 도구는
 모델을 다운로드하거나 학습·평가하지 않으며 성능 metric을 만들지 않습니다.
@@ -11,7 +11,7 @@ python -m tools.plan_civil_ml_experiment \
   --checkpoint evaluation/training/checkpoints/civil-retrieval-v1
 ```
 
-## 확인하는 Gate
+## 게이트 점검 항목
 
 - prepared dataset의 train/validation hash와 1건 이상의 split
 - `civil_transactions` 단일 domain 격리
@@ -20,7 +20,7 @@ python -m tools.plan_civil_ml_experiment \
 - Sentence Transformers 선택 의존성 설치 여부
 - fine-tuned checkpoint 존재 여부
 
-## Experiment Matrix
+## 실험 조합
 
 - Pretrained Embedding
 - Pretrained Embedding + Reranker

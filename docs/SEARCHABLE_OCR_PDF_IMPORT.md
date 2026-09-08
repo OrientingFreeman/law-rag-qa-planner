@@ -1,4 +1,4 @@
-# Searchable OCR PDF Import Adapter
+# 검색 가능한 OCR PDF 가져오기 어댑터
 
 v4.27.1은 텍스트 레이어가 있는 OCR PDF를 v4.27.0의 private OCR import
 envelope로 변환한다. OCR을 새로 수행하거나 문서 내용을 법률지식으로 승인하지

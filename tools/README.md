@@ -1,6 +1,6 @@
 # 도구 안내
 
-## Searchable OCR PDF import
+## 검색 가능한 OCR PDF 가져오기
 
 텍스트 레이어가 있는 OCR PDF를 v4.27.0 private envelope로 변환하고 선택적으로
 감사 보고서를 함께 생성합니다. full text JSON은 Git 저장소 밖에 출력해야 합니다.
@@ -17,7 +17,7 @@ python -m tools.import_ocr_pdf \
   --audit-output /private/path/ocr_audit.json
 ```
 
-## Private OCR provenance 감사
+## 비공개 OCR 출처 감사
 
 실제 OCR 원문을 공개 저장소에 복사하지 않고 private import envelope의 페이지
 구조와 위험 패턴을 감사합니다. 출력 보고서에는 원문과 private source path가
@@ -31,7 +31,7 @@ python -m tools.audit_ocr_source /private/path/ocr_import.json \
 `blocked`이면 명령은 exit code 2를 반환합니다. `passed`도 법률지식 승인을
 의미하지 않으며 후속 추출 결과에는 별도의 사람 검수가 필요합니다.
 
-## Agent 실험과 비교
+## Agent 워크플로 실험과 비교
 
 동일한 평가 데이터로 기존 Baseline과 Agent Workflow를 실행하고 비교합니다.
 
@@ -52,7 +52,7 @@ python -m tools.compare_rag_experiments \
 
 원시 결과는 `evaluation/experiments/`에 저장되며 기본적으로 Git에 포함하지 않습니다. 재현 가능한 검증 요약은 `evaluation/baselines/`에 둡니다.
 
-## Retrieval Benchmark
+## 검색 벤치마크
 
 안전성·유보 문항을 제외하고 정답 근거가 지정된 retrieval 문항만 동일한
 dataset/corpus version과 Top-K 조건에서 비교합니다.
@@ -105,7 +105,7 @@ python -m tools.run_retrieval_benchmark \
 `average_reranking_latency_ms`가 분리되어 저장됩니다. 실제 실행하지 않은
 조합의 성능 수치는 문서화하지 않습니다.
 
-## Retrieval Ablation
+## 검색 Ablation
 
 모든 검색 조합의 실행 가능 상태를 먼저 기록하고, 완료된 동일 조건 결과만
 baseline/treatment로 비교합니다. 기본 동작은 plan-only입니다.
@@ -188,7 +188,7 @@ python -m tools.plan_civil_ml_experiment \
   --checkpoint evaluation/training/checkpoints/civil-retrieval-v1
 ```
 
-## Embedding Fine-tuning 준비와 실행
+## 임베딩 미세조정 준비와 실행
 
 승인 dataset의 hash와 review 상태를 검증하고, 동일 query/case가 양쪽 split에
 들어가지 않도록 재현 가능한 triplet dataset을 생성합니다.
@@ -321,7 +321,7 @@ python -m tools.export_printed_page_decisions PRIVATE_REVIEW_QUEUE.json \
 
 감사 시 `--printed-page-decisions PRIVATE_PRINTED_PAGE_DECISIONS.json`을 추가한다.
 
-# OCR 인쇄면수 추론·교정 overlay (v4.27.5)
+# OCR 인쇄면수 추론·교정 오버레이 (v4.27.5)
 
 승인된 private correction overlay를 메모리에서 적용하고 인쇄면수 누락에 검토용 제안값을 만든다.
 

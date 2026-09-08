@@ -1,17 +1,17 @@
-# Hard-negative Candidate와 Human Review
+# Hard-negative 후보와 사람 검수
 
 ## 목적
 
-Retrieval Benchmark의 `wrong_top1`, `retrieval_miss`, `over_retrieval`을
+검색 벤치마크의 `wrong_top1`, `retrieval_miss`, `over_retrieval`을
 학습 데이터 후보로 환류합니다. 검색 결과에 등장했다는 이유만으로 실제
 negative라고 단정하지 않으며, 자동 후보는 항상 `review_required`로 생성됩니다.
 
 ```text
-Retrieval Benchmark
-→ Hard-negative Candidate
-→ Human Review
-→ Approved Candidate
-→ Versioned Training Dataset
+검색 벤치마크
+→ Hard-negative 후보
+→ 사람 검수
+→ 승인된 후보
+→ 버전이 지정된 학습 데이터셋
 ```
 
 ## 후보 생성
@@ -52,7 +52,7 @@ case, method, positive와 negative ID의 canonical content로 결정합니다.
 
 공개 데모에서는 기존 정책과 동일하게 검수 쓰기가 비활성화됩니다.
 
-## 승인 데이터 export
+## 승인 데이터 내보내기
 
 ```bash
 python -m tools.export_hard_negative_dataset \

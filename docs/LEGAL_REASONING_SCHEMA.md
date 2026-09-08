@@ -1,4 +1,4 @@
-# Legal Reasoning Schema v0
+# 법률 추론 스키마 v0
 
 `law_rag.reasoning.legal_schema`는 검색용 `LegalOntology`와 별개의 지식
 구조 계층이다. `LegalOntology`가 용어 정규화와 retrieval 보강을 담당하는 반면,

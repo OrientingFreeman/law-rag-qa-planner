@@ -1,4 +1,4 @@
-## v4.27.6 - Approved Printed-page Mapping
+## v4.27.6 - 승인된 인쇄면수 매핑
 
 - 고신뢰도 인쇄면수 추론값을 별도 private decision JSON으로 내보냅니다.
 - 원본 확인으로 인쇄면수가 없다고 판정한 페이지를 `verified_label_absent`로 기록합니다.
@@ -6,7 +6,7 @@
 - 결정 파일을 원본 OCR content SHA-256에 묶어 오래된 매핑 적용을 거부합니다.
 - 기존 탐지값과 충돌하는 배정 또는 표지 부재 결정은 즉시 거부합니다.
 
-## v4.27.5 - Printed-page Inference and Correction Overlay
+## v4.27.5 - 인쇄면수 추론과 교정 오버레이
 
 - 최소 20개·80% 이상 지지를 요구하는 물리면-인쇄면 최빈 오프셋 추론을 추가합니다.
 - 누락 인쇄면수에 제안값, high/medium 신뢰도, 근거를 기록하되 자동 승인하지 않습니다.
@@ -14,7 +14,7 @@
 - 원본 private import를 변경하지 않는 승인형 text correction overlay를 지원합니다.
 - 교정 문자열은 해당 페이지에서 정확히 한 번 일치해야 하며 전후 SHA-256과 검토 이력을 private 큐에 보존합니다.
 
-## v4.27.4 - Private OCR Warning Review Queue
+## v4.27.4 - 비공개 OCR 경고 검수 대기열
 
 - 인쇄면수 누락을 front matter 후보, 비본문, 실제 탐지 공백으로 분류합니다.
 - 호환 한자와 부정어 띄어쓰기에는 제한된 문맥만 담은 private 검토 큐를 생성합니다.
@@ -22,21 +22,21 @@
 - 승인된 경고는 삭제하지 않고 동일 warning ID를 유지한 `info` 감사 이력으로 낮춥니다.
 - 현재 감사 결과와 일치하지 않는 오래된 warning decision은 적용을 거부합니다.
 
-## v4.27.3 - Negation Audit False-positive Fix
+## v4.27.3 - 부정 표현 감사 오탐 수정
 
 - 정상적인 법률 문구 `아니 된다`를 `suspect_negation` 오류에서 제외합니다.
 - `아니 뇐다`, `아니 됀다`, `아니 되ㄴ다`처럼 명백한 OCR 오인식만 차단합니다.
 - `아니 된 다`는 차단 대신 `suspect_negation_spacing` 검토 경고로 기록합니다.
 - 인쇄면수 누락 건수를 감사 요약에 명시합니다.
 
-## v4.27.2 - OCR Re-audit and Footnote-aware Layout Hints
+## v4.27.2 - OCR 재감사와 각주 인식 레이아웃 힌트
 
 - 검토자가 승인한 blank/divider 등 비본문 페이지는 오류 대신 정보로 기록합니다.
 - 기존 private import JSON에서 결합형 머리말의 인쇄면수를 재탐지할 수 있습니다.
 - 고정 50% 분할 없이 각주 표지 군집을 이용해 본문/각주 후보 provenance만 남깁니다.
 - 원문과 private 경로는 계속 public audit report에 포함하지 않습니다.
 
-## v4.27.1 - Searchable OCR PDF Import Adapter
+## v4.27.1 - 검색 가능한 OCR PDF 가져오기 어댑터
 
 - 텍스트 레이어가 있는 OCR PDF를 페이지별 private import envelope로 변환합니다.
 - PDF의 1-based 물리 페이지 번호와 인쇄 페이지 표지 후보를 분리해 보존합니다.
@@ -48,7 +48,7 @@
 - searchable minimal PDF fixture를 실행 중 생성해 실제 page extraction과 공개/비공개 경계를 검증합니다.
 - 법률지식 추출·승인, 완성형 PDF layout reconstruction 및 GPU/ML 작업은 포함하지 않습니다.
 
-## v4.27.0 - OCR Source Provenance & Quality Audit
+## v4.27.0 - OCR 원천 출처·품질 감사
 
 - private OCR import용 source manifest와 page envelope를 추가합니다.
 - 문서·판·장·절·페이지·문단·문자 span 및 원문 SHA-256을 안정적인 segment provenance로 기록합니다.
@@ -59,7 +59,7 @@
 - 공개 fixture는 직접 작성한 최소 텍스트만 사용하며 실제 저작권 OCR 자료를 포함하지 않습니다.
 - 기존 Q&A, retrieval, evaluation, training review 및 GPU 보류 상태를 변경하지 않습니다.
 
-## v4.26.0 - Legal Reasoning Schema v0
+## v4.26.0 - 법률 추론 스키마 v0
 
 - 검색용 `LegalOntology` 및 요청별 evidence/argument graph와 분리된 정적 Legal Reasoning Schema를 추가합니다.
 - Claim, Cause of Action, Element, Defense, Counter-defense, 주장·증명책임, 필요 사실, 증거 유형, 후속 질문 및 법적 근거를 안정적인 ID로 표현합니다.
@@ -69,7 +69,7 @@
 - 공개 법령과 직접 작성한 최소 구조만 사용하는 대여금반환청구 파일럿 fixture를 `review_required` 상태로 제공합니다.
 - OCR 원문, 자동 OCR 추출, review UI, matching/reasoning engine, graph DB 및 ML 실행은 포함하지 않습니다.
 
-## v4.25.1 - Completed Review Queue UX
+## v4.25.1 - 검수 완료 대기열 UX
 
 - 승인뿐 아니라 수정 요청·거절도 한 번 처리된 후보로 판정해 기본 검수 큐에서 제외합니다.
 - `처리된 후보도 표시`를 선택하면 모든 처리 결과를 다시 조회할 수 있습니다.
@@ -79,7 +79,7 @@
 - 기존 `include_approved` API query는 승인 결과만 표시하는 하위 호환 동작으로 유지합니다.
 - 기존 append-only 검수 기록과 승인 dataset export 정책은 변경하지 않습니다.
 
-## v4.25.0 - Civil ML Experiment Readiness Gate
+## v4.25.0 - 민법 ML 실험 준비도 게이트
 
 - 민법 approved split, 민법 gold-bearing 평가 문항, 선택 ML 의존성, fine-tuned checkpoint를 독립 gate로 검사합니다.
 - pretrained embedding, pretrained + reranker, fine-tuning, fine-tuned embedding, fine-tuned + reranker의 실행 가능 상태를 하나의 matrix로 기록합니다.
@@ -88,7 +88,7 @@
 - gate는 모델을 다운로드·학습·평가하지 않으며 performance metric을 생성하지 않습니다.
 - 결과를 기존 JSON Experiment Store에 저장하여 이후 실제 ML 실행 조건의 근거로 사용합니다.
 
-## v4.24.0 - Civil Approved Dataset Export & Split Preparation
+## v4.24.0 - 민법 승인 데이터셋 내보내기·분할 준비
 
 - 기존 generic export를 유지하면서 `civil_transactions` domain과 `civil-*` candidate pool version을 함께 지정할 수 있습니다.
 - 승인된 후보 중 선택 범위에 일치하는 레코드만 export하고 domain, category, candidate pool version을 보존합니다.
@@ -98,14 +98,14 @@
 - 개인정보보호법 등 기존 승인 데이터와 회귀 baseline은 변경하거나 삭제하지 않습니다.
 - 첨부 패키지에는 로컬 수동 검수 이력이 없으므로 실제 민법 dataset은 승인 기록이 있는 사용자 환경에서만 생성됩니다.
 
-## v4.23.1 - Grouped Hard-negative Review Queue
+## v4.23.1 - 사례별 Hard-negative 검수 대기열
 
 - 같은 평가 사례와 retrieval method에서 파생된 여러 hard negative를 기본적으로 사례당 한 장으로 묶어 표시합니다.
 - 숨겨진 추가 후보 수를 표시하고 `같은 사례의 추가 후보도 표시`를 선택하면 모든 후보를 독립적으로 검수할 수 있습니다.
 - candidate pool version 필터를 추가해 기존 후보와 신규 민법 배치를 구분합니다.
 - 기존 append-only 후보·검수 기록은 삭제하거나 변경하지 않습니다.
 
-## v4.23.0 - Civil-law ML Review Readiness
+## v4.23.0 - 민법 ML 검수 준비도
 
 - 기존 개인정보보호법 corpus·평가·회귀 baseline을 변경하지 않고 신규 ML 수동 검수의 기본 도메인을 민법으로 분리합니다.
 - 도메인별 corpus 범위, 평가 문항, gold 근거 해소 여부, benchmark 실패와 hard-negative 후보를 감사하는 CLI를 추가합니다.
@@ -115,7 +115,7 @@
 - 자동 발견 후보는 계속 `review_required`이며, 수동 승인 전 자동 학습을 허용하지 않습니다.
 - synthetic 민법 사례나 신규 정답 데이터는 이번 패치에서 추가하지 않습니다.
 
-## v4.22.0 - Retrieval Ablation Runner
+## v4.22.0 - 검색 Ablation 실행기
 
 - BM25부터 fine-tuned embedding + reranker까지 일곱 검색 조합을 하나의 재현 가능한 실행 계획으로 관리합니다.
 - 기본 명령은 모델을 실행하지 않는 plan-only이며, `--execute`로 명시한 사용 가능한 조합만 실제 benchmark를 수행합니다.
@@ -125,7 +125,7 @@
 - 결과를 기존 Experiment Store에 저장하고 Evaluation UI의 Retrieval Ablation 영역에서 조회합니다.
 - runner는 특정 법률 도메인에 종속되지 않으며 민법 학습·검수 데이터 보강은 다음 별도 패치로 유지합니다.
 
-## v4.21.0 - Optional Cross-Encoder Reranker Infrastructure
+## v4.21.0 - 선택형 Cross-Encoder 재순위화 기반
 
 - core retriever와 독립된 `ProvisionReranker` interface와 lazy-loaded Sentence Transformers `CrossEncoder` adapter를 추가합니다.
 - retriever Top-N 후보만 rerank하고 최종 Top-K를 반환하며, 동점은 원래 retrieval 순서를 보존합니다.
@@ -134,7 +134,7 @@
 - reranker를 사용하지 않으면 기존 ranking이 변하지 않으며 ML 모델을 다운로드하지 않습니다.
 - injected fake CrossEncoder로 CI를 검증하고, 실제 실행하지 않은 모델 조합의 성능 수치는 기록하지 않습니다.
 
-## v4.20.0 - Reproducible Embedding Training Pipeline
+## v4.20.0 - 재현 가능한 임베딩 학습 파이프라인
 
 - 승인된 hard-negative dataset의 manifest hash, record count, review 상태와 positive/negative 충돌을 학습 전에 검증합니다.
 - 동일 evaluation case 또는 query가 train과 validation에 동시에 들어가지 않도록 group 단위 deterministic split을 생성합니다.
@@ -150,7 +150,7 @@
 - 기존 후보 파일, append-only 검수 이력, API는 그대로 유지하므로 데이터 마이그레이션이 필요 없습니다.
 - 평가 콘솔에서는 학습 후보 전용 DOM과 이벤트를 제거해 두 화면의 책임을 명확히 했습니다.
 
-## v4.19.0 - Hard-negative Candidate와 Human Review
+## v4.19.0 - Hard-negative 후보와 사람 검수
 
 - Retrieval Benchmark의 `wrong_top1`, `retrieval_miss`, `over_retrieval`에서 후보를 생성합니다.
 - 실제 corpus의 조문·항·호 본문을 positive와 hard-negative에 포함합니다.
@@ -160,7 +160,7 @@
 - 공개 데모의 검수 쓰기 차단 정책을 그대로 적용합니다.
 - embedding fine-tuning과 자동 재학습은 다음 독립 패치로 유지합니다.
 
-## v4.18.0 - 재현 가능한 Retrieval Benchmark
+## v4.18.0 - 재현 가능한 검색 벤치마크
 
 - 공식 61문항에서 gold-bearing non-abstention retrieval 문항 45개를 자동 분리합니다.
 - BM25, 기존 문자 n-gram `semantic_lite`, production hybrid를 동일 조건에서 비교합니다.
@@ -170,7 +170,7 @@
 - CI에서 Hit@K와 MRR 기준선 하락을 감지합니다.
 - hard-negative dataset과 embedding fine-tuning은 다음 독립 패치로 유지합니다.
 
-## v4.17.2 - 콘솔에서 Baseline·Agent 실험 실행
+## v4.17.2 - 콘솔에서 기준선·Agent 실험 실행
 
 - 저장된 실험 영역에서 61개 전체 데이터의 Baseline 또는 Agent 실험을 직접 실행할 수 있습니다.
 - 실행 중 중복 요청을 차단하고, 완료된 실험을 저장한 뒤 해당 선택 목록에 자동 반영합니다.
@@ -181,7 +181,7 @@
 - 홈 상단 탐색 메뉴와 주요 실행 버튼에 Agent 실행·평가 콘솔 진입 경로를 추가했습니다.
 - 좁은 화면에서도 기존 CTA와 함께 세로로 배치되도록 기존 반응형 규칙을 재사용했습니다.
 
-## v4.17.0 - Agent Trace 데모와 최종 문서화
+## v4.17.0 - Agent 실행 추적 데모와 최종 문서화
 
 - 기존 내부 평가 콘솔에 10단계 Agent 실행 Trace를 표시합니다.
 - 단계별 성공·경고·보류·실패, 검색 전략, 선택 근거, 재시도, confidence와 중단 사유를 확인할 수 있습니다.
@@ -191,7 +191,7 @@
 - README, Agent Workflow, 실험 비교, 평가 보고서와 최종 검증 문서를 실제 측정 결과에 맞게 갱신합니다.
 - 외부 공개 문구를 특정 조직이나 사용 목적에 종속되지 않는 범용 기술 데모 설명으로 정리했습니다.
 
-## v4.16.0 - Safety Evaluation과 재현 가능한 실험 비교
+## v4.16.0 - 안전성 평가와 재현 가능한 실험 비교
 
 - 안전한 보류·추가 사실 요청·정상 답변을 검증하는 경계 사례 12개를 추가해 공식 평가 데이터를 61개로 확장했습니다.
 - lexical, semantic, hybrid 검색 전략과 query rewrite·ontology reranking 설정을 실제 실행 옵션으로 분리했습니다.
@@ -202,7 +202,7 @@
 - 실험 실행·목록·상세·비교·실패 사례 조회 API와 CLI를 제공합니다.
 - 실험 원문은 Git에서 제외하며 실제 측정 결과는 실행 환경·설정과 함께 JSON으로 재현합니다.
 
-## v4.15.0 - Agent Core와 실행 추적
+## v4.15.0 - Agent 핵심 기능과 실행 추적
 
 - 기존 검색·추론·생성 기능을 10단계의 명시적인 Agent Workflow로 오케스트레이션합니다.
 - 각 실행에 `run_id`를 부여하고 단계 상태, 소요시간, 검색 전략, 선택 근거, 경고와 중단 사유를 `execution_trace`에 기록합니다.

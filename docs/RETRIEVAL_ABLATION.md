@@ -1,4 +1,4 @@
-# Retrieval Ablation Runner
+# 검색 Ablation 실행기
 
 v4.22의 Retrieval Ablation Runner는 검색 조합의 구현 여부와 실제 실행 결과를
 분리하여 관리합니다. 특정 법률 분야에 종속되지 않으며 동일한 dataset, corpus,

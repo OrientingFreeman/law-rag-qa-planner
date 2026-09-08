@@ -1,4 +1,4 @@
-# Baseline과 Agent Workflow 실험 비교
+# 기준선과 Agent 워크플로 실험 비교
 
 ## 1. 비교 원칙
 

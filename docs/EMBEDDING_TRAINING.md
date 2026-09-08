@@ -1,23 +1,23 @@
-# Reproducible Embedding Training
+# 재현 가능한 임베딩 학습
 
 ## 범위
 
-이 파이프라인은 Human Review에서 승인된 hard-negative만 법률 retrieval embedding
-학습에 사용합니다. 자동 발견된 failure를 검증 없이 학습하거나, 로컬 기본 테스트에서
+이 파이프라인은 사람 검수에서 승인된 hard-negative만 법률 검색 임베딩
+학습에 사용합니다. 자동 발견된 실패를 검증 없이 학습하거나, 로컬 기본 테스트에서
 외부 모델을 다운로드하지 않습니다.
 
 ## 데이터 흐름
 
 ```text
-Retrieval Benchmark
-  -> Hard-negative Candidate
-  -> Human Review
-  -> Approved Versioned Dataset
-  -> Manifest/Conflict Validation
-  -> Group-safe Train/Validation Triplets
-  -> Plan-only or Explicit Fine-tuning
-  -> Checkpoint
-  -> Retrieval Benchmark Comparison
+검색 벤치마크
+  -> Hard-negative 후보
+  -> 사람 검수
+  -> 승인된 버전 데이터셋
+  -> Manifest·충돌 검증
+  -> 그룹 누수를 방지한 학습·검증 triplet
+  -> 실행 계획 또는 명시적 미세조정
+  -> 체크포인트
+  -> 검색 벤치마크 비교
 ```
 
 split 기준은 `source.dataset_id + source.case_id`이며 case ID가 없으면 query hash를
