@@ -99,7 +99,13 @@ Legal Reasoning 영역은 Claim, Cause of Action, Element, Defense, Counter-defe
 
 ## 빠른 실행
 
-### 로컬
+### 공개 데모
+
+- 웹 UI: [https://lawreasoning-demo.duckdns.org/](https://lawreasoning-demo.duckdns.org/)
+- OpenAPI 문서: [https://lawreasoning-demo.duckdns.org/docs](https://lawreasoning-demo.duckdns.org/docs)
+- 상태 확인: [https://lawreasoning-demo.duckdns.org/health](https://lawreasoning-demo.duckdns.org/health)
+
+### 로컬 실행
 
 ```bash
 git clone https://github.com/OrientingFreeman/law-rag-qa-planner.git
@@ -113,11 +119,7 @@ cp .env.example .env
 python -m law_rag.api
 ```
 
-실행 후 다음 주소를 확인할 수 있습니다.
-
-- 웹 UI: `http://127.0.0.1:8000/`
-- OpenAPI 문서: `http://127.0.0.1:8000/docs`
-- 상태 확인: `http://127.0.0.1:8000/health`
+로컬 개발 서버는 기본적으로 포트 `8000`을 사용합니다.
 
 ### Docker 실행
 
@@ -128,7 +130,9 @@ docker compose up --build
 ### API 예시
 
 ```bash
-curl -X POST http://127.0.0.1:8000/answer \
+DEMO_BASE_URL=https://lawreasoning-demo.duckdns.org
+
+curl -X POST "$DEMO_BASE_URL/answer" \
   -H 'Content-Type: application/json' \
   -d '{
     "question": "개인정보 수집 동의 요건은 무엇인가요?",
@@ -137,10 +141,13 @@ curl -X POST http://127.0.0.1:8000/answer \
   }'
 ```
 
-Agent trace를 포함한 실행:
+관리자 인증 후 Agent trace를 포함한 실행:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/agent/runs \
+DEMO_BASE_URL=https://lawreasoning-demo.duckdns.org
+
+curl -u "${LAW_RAG_ADMIN_USERNAME}:${LAW_RAG_ADMIN_PASSWORD}" \
+  -X POST "$DEMO_BASE_URL/agent/runs" \
   -H 'Content-Type: application/json' \
   -d '{
     "question": "개정 전 개인정보 수집 동의 요건은 무엇인가요?",
