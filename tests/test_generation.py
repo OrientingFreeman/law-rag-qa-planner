@@ -239,6 +239,34 @@ def test_answer_v3_returns_structured_legal_qa_fields():
     assert isinstance(response["related_provisions"], list)
 
 
+def test_answer_excludes_unrelated_candidate_and_phantom_conflict():
+    service = LawRagService(
+        data_path="data/legal_corpus.json",
+        domains_path="domains",
+        llm_provider=DeterministicProvider(),
+    )
+
+    response = service.answer(
+        "개인정보 수집 동의 요건은 무엇인가요?",
+        domain_id="digital_business",
+        top_k=3,
+    )
+
+    citations = [row["citation"] for row in response["results"]]
+    reasoning_citations = [row["citation"] for row in response["reasoning_chain"]]
+    reasoning_steps = [
+        row["type"] for row in response["legal_reasoning_path"]["steps"]
+    ]
+
+    assert response["abstain"] is False
+    assert response["multi_path_reasoning"]["status"] == "not_applicable"
+    assert all("제15조의3" not in citation for citation in citations)
+    assert all("제15조의3" not in citation for citation in reasoning_citations)
+    assert "resolve_rule_conflict" not in reasoning_steps
+    assert "제15조의3" not in response["display_answer"]
+    assert "규칙 충돌" not in response["display_answer"]
+
+
 def test_answer_v3_extracts_list_points_and_contextual_facts():
     from law_rag.generation.analysis import build_answer_structure, classify_question
     from law_rag.retrieval.aggregation import aggregate_evidence
@@ -1329,7 +1357,7 @@ def test_answer_v22_resolves_rule_competition_before_planning():
     assert resolution["resolved_count"] == resolution["decision_count"]
     assert any(row["resolution_type"] == "exception_controls" for row in resolution["decisions"])
     decision_steps = [step for step in path["steps"] if step["type"] == "resolve_rule_conflict"]
-    assert len(decision_steps) == resolution["decision_count"]
+    assert len(decision_steps) == resolution["conflict_count"]
     assert all(step["source_decision_id"] for step in decision_steps)
 
 

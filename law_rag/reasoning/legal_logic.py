@@ -483,7 +483,11 @@ def derive_reasoning_path_from_logic_tree(
             row for row in (conflict_resolution or {}).get("decisions", [])
             if str(row.get("issue_id")) == issue_id
         ), None)
-        if decision and decision.get("resolved"):
+        if (
+            decision
+            and decision.get("resolved")
+            and decision.get("resolution_type") == "exception_controls"
+        ):
             steps.append({
                 "step": step_no,
                 "type": "resolve_rule_conflict",

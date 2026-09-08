@@ -58,6 +58,31 @@ def _paragraph_order(result: SearchResult) -> int:
     return int(match.group(1)) if match else 0
 
 
+def _is_explicit_limitation(source: SearchResult, primary_results: list[SearchResult]) -> bool:
+    text = source.provision.text or ""
+    limitation_terms = ("다만", "예외로", "적용하지 아니", "아니 된다", "금지", "초과하여")
+    if not any(token in text for token in limitation_terms):
+        return False
+    references = _article_tokens(text)
+    for target in primary_results:
+        same_provision = (
+            source.provision.law_id == target.provision.law_id
+            and source.provision.article_no == target.provision.article_no
+        )
+        if same_provision or target.provision.article_no in references:
+            return True
+    return False
+
+
+def _misses_query_qualifier(result: SearchResult, plan: object) -> bool:
+    qualifiers = [str(value).strip() for value in getattr(plan, "qualifiers", []) if str(value).strip()]
+    if not qualifiers:
+        return False
+    provision = result.provision
+    searchable = " ".join(filter(None, [provision.article_title, provision.topic, provision.text]))
+    return not any(value in searchable for value in qualifiers)
+
+
 def _typed_relation(source: SearchResult, target: SearchResult, shared: set[str]) -> tuple[str, float, str] | None:
     if not shared:
         return None
@@ -288,6 +313,8 @@ def build_evidence_graph(
     target_set = set(targets)
     nodes: list[EvidenceNode] = []
     covered: set[str] = set()
+    primary_limit = max(1, len(targets))
+    primary_results = results[:primary_limit]
 
     for index, result in enumerate(results):
         issues = sorted(matched_issue_ids(result, plan, ontology=ontology))
@@ -296,8 +323,10 @@ def build_evidence_graph(
         role = "primary" if issues and index < max(1, len(targets)) else "supporting"
         if result.retrieval_reason.startswith("related") or result.relation_score > 0:
             role = "implementing" if result.provision.document_type in {"시행령", "시행규칙"} else "related"
-        if any(token in result.provision.text for token in ("다만", "제외", "아니 된다", "금지", "초과하여")) and issues:
+        if _is_explicit_limitation(result, primary_results) and issues:
             role = "exception" if role != "primary" else role
+        elif role == "supporting" and issues and _misses_query_qualifier(result, plan):
+            role = "candidate"
 
         result.evidence_role = role
         result.issue_ids = issues

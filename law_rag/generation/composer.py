@@ -75,6 +75,8 @@ def _role_for(result: SearchResult, actions: set[str]) -> str:
         return "primary"
     if "국외이전" in actions and article == "제28조의8":
         return "primary"
+    if result.evidence_role in {"exception", "supporting", "implementing", "related"}:
+        return result.evidence_role
     if result.retrieval_reason in {"direct", "planned"}:
         return "primary"
     return "supporting"

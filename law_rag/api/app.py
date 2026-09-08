@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
@@ -9,6 +10,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 
 from law_rag.api.schemas import (
@@ -26,6 +28,9 @@ from law_rag.api.schemas import (
     LawResponse,
     QueryRequest,
     QueryResponse,
+    PublicAnswerResponse,
+    PublicQueryResponse,
+    PublicRetrieveResponse,
     RetrieveResponse,
 )
 from law_rag.evaluation.runner import EvaluationRunner, load_dataset, write_report
@@ -84,6 +89,10 @@ def create_app(
     ).strip().lower() in {"1", "true", "yes", "on"}
     demo_max_requests = max(1, int(os.getenv("LAW_RAG_DEMO_MAX_REQUESTS", "20")))
     demo_window_seconds = max(60, int(os.getenv("LAW_RAG_DEMO_WINDOW_SECONDS", "3600")))
+    admin_username = os.getenv("LAW_RAG_ADMIN_USERNAME", "").strip()
+    admin_password = os.getenv("LAW_RAG_ADMIN_PASSWORD", "")
+    admin_auth_required = public_demo or bool(admin_username or admin_password)
+    admin_security = HTTPBasic(auto_error=False)
     request_history: dict[str, deque[float]] = defaultdict(deque)
 
     @asynccontextmanager
@@ -115,7 +124,10 @@ def create_app(
 
     @app.middleware("http")
     async def public_demo_rate_limit(request: Request, call_next):
-        limited_paths = {"/answer", "/query", "/retrieve", "/agent/runs"}
+        limited_paths = {
+            "/answer", "/query", "/retrieve", "/agent/runs",
+            "/internal/answer", "/internal/query", "/internal/retrieve",
+        }
         if public_demo and request.method == "POST" and request.url.path in limited_paths:
             client_key = request.client.host if request.client else "unknown"
             now = time.monotonic()
@@ -140,6 +152,42 @@ def create_app(
 
     def get_service(request: Request) -> LawRagService:
         return request.app.state.law_rag_service
+
+    def require_admin(
+        request: Request,
+        credentials: HTTPBasicCredentials | None = Depends(admin_security),
+    ) -> str | None:
+        if not admin_auth_required:
+            return None
+        if not admin_username or not admin_password:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "code": "admin_auth_not_configured",
+                    "message": "관리자 인증 정보가 설정되지 않았습니다.",
+                },
+            )
+        forwarded_proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+        if public_demo and forwarded_proto.split(",", 1)[0].strip().lower() != "https":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "admin_https_required",
+                    "message": "관리자 기능은 HTTPS 연결에서만 사용할 수 있습니다.",
+                },
+            )
+        valid = bool(credentials) and secrets.compare_digest(
+            credentials.username.encode("utf-8"), admin_username.encode("utf-8")
+        ) and secrets.compare_digest(
+            credentials.password.encode("utf-8"), admin_password.encode("utf-8")
+        )
+        if not valid:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"code": "admin_auth_required", "message": "관리자 인증이 필요합니다."},
+                headers={"WWW-Authenticate": 'Basic realm="law-rag-admin", charset="UTF-8"'},
+            )
+        return credentials.username
 
     def validate_domain(service: LawRagService, domain_id: str) -> None:
         if domain_id == "all":
@@ -191,14 +239,15 @@ def create_app(
         )
 
     @app.get("/internal/evaluation", include_in_schema=False)
-    def internal_evaluation_ui() -> FileResponse:
+    @app.get("/evaluation", include_in_schema=False)
+    def internal_evaluation_ui(_: str | None = Depends(require_admin)) -> FileResponse:
         return FileResponse(
             STATIC_DIR / "evaluation.html",
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
         )
 
     @app.get("/internal/training-review", include_in_schema=False)
-    def internal_training_review_ui() -> FileResponse:
+    def internal_training_review_ui(_: str | None = Depends(require_admin)) -> FileResponse:
         return FileResponse(
             STATIC_DIR / "training-review.html",
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
@@ -209,6 +258,7 @@ def create_app(
         return {
             "public_demo": public_demo,
             "evaluation_run_enabled": evaluation_run_enabled,
+            "admin_auth_required": admin_auth_required,
             "max_requests": demo_max_requests if public_demo else None,
             "window_seconds": demo_window_seconds if public_demo else None,
         }
@@ -232,24 +282,56 @@ def create_app(
         validate_domain(service, domain)
         return service.list_laws(domain_id=domain)
 
-    @app.post("/retrieve", response_model=RetrieveResponse, tags=["retrieval"])
+    retrieve_model = PublicRetrieveResponse if public_demo else RetrieveResponse
+    query_model = PublicQueryResponse if public_demo else QueryResponse
+    answer_model = PublicAnswerResponse if public_demo else AnswerResponse
+
+    @app.post("/retrieve", response_model=retrieve_model, tags=["retrieval"])
     def retrieve(payload: QueryRequest, service: LawRagService = Depends(get_service)) -> dict[str, object]:
         validate_domain(service, payload.domain)
         return service.retrieve(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
 
-    @app.post("/answer", response_model=AnswerResponse, tags=["qa"])
+    @app.post("/answer", response_model=answer_model, tags=["qa"])
     def answer(payload: QueryRequest, service: LawRagService = Depends(get_service)) -> dict[str, object]:
         validate_domain(service, payload.domain)
         return service.answer(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
 
-    @app.post("/query", response_model=QueryResponse, tags=["qa"])
+    @app.post("/query", response_model=query_model, tags=["qa"])
     def query(payload: QueryRequest, service: LawRagService = Depends(get_service)) -> dict[str, object]:
         validate_domain(service, payload.domain)
         return service.query(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
 
+    @app.post("/internal/retrieve", response_model=RetrieveResponse, include_in_schema=False)
+    def internal_retrieve(
+        payload: QueryRequest,
+        service: LawRagService = Depends(get_service),
+        _: str | None = Depends(require_admin),
+    ) -> dict[str, object]:
+        validate_domain(service, payload.domain)
+        return service.retrieve(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
+
+    @app.post("/internal/query", response_model=QueryResponse, include_in_schema=False)
+    def internal_query(
+        payload: QueryRequest,
+        service: LawRagService = Depends(get_service),
+        _: str | None = Depends(require_admin),
+    ) -> dict[str, object]:
+        validate_domain(service, payload.domain)
+        return service.query(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
+
+    @app.post("/internal/answer", response_model=AnswerResponse, include_in_schema=False)
+    def internal_answer(
+        payload: QueryRequest,
+        service: LawRagService = Depends(get_service),
+        _: str | None = Depends(require_admin),
+    ) -> dict[str, object]:
+        validate_domain(service, payload.domain)
+        return service.answer(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
+
     @app.post("/agent/runs", response_model=AgentRunResponse, tags=["agent"])
     def run_agent(payload: AgentRunRequest, request: Request,
-                  service: LawRagService = Depends(get_service)) -> dict[str, object]:
+                  service: LawRagService = Depends(get_service),
+                  _: str | None = Depends(require_admin)) -> dict[str, object]:
         validate_domain(service, payload.domain)
         runner: AgentWorkflowRunner = request.app.state.agent_workflow
         run = runner.run(
@@ -269,13 +351,19 @@ def create_app(
         return run.to_dict()
 
     @app.get("/agent/runs", response_model=list[AgentRunResponse], tags=["agent"])
-    def list_agent_runs(request: Request, limit: int = 20) -> list[dict[str, object]]:
+    def list_agent_runs(
+        request: Request, limit: int = 20,
+        _: str | None = Depends(require_admin),
+    ) -> list[dict[str, object]]:
         limit = max(1, min(limit, 100))
         store: InMemoryTraceStore = request.app.state.agent_trace_store
         return [run.to_dict() for run in store.list(limit)]
 
     @app.get("/agent/runs/{run_id}", response_model=AgentRunResponse, tags=["agent"])
-    def get_agent_run(run_id: str, request: Request) -> dict[str, object]:
+    def get_agent_run(
+        run_id: str, request: Request,
+        _: str | None = Depends(require_admin),
+    ) -> dict[str, object]:
         store: InMemoryTraceStore = request.app.state.agent_trace_store
         run = store.get(run_id)
         if run is None:
@@ -287,7 +375,8 @@ def create_app(
 
     @app.post("/experiments/run", response_model=ExperimentResponse, tags=["experiments"])
     def run_experiment(payload: ExperimentRunRequest, request: Request,
-                       service: LawRagService = Depends(get_service)) -> dict[str, object]:
+                       service: LawRagService = Depends(get_service),
+                       _: str | None = Depends(require_admin)) -> dict[str, object]:
         if not evaluation_run_enabled:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -323,7 +412,9 @@ def create_app(
         return report
 
     @app.get("/experiments", tags=["experiments"])
-    def list_experiments(request: Request) -> list[dict[str, object]]:
+    def list_experiments(
+        request: Request, _: str | None = Depends(require_admin)
+    ) -> list[dict[str, object]]:
         return request.app.state.experiment_store.list()
 
     @app.get("/experiments/verified-summary", tags=["experiments"])
@@ -337,18 +428,26 @@ def create_app(
         return json.loads(path.read_text(encoding="utf-8"))
 
     @app.get("/experiments/ablations", tags=["experiments"])
-    def list_retrieval_ablations(request: Request) -> list[dict[str, object]]:
+    def list_retrieval_ablations(
+        request: Request, _: str | None = Depends(require_admin)
+    ) -> list[dict[str, object]]:
         return request.app.state.experiment_store.list_ablation_reports()
 
     @app.get("/experiments/{experiment_id}", response_model=ExperimentResponse, tags=["experiments"])
-    def get_experiment(experiment_id: str, request: Request) -> dict[str, object]:
+    def get_experiment(
+        experiment_id: str, request: Request,
+        _: str | None = Depends(require_admin),
+    ) -> dict[str, object]:
         report = request.app.state.experiment_store.get(experiment_id)
         if report is None:
             raise HTTPException(status_code=404, detail={"code": "experiment_not_found", "message": "실험 결과를 찾을 수 없습니다."})
         return report
 
     @app.post("/experiments/compare", tags=["experiments"])
-    def compare_saved_experiments(payload: ExperimentCompareRequest, request: Request) -> dict[str, object]:
+    def compare_saved_experiments(
+        payload: ExperimentCompareRequest, request: Request,
+        _: str | None = Depends(require_admin),
+    ) -> dict[str, object]:
         store: ExperimentStore = request.app.state.experiment_store
         baseline = store.get(payload.baseline_experiment_id)
         candidate = store.get(payload.candidate_experiment_id)
@@ -360,14 +459,20 @@ def create_app(
             raise HTTPException(status_code=422, detail={"code": "incompatible_experiments", "message": str(exc)}) from exc
 
     @app.get("/experiments/{experiment_id}/failures", tags=["experiments"])
-    def experiment_failures(experiment_id: str, request: Request) -> list[dict[str, object]]:
+    def experiment_failures(
+        experiment_id: str, request: Request,
+        _: str | None = Depends(require_admin),
+    ) -> list[dict[str, object]]:
         report = request.app.state.experiment_store.get(experiment_id)
         if report is None:
             raise HTTPException(status_code=404, detail={"code": "experiment_not_found", "message": "실험 결과를 찾을 수 없습니다."})
         return [row for row in report["cases"] if not row["passed"]]
 
     @app.get("/evaluation/reviews/queue", tags=["evaluation"])
-    def evaluation_review_queue(request: Request, include_approved: bool = False) -> dict[str, object]:
+    def evaluation_review_queue(
+        request: Request, include_approved: bool = False,
+        _: str | None = Depends(require_admin),
+    ) -> dict[str, object]:
         dataset_path: Path = request.app.state.evaluation_dataset_path
         raw = json.loads(dataset_path.read_text(encoding="utf-8"))
         rows = raw["cases"] if isinstance(raw, dict) else raw
@@ -391,7 +496,10 @@ def create_app(
         return {"dataset": snapshot, "queue_count": len(queue), "cases": queue}
 
     @app.post("/evaluation/reviews", tags=["evaluation"])
-    def save_evaluation_review(payload: EvaluationReviewRequest, request: Request) -> dict[str, str]:
+    def save_evaluation_review(
+        payload: EvaluationReviewRequest, request: Request,
+        _: str | None = Depends(require_admin),
+    ) -> dict[str, str]:
         if not evaluation_run_enabled:
             raise HTTPException(status_code=403, detail={
                 "code": "review_write_disabled", "message": "현재 서버에서는 검수 기록 저장이 비활성화되어 있습니다."
@@ -438,6 +546,7 @@ def create_app(
         include_approved: bool = False, limit: int = 50,
         domain: str | None = None, candidate_pool_version: str | None = None,
         one_per_case: bool = True,
+        _: str | None = Depends(require_admin),
     ) -> dict[str, object]:
         limit = max(1, min(limit, 200))
         all_candidates = request.app.state.hard_negative_store.list()
@@ -517,7 +626,9 @@ def create_app(
         }
 
     @app.get("/evaluation/latest", response_model=EvaluationRunResponse, tags=["evaluation"])
-    def latest_evaluation(request: Request) -> dict[str, object]:
+    def latest_evaluation(
+        request: Request, _: str | None = Depends(require_admin)
+    ) -> dict[str, object]:
         path: Path = request.app.state.evaluation_report_path
         if not path.exists():
             raise HTTPException(
@@ -531,6 +642,7 @@ def create_app(
         payload: EvaluationRunRequest,
         request: Request,
         service: LawRagService = Depends(get_service),
+        _: str | None = Depends(require_admin),
     ) -> dict[str, object]:
         if not evaluation_run_enabled:
             raise HTTPException(

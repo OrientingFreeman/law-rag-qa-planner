@@ -113,6 +113,19 @@ class RetrieveResponse(BaseModel):
     evidence_routing: EvidenceRouting = Field(default_factory=EvidenceRouting)
 
 
+class PublicRetrieveResponse(BaseModel):
+    """Compact retrieval contract used by the public portfolio demo."""
+
+    question: str
+    domain: str
+    results: list[RetrievalResult]
+    abstain: bool
+    evidence_status: EvidenceStatus
+    precedent_evidence: list[PrecedentEvidence] = Field(default_factory=list)
+    precedent_validation: PrecedentValidation = Field(default_factory=PrecedentValidation)
+    evidence_routing: EvidenceRouting = Field(default_factory=EvidenceRouting)
+
+
 class RunMetadata(BaseModel):
     service_version: str
     corpus_version: str
@@ -132,6 +145,12 @@ class QueryResponse(RetrieveResponse):
     prompt_version: str
     reasoning_chain: list[ReasoningStep]
     graph_expansion: GraphExpansion
+    metadata: RunMetadata
+
+
+class PublicQueryResponse(PublicRetrieveResponse):
+    prompt: str
+    prompt_version: str
     metadata: RunMetadata
 
 
@@ -290,6 +309,22 @@ class AnswerResponse(RetrieveResponse):
     answer_structure: AnswerStructure
     related_provisions: list[RelatedProvision]
     retrieval_explanation: RetrievalExplanation
+    confidence: Confidence
+    metadata: RunMetadata
+
+
+class PublicAnswerResponse(PublicRetrieveResponse):
+    """UI-facing answer contract without internal reasoning and audit graphs."""
+
+    answer: str
+    display_answer: str | None = None
+    generation_status: Literal["completed", "citation_invalid", "failed", "abstained"]
+    provider: str
+    model: str
+    citation_validation: CitationValidation
+    conditional_review: dict[str, object] = Field(default_factory=dict)
+    practical_action_generator: dict[str, object] = Field(default_factory=dict)
+    prompt_version: str
     confidence: Confidence
     metadata: RunMetadata
 

@@ -100,6 +100,96 @@ def _rule_score(rule: LegalRule) -> float:
     return round(0.65 * role_weight + 0.35 * source_weight, 4)
 
 
+def _not_applicable_result(question: str, issue_order: list[str]) -> dict[str, object]:
+    """Return a neutral result when the query does not contain branching legal paths."""
+
+    return {
+        "enabled": False,
+        "applicable": False,
+        "status": "not_applicable",
+        "engine": "multi_path_reasoning",
+        "version": "1.8",
+        "question": question,
+        "issue_order": issue_order,
+        "path_count": 0,
+        "candidate_path_count": 0,
+        "pruned_path_count": 0,
+        "max_concrete_basis_paths": MAX_CONCRETE_BASIS_PATHS,
+        "alternative_path_count": 0,
+        "cumulative_path_count": 0,
+        "cumulative_basis_path_count": 0,
+        "status_counts": {},
+        "path_type_counts": {},
+        "recommended_path_id": None,
+        "recommended_path_rank": None,
+        "ranking_mode": "not_applicable",
+        "recommendation_reason": "분기형 법적 경로가 필요한 질문이 아닙니다.",
+        "recommended_path_confidence": None,
+        "recommended_path_recommendation_score": None,
+        "strategy_comparison": {"enabled": False, "recommended_path_id": None, "alternatives": []},
+        "decision_support": {
+            "enabled": False,
+            "recommended_path_id": None,
+            "why_selected": [],
+            "why_not_selected": [],
+            "tradeoff_summary": None,
+            "when_to_switch": [],
+            "required_next_facts": [],
+        },
+        "reasoning_quality": {
+            "enabled": False,
+            "status": "not_applicable",
+            "overall_score": None,
+            "overall_percent": None,
+            "grade": "not_applicable",
+            "components": {},
+            "strengths": [],
+            "weaknesses": [],
+        },
+        "failure_analysis": {
+            "enabled": False,
+            "status": "not_applicable",
+            "failure_count": 0,
+            "critical_failure_count": 0,
+            "high_failure_count": 0,
+            "primary_failure": None,
+            "failures": [],
+            "missing_fact_ids": [],
+            "validation_valid": True,
+            "safe_to_execute": None,
+            "summary": "분기형 경로 평가 대상이 아닙니다.",
+        },
+        "consistency_report": {
+            "enabled": False,
+            "status": "not_applicable",
+            "consistent": True,
+            "issue_count": 0,
+            "severity_counts": {},
+            "issues": [],
+            "checked_rules": [],
+            "summary": "분기형 경로 평가 대상이 아닙니다.",
+        },
+        "scenario_simulation": {
+            "enabled": False,
+            "mode": "not_applicable",
+            "scenario_count": 0,
+            "scenarios": [],
+            "limitations": [],
+        },
+        "strategy_layer": {"enabled": False, "dimensions": []},
+        "confidence_model": {"version": "1.0", "components": [], "weights": {}},
+        "all_paths_conditional": False,
+        "validation": {
+            "valid": True,
+            "applicable": False,
+            "dangling_dependency_ids": [],
+            "unbound_evidence_node_ids": [],
+            "duplicate_path_id_count": 0,
+        },
+        "paths": [],
+    }
+
+
 def build_multi_path_reasoning(
     question: str,
     composition_plan: CompositionPlan,
@@ -291,6 +381,8 @@ def build_multi_path_reasoning(
     # route, then keep only the strongest concrete basis pairs. This prevents
     # path explosion while preserving auditable dependencies.
     before_pruning_count = len(paths)
+    if before_pruning_count == 0:
+        return _not_applicable_result(question, issue_order)
     concrete = [row for row in paths if row["path_type"] == "cumulative_basis"]
     concrete.sort(key=lambda row: (-float(row["confidence"]), str(row["path_id"])))
     kept_concrete = concrete[:MAX_CONCRETE_BASIS_PATHS]

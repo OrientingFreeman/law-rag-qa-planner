@@ -111,6 +111,84 @@ def test_web_ui_and_static_assets_are_served():
     assert 'href="/internal/evaluation"' in training_review.text
 
 
+def test_public_demo_requires_https_admin_auth_for_internal_surfaces(monkeypatch):
+    monkeypatch.setenv("LAW_RAG_PUBLIC_DEMO", "true")
+    monkeypatch.setenv("LAW_RAG_ADMIN_USERNAME", "admin")
+    monkeypatch.setenv("LAW_RAG_ADMIN_PASSWORD", "test-secret")
+    app = create_app(data_path="tests/fixtures/legal_corpus.json", domains_path="domains")
+
+    with TestClient(app, base_url="https://testserver") as api:
+        unauthenticated = api.get("/internal/evaluation")
+        wrong = api.get("/internal/training-review", auth=("admin", "wrong"))
+        evaluation = api.get("/evaluation", auth=("admin", "test-secret"))
+        review_queue = api.get(
+            "/evaluation/reviews/queue", auth=("admin", "test-secret")
+        )
+        agent_run = api.post(
+            "/agent/runs",
+            json={"question": "개인정보 수집 동의 요건은?", "domain": "digital_business"},
+        )
+
+    assert unauthenticated.status_code == 401
+    assert unauthenticated.headers["www-authenticate"].startswith("Basic")
+    assert wrong.status_code == 401
+    assert evaluation.status_code == 200
+    assert "Agent 실행과 실험 결과를 함께 추적합니다" in evaluation.text
+    assert review_queue.status_code == 200
+    assert agent_run.status_code == 401
+
+    with TestClient(app, base_url="http://testserver") as api:
+        insecure = api.get("/internal/evaluation", auth=("admin", "test-secret"))
+    assert insecure.status_code == 403
+    assert insecure.json()["detail"]["code"] == "admin_https_required"
+
+
+def test_public_demo_fails_closed_when_admin_credentials_are_missing(monkeypatch):
+    monkeypatch.setenv("LAW_RAG_PUBLIC_DEMO", "true")
+    monkeypatch.delenv("LAW_RAG_ADMIN_USERNAME", raising=False)
+    monkeypatch.delenv("LAW_RAG_ADMIN_PASSWORD", raising=False)
+    app = create_app(data_path="tests/fixtures/legal_corpus.json", domains_path="domains")
+
+    with TestClient(app, base_url="https://testserver") as api:
+        response = api.get("/internal/evaluation")
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["code"] == "admin_auth_not_configured"
+
+
+def test_public_demo_uses_compact_responses_and_keeps_full_admin_debug(monkeypatch):
+    monkeypatch.setenv("LAW_RAG_PUBLIC_DEMO", "true")
+    monkeypatch.setenv("LAW_RAG_ADMIN_USERNAME", "admin")
+    monkeypatch.setenv("LAW_RAG_ADMIN_PASSWORD", "test-secret")
+    monkeypatch.setenv("LAW_RAG_LLM_PROVIDER", "deterministic")
+    app = create_app(data_path="tests/fixtures/legal_corpus.json", domains_path="domains")
+    payload = {
+        "question": "개인정보 수집 동의 요건은?",
+        "domain": "digital_business",
+        "top_k": 1,
+    }
+
+    with TestClient(app, base_url="https://testserver") as api:
+        public_answer = api.post("/answer", json=payload)
+        public_retrieve = api.post("/retrieve", json=payload)
+        public_query = api.post("/query", json=payload)
+        debug_answer = api.post(
+            "/internal/answer", json=payload, auth=("admin", "test-secret")
+        )
+
+    assert public_answer.status_code == 200
+    assert public_retrieve.status_code == 200
+    assert public_query.status_code == 200
+    assert debug_answer.status_code == 200
+    assert "composition" not in public_answer.json()
+    assert "multi_path_reasoning" not in public_answer.json()
+    assert "legal_argument_graph" not in public_answer.json()
+    assert "evidence_graph" not in public_retrieve.json()
+    assert "reasoning_chain" not in public_query.json()
+    assert "composition" in debug_answer.json()
+    assert len(public_answer.content) < len(debug_answer.content)
+
+
 def test_verified_experiment_summary_endpoint():
     with client() as api:
         response = api.get("/experiments/verified-summary")
@@ -249,6 +327,43 @@ def test_supported_question_generates_answer(monkeypatch):
     assert body["generation_status"] == "completed"
     assert body["evidence_status"]["level"] in {"partial", "usable"}
     assert body["answer"]
+    assert body["multi_path_reasoning"]["status"] == "not_applicable"
+    assert body["multi_path_reasoning"]["failure_analysis"]["failure_count"] == 0
+
+
+def test_critical_multi_path_failure_forces_safe_abstention(monkeypatch):
+    monkeypatch.setenv("LAW_RAG_LLM_PROVIDER", "deterministic")
+    blocked = {
+        "enabled": True,
+        "applicable": True,
+        "path_count": 1,
+        "validation": {"valid": False},
+        "failure_analysis": {
+            "status": "blocked",
+            "primary_failure": {"failure_type": "reasoning_graph_integrity"},
+        },
+        "consistency_report": {"consistent": False},
+        "paths": [{"path_id": "broken-path"}],
+    }
+    monkeypatch.setattr(
+        "law_rag.generation.answer.build_multi_path_reasoning",
+        lambda *args, **kwargs: blocked,
+    )
+
+    with client() as api:
+        response = api.post("/answer", json={
+            "question": "개인정보 수집 동의 요건은 무엇인가요?",
+            "domain": "digital_business",
+            "top_k": 1,
+        })
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["abstain"] is True
+    assert body["generation_status"] == "abstained"
+    assert body["confidence"]["level"] == "low"
+    assert body["composition"]["safety_gate"]["blocked"] is True
+    assert "추론 경로 검증" in body["answer"]
 
 
 def test_abstained_candidates_are_marked_insufficient():

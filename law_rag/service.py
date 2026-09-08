@@ -491,22 +491,33 @@ class LawRagService:
         )
         results = aggregate_evidence(raw_results, self.provisions, limit=requested_top_k)
         expanded = self.law_graph.expand(results, limit=max(3, len(results)))
-        reasoning_chain = self.reasoning_builder.build(results, expanded)
         reasoning_path = response.get("legal_reasoning_path", {})
-        graph_ids = [str(node.get("document_id")) for node in response.get("evidence_graph", {}).get("nodes", [])]
+        graph_nodes = {
+            str(node.get("document_id")): node
+            for node in response.get("evidence_graph", {}).get("nodes", [])
+        }
         linked = self._precedent_linked_results(
             response.get("precedent_evidence", []),
             response.get("precedent_validation", {}),
             as_of_date=as_of_date,
         )
         candidates = {row.provision.document_id: row for row in [*results, *expanded, *linked]}
-        authoritative_results = [candidates[doc_id] for doc_id in graph_ids if doc_id in candidates]
+        for document_id, node in graph_nodes.items():
+            if document_id in candidates:
+                candidates[document_id].evidence_role = str(node.get("role", "candidate"))
+        authoritative_results = [
+            candidates[document_id] for document_id, node in graph_nodes.items()
+            if document_id in candidates and node.get("role") != "candidate"
+        ]
         if not authoritative_results:
-            authoritative_results = results
+            authoritative_results = [row for row in results if row.evidence_role != "candidate"] or results
         for rank, row in enumerate(authoritative_results, 1):
             row.rank = rank
+        reasoning_chain = self.reasoning_builder.build(authoritative_results, [])
         composition_plan = build_composition_plan(authoritative_results, response.get("legal_intent"))
         response["prompt"] = build_grounded_prompt(str(response["question"]), authoritative_results, reasoning_chain=reasoning_chain, legal_intent=response.get("legal_intent"), composition_plan=composition_plan, legal_reasoning_path=reasoning_path)
+        if not response.get("abstain"):
+            response["results"] = [self._serialize_result(row) for row in authoritative_results]
         response["authoritative_evidence_ids"] = [row.provision.document_id for row in authoritative_results]
         response["prompt_version"] = "answer_v22"
         response["reasoning_chain"] = reasoning_chain
@@ -544,20 +555,29 @@ class LawRagService:
         )
         results = aggregate_evidence(raw_results, self.provisions, limit=requested_top_k)
         expanded = self.law_graph.expand(results, limit=max(3, len(results)))
-        reasoning_chain = self.reasoning_builder.build(results, expanded)
         reasoning_path = response.get("legal_reasoning_path", {})
-        graph_ids = [str(node.get("document_id")) for node in response.get("evidence_graph", {}).get("nodes", [])]
+        graph_nodes = {
+            str(node.get("document_id")): node
+            for node in response.get("evidence_graph", {}).get("nodes", [])
+        }
         linked = self._precedent_linked_results(
             response.get("precedent_evidence", []),
             response.get("precedent_validation", {}),
             as_of_date=as_of_date,
         )
         candidates = {row.provision.document_id: row for row in [*results, *expanded, *linked]}
-        reasoning_results = [candidates[doc_id] for doc_id in graph_ids if doc_id in candidates]
+        for document_id, node in graph_nodes.items():
+            if document_id in candidates:
+                candidates[document_id].evidence_role = str(node.get("role", "candidate"))
+        reasoning_results = [
+            candidates[document_id] for document_id, node in graph_nodes.items()
+            if document_id in candidates and node.get("role") != "candidate"
+        ]
         if not reasoning_results:
-            reasoning_results = results
+            reasoning_results = [row for row in results if row.evidence_role != "candidate"] or results
         for rank, row in enumerate(reasoning_results, 1):
             row.rank = rank
+        reasoning_chain = self.reasoning_builder.build(reasoning_results, [])
         precedent_only = (
             response.get("evidence_routing", {}).get("answer_basis") == "precedent"
             and response.get("precedent_validation", {}).get("answer_supported") is True
@@ -620,9 +640,9 @@ class LawRagService:
                 "authoritative_evidence_ids": [row.provision.document_id for row in reasoning_results],
                 "reasoning_chain": reasoning_chain,
                 "graph_expansion": self._serialize_graph_expansion(expanded),
-                "answer_structure": build_answer_structure(str(response["question"]), results),
-                "related_provisions": build_related_provisions(results),
-                "retrieval_explanation": build_retrieval_explanation(results),
+                "answer_structure": build_answer_structure(str(response["question"]), reasoning_results),
+                "related_provisions": build_related_provisions(reasoning_results),
+                "retrieval_explanation": build_retrieval_explanation(reasoning_results),
                 "confidence": self._answer_confidence(
                     reasoning_results,
                     generated,
@@ -632,19 +652,97 @@ class LawRagService:
                 "metadata": self._metadata(started),
             }
         )
+        if not response.get("abstain"):
+            response["results"] = [self._serialize_result(row) for row in reasoning_results]
+        reasoning_gate = self._reasoning_safety_gate(response.get("multi_path_reasoning", {}))
+        if reasoning_gate is not None:
+            safe_answer = (
+                "결론\n"
+                "- 추론 경로 검증에서 중대한 불일치가 감지되어 확정 답변을 유보합니다.\n\n"
+                "추가 확인 사실\n"
+                "- 쟁점 분해와 적용 근거를 다시 확인한 뒤 답변을 재실행해야 합니다."
+            )
+            composition = dict(response.get("composition", {}))
+            composition["safety_gate"] = reasoning_gate
+            response.update({
+                "abstain": True,
+                "evidence_status": {
+                    "level": "insufficient",
+                    "message": "추론 무결성 검증을 통과하지 못해 답변을 유보했습니다.",
+                },
+                "answer": safe_answer,
+                "display_answer": safe_answer,
+                "generation_status": "abstained",
+                "citation_validation": {
+                    "valid": True,
+                    "cited_articles": [],
+                    "retrieved_articles": sorted({row.provision.article_no for row in reasoning_results}),
+                    "unsupported_articles": [],
+                },
+                "grounding_validation": {
+                    "valid": True,
+                    "claim_count": 0,
+                    "supported_claim_count": 0,
+                    "coverage": 1.0,
+                    "unsupported_claims": [],
+                    "claims": [],
+                },
+                "composition": composition,
+                "confidence": {
+                    "score": 0.0,
+                    "level": "low",
+                    "reasons": ["reasoning_integrity_failure", "answer_abstained"],
+                    "components": {
+                        "retrieval": 0.0,
+                        "coverage": 0.0,
+                        "citation": 0.0,
+                        "grounding": 0.0,
+                    },
+                },
+            })
         self.run_logger.write({
             "question": response["question"],
             "domain": response["domain"],
             "result_count": len(results),
-            "generation_status": generated.generation_status,
+            "generation_status": response["generation_status"],
             "provider": generated.provider,
             "model": generated.model,
             "generation_request_id": generated.request_id,
             "generation_usage": generated.usage,
             "confidence": response["confidence"],
+            "safety_gate": reasoning_gate,
             "latency_ms": response["metadata"]["latency_ms"],
         })
         return response
+
+    @staticmethod
+    def _reasoning_safety_gate(multi_path: object) -> dict[str, object] | None:
+        if not isinstance(multi_path, dict) or not multi_path.get("enabled"):
+            return None
+        if int(multi_path.get("path_count", 0) or 0) <= 0:
+            return None
+        validation = multi_path.get("validation") or {}
+        failure = multi_path.get("failure_analysis") or {}
+        consistency = multi_path.get("consistency_report") or {}
+        reasons: list[str] = []
+        if isinstance(validation, dict) and validation.get("valid") is False:
+            reasons.append("multi_path_validation_failed")
+        if isinstance(failure, dict) and failure.get("status") == "blocked":
+            primary = failure.get("primary_failure") or {}
+            failure_type = primary.get("failure_type") if isinstance(primary, dict) else None
+            if failure_type in {"no_recommended_path", "reasoning_graph_integrity"}:
+                reasons.append("critical_reasoning_failure")
+        if isinstance(consistency, dict) and consistency.get("consistent") is False:
+            reasons.append("reasoning_consistency_failed")
+        if not reasons:
+            return None
+        return {
+            "blocked": True,
+            "reasons": reasons,
+            "pre_gate_failure_status": failure.get("status") if isinstance(failure, dict) else None,
+            "pre_gate_validation_valid": validation.get("valid") if isinstance(validation, dict) else None,
+            "pre_gate_consistency": consistency.get("consistent") if isinstance(consistency, dict) else None,
+        }
 
     @staticmethod
     def _answer_confidence(reasoning_results, generated, precedents, *, precedent_only: bool):
