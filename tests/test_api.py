@@ -1,3 +1,5 @@
+import json
+
 from fastapi.testclient import TestClient
 
 from law_rag import __version__
@@ -77,6 +79,8 @@ def test_web_ui_and_static_assets_are_served():
         internal_evaluation = api.get("/internal/evaluation")
         training_review = api.get("/internal/training-review")
         evaluation_script = api.get("/static/evaluation.js")
+        static_evaluation = api.get("/static/evaluation.html")
+        static_training_review = api.get("/static/training-review.html")
     assert home.status_code == 200
     assert "법무·컴플라이언스를 위한" in home.text
     assert "평가 리포트" not in home.text
@@ -100,6 +104,8 @@ def test_web_ui_and_static_assets_are_served():
     assert 'href="/internal/evaluation"' in home.text
     assert "Agent 실행·평가 콘솔" in home.text
     assert evaluation_script.status_code == 200
+    assert static_evaluation.status_code == 404
+    assert static_training_review.status_code == 404
     assert "run-evaluation" in evaluation_script.text
     assert "run-agent" in evaluation_script.text
     assert "run-baseline-experiment" in internal_evaluation.text
@@ -128,6 +134,9 @@ def test_public_demo_requires_https_admin_auth_for_internal_surfaces(monkeypatch
             "/agent/runs",
             json={"question": "개인정보 수집 동의 요건은?", "domain": "digital_business"},
         )
+        static_evaluation = api.get("/static/evaluation.html")
+        static_training_review = api.get("/static/training-review.html")
+        documented_paths = set(api.get("/openapi.json").json()["paths"])
 
     assert unauthenticated.status_code == 401
     assert unauthenticated.headers["www-authenticate"].startswith("Basic")
@@ -136,6 +145,13 @@ def test_public_demo_requires_https_admin_auth_for_internal_surfaces(monkeypatch
     assert "Agent 실행과 실험 결과를 함께 추적합니다" in evaluation.text
     assert review_queue.status_code == 200
     assert agent_run.status_code == 401
+    assert static_evaluation.status_code == 404
+    assert static_training_review.status_code == 404
+    assert "/agent/runs" not in documented_paths
+    assert "/experiments" not in documented_paths
+    assert "/evaluation/latest" not in documented_paths
+    assert "/training/hard-negatives/queue" not in documented_paths
+    assert "/experiments/verified-summary" in documented_paths
 
     with TestClient(app, base_url="http://testserver") as api:
         insecure = api.get("/internal/evaluation", auth=("admin", "test-secret"))
@@ -189,6 +205,29 @@ def test_public_demo_uses_compact_responses_and_keeps_full_admin_debug(monkeypat
     assert len(public_answer.content) < len(debug_answer.content)
 
 
+def test_public_demo_caps_top_k_but_admin_debug_keeps_full_range(monkeypatch):
+    monkeypatch.setenv("LAW_RAG_PUBLIC_DEMO", "true")
+    monkeypatch.setenv("LAW_RAG_ADMIN_USERNAME", "admin")
+    monkeypatch.setenv("LAW_RAG_ADMIN_PASSWORD", "test-secret")
+    app = create_app(data_path="tests/fixtures/legal_corpus.json", domains_path="domains")
+    payload = {
+        "question": "개인정보 수집 동의 요건은?",
+        "domain": "digital_business",
+        "top_k": 6,
+    }
+
+    with TestClient(app, base_url="https://testserver") as api:
+        public_response = api.post("/retrieve", json=payload)
+        internal_response = api.post(
+            "/internal/retrieve", json=payload, auth=("admin", "test-secret")
+        )
+
+    assert public_response.status_code == 422
+    assert public_response.json()["detail"]["code"] == "public_demo_top_k_exceeded"
+    assert public_response.json()["detail"]["max_top_k"] == 5
+    assert internal_response.status_code == 200
+
+
 def test_verified_experiment_summary_endpoint():
     with client() as api:
         response = api.get("/experiments/verified-summary")
@@ -238,6 +277,27 @@ def test_v1_answer_metadata_confidence_and_logging(tmp_path, monkeypatch):
     assert body["confidence"]["level"] in {"medium", "high"}
     assert body["results"][0]["matched_signals"]["semantic"] >= 0
     assert list((tmp_path / "logs").glob("*.jsonl"))
+
+
+def test_public_demo_logs_question_fingerprint_not_raw_text(tmp_path, monkeypatch):
+    question = "홍길동의 실제 사건 개인정보를 포함한 질문"
+    monkeypatch.setenv("LAW_RAG_PUBLIC_DEMO", "true")
+    monkeypatch.setenv("LAW_RAG_ADMIN_USERNAME", "admin")
+    monkeypatch.setenv("LAW_RAG_ADMIN_PASSWORD", "test-secret")
+    monkeypatch.setenv("LAW_RAG_LLM_PROVIDER", "deterministic")
+    monkeypatch.setenv("LAW_RAG_LOG_DIR", str(tmp_path / "logs"))
+    monkeypatch.delenv("LAW_RAG_LOG_RAW_QUESTIONS", raising=False)
+    app = create_app(data_path="tests/fixtures/legal_corpus.json", domains_path="domains")
+
+    with TestClient(app, base_url="https://testserver") as api:
+        response = api.post("/answer", json={"question": question, "top_k": 1})
+
+    record = json.loads(next((tmp_path / "logs").glob("*.jsonl")).read_text(encoding="utf-8"))
+    assert response.status_code == 200
+    assert "question" not in record
+    assert len(record["question_sha256"]) == 64
+    assert record["question_length"] == len(question)
+    assert question not in json.dumps(record, ensure_ascii=False)
 
 
 def test_answer_exposes_routed_precedent_evidence_without_mixing_results(monkeypatch):

@@ -71,7 +71,7 @@ uvicorn law_rag.api.app:app --reload
 - `GET /experiments/{experiment_id}/failures`: 실패 사례와 관련 run ID
 - `GET /experiments/verified-summary`: 저장소에 검증된 비교 요약
 
-브라우저에서 `/static/evaluation.html`을 열면 Agent 실행 trace와 Baseline–Agent 비교를 한 화면에서 확인할 수 있다.
+관리자 인증 후 브라우저에서 `/internal/evaluation`을 열면 Agent 실행 trace와 Baseline–Agent 비교를 한 화면에서 확인할 수 있다. `/static/evaluation.html`과 `/static/training-review.html` 직접 접근은 차단한다.
 
 ## 데이터·실험 검증
 
@@ -92,7 +92,7 @@ LAW_RAG_LLM_PROVIDER=deterministic python -m tools.run_rag_experiment \
 1. 로컬에서 전체 테스트와 데이터셋 검증을 실행한다.
 2. 운영 환경의 corpus 및 LLM provider 설정을 확인한다.
 3. 비밀키는 환경 변수로 주입하고 ZIP이나 저장소에 포함하지 않는다.
-4. `/health`, 기존 `/answer`, 신규 `/agent/runs`를 순서대로 smoke test한다.
+4. `/health`와 `/answer`를 smoke test하고, 관리자 인증으로 `/internal/evaluation`과 `/agent/runs`의 `200` 응답을 확인한다.
 5. 장시간 평가 실험은 웹 요청 처리 프로세스와 분리하는 것을 권장한다.
 
 ## 알려진 한계

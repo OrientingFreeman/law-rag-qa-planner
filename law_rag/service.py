@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import replace
 from datetime import date, datetime, timezone
+import hashlib
+import os
 from pathlib import Path
 import re
 from time import perf_counter
@@ -61,6 +63,13 @@ class LawRagService:
         self.intent_planner = LegalIntentPlanner()
         self.llm_provider = llm_provider or provider_from_env()
         self.run_logger = JsonlRunLogger()
+        public_demo = os.getenv("LAW_RAG_PUBLIC_DEMO", "false").strip().lower() in {
+            "1", "true", "yes", "on",
+        }
+        default_log_raw_questions = "false" if public_demo else "true"
+        self.log_raw_questions = os.getenv(
+            "LAW_RAG_LOG_RAW_QUESTIONS", default_log_raw_questions
+        ).strip().lower() in {"1", "true", "yes", "on"}
         self.corpus_version = self._corpus_version()
 
     def _matched_domain_query_paths(self, question: str):
@@ -700,8 +709,17 @@ class LawRagService:
                     },
                 },
             })
+        question_log = (
+            {"question": response["question"]}
+            if self.log_raw_questions else {
+                "question_sha256": hashlib.sha256(
+                    str(response["question"]).encode("utf-8")
+                ).hexdigest(),
+                "question_length": len(str(response["question"])),
+            }
+        )
         self.run_logger.write({
-            "question": response["question"],
+            **question_log,
             "domain": response["domain"],
             "result_count": len(results),
             "generation_status": response["generation_status"],

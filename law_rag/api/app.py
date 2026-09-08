@@ -49,6 +49,17 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = PACKAGE_DIR / "static"
 
 
+class PublicStaticFiles(StaticFiles):
+    """Serve public assets without exposing internal HTML entry points."""
+
+    _blocked_entrypoints = {"evaluation.html", "training-review.html"}
+
+    async def get_response(self, path: str, scope):
+        if Path(path).name in self._blocked_entrypoints:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        return await super().get_response(path, scope)
+
+
 def create_app(
     *,
     data_path: str | Path | None = None,
@@ -89,6 +100,7 @@ def create_app(
     ).strip().lower() in {"1", "true", "yes", "on"}
     demo_max_requests = max(1, int(os.getenv("LAW_RAG_DEMO_MAX_REQUESTS", "20")))
     demo_window_seconds = max(60, int(os.getenv("LAW_RAG_DEMO_WINDOW_SECONDS", "3600")))
+    demo_max_top_k = max(1, min(50, int(os.getenv("LAW_RAG_DEMO_MAX_TOP_K", "5"))))
     admin_username = os.getenv("LAW_RAG_ADMIN_USERNAME", "").strip()
     admin_password = os.getenv("LAW_RAG_ADMIN_PASSWORD", "")
     admin_auth_required = public_demo or bool(admin_username or admin_password)
@@ -120,7 +132,7 @@ def create_app(
         version=APP_VERSION,
         lifespan=lifespan,
     )
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    app.mount("/static", PublicStaticFiles(directory=STATIC_DIR), name="static")
 
     @app.middleware("http")
     async def public_demo_rate_limit(request: Request, call_next):
@@ -203,6 +215,17 @@ def create_app(
                 },
             )
 
+    def validate_public_query(payload: QueryRequest) -> None:
+        if public_demo and payload.top_k is not None and payload.top_k > demo_max_top_k:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "public_demo_top_k_exceeded",
+                    "message": f"공개 데모에서는 검색 결과를 최대 {demo_max_top_k}개까지 요청할 수 있습니다.",
+                    "max_top_k": demo_max_top_k,
+                },
+            )
+
     def enforce_review_gate(request: Request, cases: list[object]) -> None:
         snapshot = checked_dataset_snapshot(
             request.app.state.evaluation_dataset_path,
@@ -261,6 +284,7 @@ def create_app(
             "admin_auth_required": admin_auth_required,
             "max_requests": demo_max_requests if public_demo else None,
             "window_seconds": demo_window_seconds if public_demo else None,
+            "max_top_k": demo_max_top_k if public_demo else None,
         }
 
     @app.get("/health", response_model=HealthResponse, tags=["system"])
@@ -289,16 +313,19 @@ def create_app(
     @app.post("/retrieve", response_model=retrieve_model, tags=["retrieval"])
     def retrieve(payload: QueryRequest, service: LawRagService = Depends(get_service)) -> dict[str, object]:
         validate_domain(service, payload.domain)
+        validate_public_query(payload)
         return service.retrieve(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
 
     @app.post("/answer", response_model=answer_model, tags=["qa"])
     def answer(payload: QueryRequest, service: LawRagService = Depends(get_service)) -> dict[str, object]:
         validate_domain(service, payload.domain)
+        validate_public_query(payload)
         return service.answer(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
 
     @app.post("/query", response_model=query_model, tags=["qa"])
     def query(payload: QueryRequest, service: LawRagService = Depends(get_service)) -> dict[str, object]:
         validate_domain(service, payload.domain)
+        validate_public_query(payload)
         return service.query(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
 
     @app.post("/internal/retrieve", response_model=RetrieveResponse, include_in_schema=False)
@@ -328,7 +355,10 @@ def create_app(
         validate_domain(service, payload.domain)
         return service.answer(payload.question, domain_id=payload.domain, top_k=payload.top_k, as_of_date=payload.as_of_date)
 
-    @app.post("/agent/runs", response_model=AgentRunResponse, tags=["agent"])
+    @app.post(
+        "/agent/runs", response_model=AgentRunResponse, tags=["agent"],
+        include_in_schema=not public_demo,
+    )
     def run_agent(payload: AgentRunRequest, request: Request,
                   service: LawRagService = Depends(get_service),
                   _: str | None = Depends(require_admin)) -> dict[str, object]:
@@ -350,7 +380,10 @@ def create_app(
         )
         return run.to_dict()
 
-    @app.get("/agent/runs", response_model=list[AgentRunResponse], tags=["agent"])
+    @app.get(
+        "/agent/runs", response_model=list[AgentRunResponse], tags=["agent"],
+        include_in_schema=not public_demo,
+    )
     def list_agent_runs(
         request: Request, limit: int = 20,
         _: str | None = Depends(require_admin),
@@ -359,7 +392,10 @@ def create_app(
         store: InMemoryTraceStore = request.app.state.agent_trace_store
         return [run.to_dict() for run in store.list(limit)]
 
-    @app.get("/agent/runs/{run_id}", response_model=AgentRunResponse, tags=["agent"])
+    @app.get(
+        "/agent/runs/{run_id}", response_model=AgentRunResponse, tags=["agent"],
+        include_in_schema=not public_demo,
+    )
     def get_agent_run(
         run_id: str, request: Request,
         _: str | None = Depends(require_admin),
@@ -373,7 +409,10 @@ def create_app(
             )
         return run.to_dict()
 
-    @app.post("/experiments/run", response_model=ExperimentResponse, tags=["experiments"])
+    @app.post(
+        "/experiments/run", response_model=ExperimentResponse, tags=["experiments"],
+        include_in_schema=not public_demo,
+    )
     def run_experiment(payload: ExperimentRunRequest, request: Request,
                        service: LawRagService = Depends(get_service),
                        _: str | None = Depends(require_admin)) -> dict[str, object]:
@@ -411,7 +450,7 @@ def create_app(
         request.app.state.experiment_store.save(report)
         return report
 
-    @app.get("/experiments", tags=["experiments"])
+    @app.get("/experiments", tags=["experiments"], include_in_schema=not public_demo)
     def list_experiments(
         request: Request, _: str | None = Depends(require_admin)
     ) -> list[dict[str, object]]:
@@ -427,13 +466,19 @@ def create_app(
             })
         return json.loads(path.read_text(encoding="utf-8"))
 
-    @app.get("/experiments/ablations", tags=["experiments"])
+    @app.get(
+        "/experiments/ablations", tags=["experiments"],
+        include_in_schema=not public_demo,
+    )
     def list_retrieval_ablations(
         request: Request, _: str | None = Depends(require_admin)
     ) -> list[dict[str, object]]:
         return request.app.state.experiment_store.list_ablation_reports()
 
-    @app.get("/experiments/{experiment_id}", response_model=ExperimentResponse, tags=["experiments"])
+    @app.get(
+        "/experiments/{experiment_id}", response_model=ExperimentResponse,
+        tags=["experiments"], include_in_schema=not public_demo,
+    )
     def get_experiment(
         experiment_id: str, request: Request,
         _: str | None = Depends(require_admin),
@@ -443,7 +488,10 @@ def create_app(
             raise HTTPException(status_code=404, detail={"code": "experiment_not_found", "message": "실험 결과를 찾을 수 없습니다."})
         return report
 
-    @app.post("/experiments/compare", tags=["experiments"])
+    @app.post(
+        "/experiments/compare", tags=["experiments"],
+        include_in_schema=not public_demo,
+    )
     def compare_saved_experiments(
         payload: ExperimentCompareRequest, request: Request,
         _: str | None = Depends(require_admin),
@@ -458,7 +506,10 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(status_code=422, detail={"code": "incompatible_experiments", "message": str(exc)}) from exc
 
-    @app.get("/experiments/{experiment_id}/failures", tags=["experiments"])
+    @app.get(
+        "/experiments/{experiment_id}/failures", tags=["experiments"],
+        include_in_schema=not public_demo,
+    )
     def experiment_failures(
         experiment_id: str, request: Request,
         _: str | None = Depends(require_admin),
@@ -468,7 +519,10 @@ def create_app(
             raise HTTPException(status_code=404, detail={"code": "experiment_not_found", "message": "실험 결과를 찾을 수 없습니다."})
         return [row for row in report["cases"] if not row["passed"]]
 
-    @app.get("/evaluation/reviews/queue", tags=["evaluation"])
+    @app.get(
+        "/evaluation/reviews/queue", tags=["evaluation"],
+        include_in_schema=not public_demo,
+    )
     def evaluation_review_queue(
         request: Request, include_approved: bool = False,
         _: str | None = Depends(require_admin),
@@ -495,7 +549,10 @@ def create_app(
                 })
         return {"dataset": snapshot, "queue_count": len(queue), "cases": queue}
 
-    @app.post("/evaluation/reviews", tags=["evaluation"])
+    @app.post(
+        "/evaluation/reviews", tags=["evaluation"],
+        include_in_schema=not public_demo,
+    )
     def save_evaluation_review(
         payload: EvaluationReviewRequest, request: Request,
         _: str | None = Depends(require_admin),
@@ -540,7 +597,10 @@ def create_app(
         request.app.state.review_store.append(record)
         return record.to_dict()
 
-    @app.get("/training/hard-negatives/queue", tags=["training"])
+    @app.get(
+        "/training/hard-negatives/queue", tags=["training"],
+        include_in_schema=not public_demo,
+    )
     def hard_negative_review_queue(
         request: Request, include_processed: bool = False,
         include_approved: bool = False, limit: int = 50,
@@ -625,7 +685,10 @@ def create_app(
             "candidates": queue[:limit],
         }
 
-    @app.get("/evaluation/latest", response_model=EvaluationRunResponse, tags=["evaluation"])
+    @app.get(
+        "/evaluation/latest", response_model=EvaluationRunResponse, tags=["evaluation"],
+        include_in_schema=not public_demo,
+    )
     def latest_evaluation(
         request: Request, _: str | None = Depends(require_admin)
     ) -> dict[str, object]:
@@ -637,7 +700,10 @@ def create_app(
             )
         return json.loads(path.read_text(encoding="utf-8"))
 
-    @app.post("/evaluation/run", response_model=EvaluationRunResponse, tags=["evaluation"])
+    @app.post(
+        "/evaluation/run", response_model=EvaluationRunResponse, tags=["evaluation"],
+        include_in_schema=not public_demo,
+    )
     def run_evaluation(
         payload: EvaluationRunRequest,
         request: Request,
