@@ -2,9 +2,9 @@
 
 ## 최신 체크포인트: v4.27.6
 
-현재 공개 코드의 최신 체크포인트는 v4.27.6이다. 아래 결과는 기능·데이터
-품질 검증과 과거 Agent 실험을 구분해 기록한다. 특정 실행 환경의 수치를
-일반적인 법률 판단 정확도나 생성형 모델 성능으로 해석하지 않는다.
+현재 공개 코드의 최신 체크포인트는 v4.27.6입니다. 아래 결과는 기능·데이터
+품질 검증과 과거 Agent 실험을 구분해 기록합니다. 특정 실행 환경의 수치를
+일반적인 법률 판단 정확도나 생성형 모델 성능으로 해석하지 않습니다.
 
 | 항목 | 최신 확인 결과 |
 | --- | --- |
@@ -17,16 +17,16 @@
 | 적용된 private 보정 | text correction 2건, printed-page decision 124건 |
 
 남은 테스트 경고는 Starlette TestClient와 `httpx`의 deprecation warning이며,
-테스트 실패나 API 동작 오류가 아니다. private OCR의 원문, 페이지 snippet,
-review queue, correction text와 source path는 공개 저장소에 포함하지 않는다.
+테스트 실패나 API 동작 오류가 아닙니다. private OCR의 원문, 페이지 snippet,
+review queue, correction text와 source path는 공개 저장소에 포함하지 않습니다.
 
 v4.27.6의 구현 범위, 평가 버전 경계, 공개/비공개 경계와 미구현 범위는
-[`PROJECT_CHECKPOINT_V4276.md`](../PROJECT_CHECKPOINT_V4276.md)를 참고한다.
+[`PROJECT_CHECKPOINT_V4276.md`](../PROJECT_CHECKPOINT_V4276.md)를 참고합니다.
 
 ## 역사적 기록: v4.17.0 Agent 검증
 
-아래 내용은 v4.17.0 시점의 Agent Workflow 검증 기록이다. 최신 회귀 결과를
-대체하지 않으며, 61개 사례 Baseline–Agent 비교의 조건과 기능 범위를 보존한다.
+아래 내용은 v4.17.0 시점의 Agent Workflow 검증 기록입니다. 최신 회귀 결과를
+대체하지 않으며, 61개 사례 Baseline–Agent 비교의 조건과 기능 범위를 보존합니다.
 
 ## v4.17.0 검증 결과
 
@@ -47,7 +47,7 @@ LAW_RAG_LLM_PROVIDER=deterministic python -m pytest -q
 # 246 passed, 1 warning
 ```
 
-경고 1건은 FastAPI TestClient가 사용하는 Starlette의 `httpx` 호환성 폐기 예정 알림이며 테스트 실패나 현재 API 동작 오류가 아니다.
+경고 1건은 FastAPI TestClient가 사용하는 Starlette의 `httpx` 호환성 폐기 예정 알림이며 테스트 실패나 현재 API 동작 오류가 아닙니다.
 
 ## 기능 확인
 
@@ -71,7 +71,7 @@ uvicorn law_rag.api.app:app --reload
 - `GET /experiments/{experiment_id}/failures`: 실패 사례와 관련 run ID
 - `GET /experiments/verified-summary`: 저장소에 검증된 비교 요약
 
-관리자 인증 후 브라우저에서 `/internal/evaluation`을 열면 Agent 실행 trace와 Baseline–Agent 비교를 한 화면에서 확인할 수 있다. `/static/evaluation.html`과 `/static/training-review.html` 직접 접근은 차단한다.
+관리자 인증 후 브라우저에서 `/internal/evaluation`을 열면 Agent 실행 trace와 Baseline–Agent 비교를 한 화면에서 확인할 수 있습니다. `/static/evaluation.html`과 `/static/training-review.html` 직접 접근은 차단합니다.
 
 ## 데이터·실험 검증
 
@@ -85,20 +85,20 @@ LAW_RAG_LLM_PROVIDER=deterministic python -m tools.run_rag_experiment \
   --mode agent --dataset evaluation/datasets/official_core_cases.json
 ```
 
-검증된 61문항 비교 결과는 `docs/EVALUATION_REPORT.md`와 `evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json`에 기록했다. 원시 실험·trace·실패 로그는 재생성 가능한 실행 산출물이므로 기본적으로 Git에서 제외한다.
+검증된 61문항 비교 결과는 `docs/EVALUATION_REPORT.md`와 `evaluation/baselines/v4.16.0_baseline_vs_agent_summary.json`에 기록했습니다. 원시 실험·trace·실패 로그는 재생성 가능한 실행 산출물이므로 기본적으로 Git에서 제외합니다.
 
 ## 배포 전 확인
 
-1. 로컬에서 전체 테스트와 데이터셋 검증을 실행한다.
-2. 운영 환경의 corpus 및 LLM provider 설정을 확인한다.
-3. 비밀키는 환경 변수로 주입하고 ZIP이나 저장소에 포함하지 않는다.
-4. `/health`와 `/answer`를 smoke test하고, 관리자 인증으로 `/internal/evaluation`과 `/agent/runs`의 `200` 응답을 확인한다.
-5. 장시간 평가 실험은 웹 요청 처리 프로세스와 분리하는 것을 권장한다.
+1. 로컬에서 전체 테스트와 데이터셋 검증을 실행합니다.
+2. 운영 환경의 corpus 및 LLM provider 설정을 확인합니다.
+3. 비밀키는 환경 변수로 주입하고 ZIP이나 저장소에 포함하지 않습니다.
+4. `/health`와 `/answer`를 smoke test하고, 관리자 인증으로 `/internal/evaluation`과 `/agent/runs`의 `200` 응답을 확인합니다.
+5. 장시간 평가 실험은 웹 요청 처리 프로세스와 분리하는 것을 권장합니다.
 
 ## 알려진 한계
 
-- 실험 API는 안전한 최소 구현이며 대규모 작업 큐나 분산 실행기가 아니다.
-- 실행·실험 저장소는 단일 프로세스와 소규모 데모를 우선한다.
-- 보류 정책은 안전성을 높이지만 답변 가능한 문항의 불필요한 보류가 증가할 수 있다.
-- 검증 실행의 재시도 12건에서는 실제 품질 개선이 관측되지 않았다.
-- 61개 평가의 통과율을 생성형 답변 정확도 100% 또는 실서비스 성능으로 해석하면 안 된다.
+- 실험 API는 안전한 최소 구현이며 대규모 작업 큐나 분산 실행기가 아닙니다.
+- 실행·실험 저장소는 단일 프로세스와 소규모 데모를 우선합니다.
+- 보류 정책은 안전성을 높이지만 답변 가능한 문항의 불필요한 보류가 증가할 수 있습니다.
+- 검증 실행의 재시도 12건에서는 실제 품질 개선이 관측되지 않았습니다.
+- 61개 평가의 통과율을 생성형 답변 정확도 100% 또는 실서비스 성능으로 해석하면 안 됩니다.

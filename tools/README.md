@@ -319,11 +319,11 @@ python -m tools.export_printed_page_decisions PRIVATE_REVIEW_QUEUE.json \
   --verified-label-absent 1,9 --approve-high-confidence
 ```
 
-감사 시 `--printed-page-decisions PRIVATE_PRINTED_PAGE_DECISIONS.json`을 추가한다.
+감사 시 `--printed-page-decisions PRIVATE_PRINTED_PAGE_DECISIONS.json`을 추가합니다.
 
 # OCR 인쇄면수 추론·교정 오버레이 (v4.27.5)
 
-승인된 private correction overlay를 메모리에서 적용하고 인쇄면수 누락에 검토용 제안값을 만든다.
+승인된 private correction overlay를 메모리에서 적용하고 인쇄면수 누락에 검토용 제안값을 만듭니다.
 
 ```bash
 python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
@@ -334,12 +334,12 @@ python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
   --output PRIVATE_AUDIT.json
 ```
 
-자세한 형식은 `docs/OCR_CORRECTION_OVERLAY.md`를 따른다.
+자세한 형식은 `docs/OCR_CORRECTION_OVERLAY.md`를 따릅니다.
 
 # OCR 경고 검토 큐 (v4.27.4)
 
-감사 경고를 유형별 private 검토 큐로 분류한다. 문맥 snippet이 포함되므로 출력은 Git 저장소
-밖에 두어야 한다.
+감사 경고를 유형별 private 검토 큐로 분류합니다. 문맥 snippet이 포함되므로 출력은 Git 저장소
+밖에 두어야 합니다.
 
 ```bash
 python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
@@ -349,13 +349,13 @@ python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
   --output PRIVATE_AUDIT.json
 ```
 
-검토 완료 후 `--warning-decisions PRIVATE_WARNING_DECISIONS.json`을 추가한다. 자세한 형식은
-`docs/OCR_WARNING_REVIEW.md`를 따른다.
+검토 완료 후 `--warning-decisions PRIVATE_WARNING_DECISIONS.json`을 추가합니다. 자세한 형식은
+`docs/OCR_WARNING_REVIEW.md`를 따릅니다.
 
 # OCR 재감사 (v4.27.2)
 
 승인된 비본문 페이지, 결합형 머리말의 인쇄면수, 가변적인 각주 후보를 기존 private import에서
-재감사할 수 있다. 원문을 다시 PDF에서 추출하지 않는다.
+재감사할 수 있습니다. 원문을 다시 PDF에서 추출하지 않습니다.
 
 ```bash
 python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
@@ -364,5 +364,5 @@ python -m tools.audit_ocr_source PRIVATE_IMPORT.json \
   --output PRIVATE_AUDIT.json
 ```
 
-페이지 결정 파일과 출력은 Git 저장소 밖의 private storage에 둔다. 자세한 형식은
-`docs/OCR_REAUDIT_AND_LAYOUT.md`를 따른다.
+페이지 결정 파일과 출력은 Git 저장소 밖의 private storage에 둡니다. 자세한 형식은
+`docs/OCR_REAUDIT_AND_LAYOUT.md`를 따릅니다.
