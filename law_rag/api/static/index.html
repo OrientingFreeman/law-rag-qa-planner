@@ -5,18 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="법무·컴플라이언스를 위한 근거 기반 법령 AI 기술 데모">
   <title>근거 기반 법령 AI 데모</title>
-  <link rel="stylesheet" href="/static/app.css?v=4.27.6">
+  <link rel="stylesheet" href="/static/app.css?v=4.27.6-ui1">
 </head>
 <body>
 <header class="site-header">
   <a class="brand" href="/">근거 기반 법령 AI <span id="brand-version">버전 확인 중</span></a>
-  <nav>
+  <nav aria-label="주요 메뉴">
     <a href="#demo">데모</a>
-    <a href="/internal/evaluation">Agent 평가</a>
+    <a href="#proof">검증 결과</a>
+    <a href="#fit">구현 범위</a>
     <a href="#architecture">구조</a>
-    <a href="#fit">직무 연계</a>
-    <a href="#quality">검증</a>
+    <a href="#quality">설계 원칙</a>
     <a href="/docs">API 문서</a>
+    <a class="admin-only-link" href="/internal/evaluation" hidden>관리자 평가</a>
   </nav>
 </header>
 <main>
@@ -24,12 +25,13 @@
     <div class="hero-copy">
       <p class="eyebrow">Evidence-Grounded Legal AI</p>
       <h1>법무·컴플라이언스를 위한<br>근거 기반 법령 AI</h1>
-      <p class="hero-description">법령 구조를 반영한 검색, 근거 기반 답변 생성, 인용 검증과 회귀 평가를 하나의 흐름으로 구현한 비공식 기술 데모입니다.</p>
+      <p class="hero-description">법령 구조를 반영한 검색부터 근거 제한 생성, 인용 검증, 안전한 유보와 회귀 평가까지 하나의 흐름으로 구현한 비공식 기술 데모입니다.</p>
       <div class="hero-actions">
-        <a class="primary-link" href="#demo">3분 데모 시작</a>
-        <a class="secondary-link evaluation-link" href="/internal/evaluation">Agent 실행·평가 콘솔</a>
-        <a class="secondary-link" href="#architecture">설계 구조 보기</a>
+        <a class="primary-link" href="#demo">예시 질문으로 체험하기</a>
+        <a class="secondary-link" href="#proof">검증 결과 보기</a>
+        <a class="secondary-link evaluation-link admin-only-link" href="/internal/evaluation" hidden>Agent 실행·평가 콘솔</a>
       </div>
+      <div class="hero-tags" aria-label="핵심 안전 기능"><span>공식 출처</span><span>시행일 검색</span><span>인용 검증</span><span>근거 부족 시 유보</span></div>
       <p class="disclaimer">본 서비스는 비공식 기술 데모이며 법률 자문을 제공하지 않습니다.</p>
     </div>
     <aside class="hero-side">
@@ -45,12 +47,26 @@
     <article><span>04</span><strong>인용·회귀 평가</strong><p>미지원 인용을 탐지하고 평가셋으로 품질 저하를 추적합니다.</p></article>
   </section>
 
+  <section id="proof" class="proof-section" aria-labelledby="proof-title">
+    <div class="section-heading proof-heading">
+      <div><p class="eyebrow">Verified Checkpoint</p><h2 id="proof-title">좋아 보이는 답변보다, 반복해서 검증할 수 있는 시스템</h2></div>
+      <p>고정된 데이터셋과 결정론 실행으로 기준선과 Agent 워크플로를 비교했습니다.</p>
+    </div>
+    <div class="proof-grid" aria-live="polite">
+      <article><span>평가 데이터셋</span><strong id="proof-case-count">61개</strong><p>법령 검색·답변 유보 사례</p></article>
+      <article><span>Agent 보류 판단</span><strong id="proof-abstention">93.75%</strong><p>보류 대상 결과 정확도</p></article>
+      <article><span>기준선 대비</span><strong id="proof-improved">+6건</strong><p>통과로 전환된 평가 사례</p></article>
+      <article><span>회귀 사례</span><strong id="proof-regressed">0건</strong><p>기존 통과 사례의 실패 전환</p></article>
+    </div>
+    <p class="proof-note">v4.16.0 검증 체크포인트 기준의 폐쇄형 결정론 평가이며, 외부 생성형 모델의 일반적인 법률답변 정확도를 의미하지 않습니다. <a href="https://github.com/OrientingFreeman/law-rag-qa-planner/blob/main/docs/EXPERIMENT_COMPARISON.md" target="_blank" rel="noopener noreferrer">평가 조건과 한계 보기</a></p>
+  </section>
+
   <section id="demo" class="workspace-section">
     <div class="section-heading"><p class="eyebrow">Interactive Demo</p><h2>법령 질의 체험</h2><p>예시 질문을 선택하거나 직접 질문을 입력하면 답변과 근거 조문을 함께 확인할 수 있습니다.</p></div>
     <section id="qa-panel" class="panel active">
       <form id="query-form" class="query-card">
-        <div class="field-full"><label for="question">법률 질문</label><textarea id="question" rows="4" required maxlength="1000" placeholder="예: 개인정보 처리위탁 시 필요한 조치는 무엇인가요?"></textarea></div>
-        <div class="sample-title">검증 시나리오를 선택하면 질문과 검색 도메인이 함께 설정됩니다.</div>
+        <div class="field-full"><label for="question">법률 질문</label><textarea id="question" rows="4" required maxlength="1000" aria-describedby="question-help" placeholder="예: 개인정보 처리위탁 시 필요한 조치는 무엇인가요?"></textarea></div>
+        <div id="question-help" class="sample-title">검증 시나리오를 선택하면 질문과 검색 도메인이 함께 설정됩니다.</div>
         <div class="sample-catalog">
           <section class="sample-group statute-samples">
             <div class="sample-group-heading"><span>Statute</span><div><h3>법령 직접 확인</h3><p>조문이 직접 규범 근거가 되는 질문</p></div></div>
@@ -87,6 +103,7 @@
           <div><label for="as-of-date">법령 기준일</label><input id="as-of-date" type="date"></div>
         </div>
         <button id="submit-button" class="primary-button" type="submit">근거 기반 답변 확인</button>
+        <p id="form-status" class="form-status" role="status" aria-live="polite" hidden></p>
         <p id="demo-limit-note" class="demo-limit-note" hidden></p>
       </form>
 
@@ -120,15 +137,15 @@
   </section>
 
   <section id="fit" class="fit-section">
-    <div class="section-heading"><p class="eyebrow">Role Fit</p><h2>법률 실무와 AI 데이터 품질을 함께 보여주는 프로젝트</h2><p>같은 시스템을 서로 다른 직무 관점에서 이해할 수 있도록 핵심 역량을 정리했습니다.</p></div>
+    <div class="section-heading"><p class="eyebrow">Implementation Scope</p><h2>법률 정보 구조화와 AI 품질 검증을 함께 구현했습니다.</h2><p>검색 결과를 생성 모델에 연결하는 데 그치지 않고, 데이터 구조와 실패 판정까지 평가 가능한 형태로 관리합니다.</p></div>
     <div class="fit-grid">
       <article>
-        <span class="fit-label">법률 실무·고객 업무</span>
-        <h3>법률 쟁점을 구조화하고 근거를 빠르게 확인합니다.</h3>
+        <span class="fit-label">법률 정보 구조화</span>
+        <h3>법률 쟁점을 구조화하고 공식 근거를 빠르게 확인합니다.</h3>
         <ul><li>질문에서 법적 행위·주체·요건을 분리</li><li>관련 조문과 공식 출처를 함께 제시</li><li>근거 부족 시 답변을 유보하는 안전장치</li><li>반복적인 법률 확인 업무의 표준화 가능성</li></ul>
       </article>
       <article>
-        <span class="fit-label">LLM·데이터 품질</span>
+        <span class="fit-label">AI 시스템 검증</span>
         <h3>학습·검색 데이터와 생성 결과를 평가 가능한 형태로 관리합니다.</h3>
         <ul><li>조·항·호 단위 메타데이터 설계</li><li>하이브리드 검색과 검색 순위 평가</li><li>문장별 Grounding 및 Citation Validation</li><li>회귀 평가와 실패 사례 기반 품질 개선</li></ul>
       </article>
@@ -153,7 +170,7 @@
     <article class="principles"><div><strong>신뢰성</strong><p>근거가 부족하면 답변을 유보합니다.</p></div><div><strong>추적 가능성</strong><p>답변과 관련 조문을 연결합니다.</p></div><div><strong>평가 가능성</strong><p>정량 지표와 실패 사례를 보존합니다.</p></div></article>
   </section>
 </main>
-<footer><strong>근거 기반 법령 AI 데모</strong><span>비공식 기술 데모 · 법률 자문 아님</span></footer>
-<script src="/static/app.js?v=4.27.6" defer></script>
+<footer><strong>근거 기반 법령 AI 데모</strong><span>비공식 기술 데모 · 법률 자문 아님</span><a href="https://github.com/OrientingFreeman/law-rag-qa-planner" target="_blank" rel="noopener noreferrer">GitHub 저장소</a></footer>
+<script src="/static/app.js?v=4.27.6-ui1" defer></script>
 </body>
 </html>

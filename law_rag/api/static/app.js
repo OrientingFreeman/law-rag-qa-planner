@@ -214,6 +214,10 @@ async function loadDemoConfig() {
     const response = await fetch("/demo-config");
     if (!response.ok) return;
     const config = await response.json();
+    const protectAdminLinks = config.public_demo && config.admin_auth_required;
+    $$(".admin-only-link").forEach((link) => {
+      link.hidden = protectAdminLinks;
+    });
     if (config.public_demo && config.max_requests) {
       const minutes = Math.round(config.window_seconds / 60);
       const note = $("#demo-limit-note");
@@ -223,6 +227,31 @@ async function loadDemoConfig() {
   } catch {
     // 설정 조회 실패는 핵심 데모 기능을 막지 않는다.
   }
+}
+
+function formatPercent(value) {
+  return `${(Number(value) * 100).toFixed(2)}%`;
+}
+
+async function loadVerifiedSummary() {
+  try {
+    const response = await fetch("/experiments/verified-summary");
+    if (!response.ok) return;
+    const summary = await response.json();
+    $("#proof-case-count").textContent = `${summary.dataset.case_count}개`;
+    $("#proof-abstention").textContent = formatPercent(summary.agent.expected_abstention_accuracy);
+    $("#proof-improved").textContent = `+${summary.comparison.improved_cases}건`;
+    $("#proof-regressed").textContent = `${summary.comparison.regressed_cases}건`;
+  } catch {
+    // 화면에는 검증된 체크포인트의 기본값을 유지한다.
+  }
+}
+
+function setFormStatus(message = "", tone = "") {
+  const status = $("#form-status");
+  status.textContent = message;
+  status.className = `form-status${tone ? ` ${tone}` : ""}`;
+  status.hidden = !message;
 }
 
 async function loadDomains() {
@@ -338,6 +367,8 @@ function renderQuery(data) {
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = $('#submit-button');
+  form.setAttribute('aria-busy', 'true');
+  setFormStatus('');
   button.disabled = true;
   button.textContent = '법령과 근거를 분석하는 중…';
   try {
@@ -353,12 +384,18 @@ form.addEventListener('submit', async (event) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const data = await response.json();
+    let data = {};
+    try {
+      data = await response.json();
+    } catch {
+      // 프록시 오류처럼 JSON이 아닌 응답도 사용자에게 일관되게 안내한다.
+    }
     if (!response.ok) throw new Error(data.detail?.message || '요청을 처리하지 못했습니다.');
     renderQuery(data);
   } catch (error) {
-    window.alert(error.message || '요청 중 오류가 발생했습니다.');
+    setFormStatus(error.message || '요청 중 오류가 발생했습니다.', 'error');
   } finally {
+    form.removeAttribute('aria-busy');
     button.disabled = false;
     button.textContent = '근거 기반 답변 확인';
   }
@@ -367,3 +404,4 @@ form.addEventListener('submit', async (event) => {
 loadHealth();
 loadDemoConfig();
 loadDomains();
+loadVerifiedSummary();

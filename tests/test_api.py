@@ -103,6 +103,12 @@ def test_web_ui_and_static_assets_are_served():
     assert "Agent 실행과 실험 결과를 함께 추적합니다" in internal_evaluation.text
     assert 'href="/internal/evaluation"' in home.text
     assert "Agent 실행·평가 콘솔" in home.text
+    assert 'id="proof"' in home.text
+    assert "폐쇄형 결정론 평가" in home.text
+    assert home.text.count("admin-only-link") == 2
+    assert 'fetch("/experiments/verified-summary")' in script.text
+    assert '$$(".admin-only-link")' in script.text
+    assert "window.alert" not in script.text
     assert evaluation_script.status_code == 200
     assert static_evaluation.status_code == 404
     assert static_training_review.status_code == 404
